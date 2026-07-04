@@ -2218,6 +2218,10 @@ function app() {
     contaErro: '',
     contaSucesso: '',
     notifPermissao: (typeof Notification !== 'undefined' ? Notification.permission : 'default'),
+    cropModal: false, cropSrc: '', cropTipo: '',
+    cropX: 0, cropY: 0, cropScalePercent: 100,
+    cropImgNW: 0, cropImgNH: 0, cropImgDispW: 0, cropImgDispH: 0,
+    cropDragging: false, cropDragLX: 0, cropDragLY: 0,
     mediaViewer: { show: false, current: null, list: [], idx: 0 },
     loggedIn: localStorage.getItem('amigo_session') === 'ok' || sessionStorage.getItem('amigo_session') === 'ok',
     loginUser: '',
@@ -2407,18 +2411,7 @@ function app() {
       const file = event.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const size = Math.min(img.width, img.height, 200);
-          canvas.width = canvas.height = size;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, (img.width-size)/2, (img.height-size)/2, size, size, 0, 0, size, size);
-          this.editingCliente.foto = canvas.toDataURL('image/jpeg', 0.7);
-        };
-        img.src = e.target.result;
-      };
+      reader.onload = (e) => { this.cropSrc = e.target.result; this.cropTipo = 'lead'; this.cropModal = true; };
       reader.readAsDataURL(file);
     },
 
@@ -3403,19 +3396,65 @@ function app() {
       const file = event.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const size = Math.min(img.width, img.height, 300);
-          canvas.width = canvas.height = size;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, (img.width-size)/2, (img.height-size)/2, size, size, 0, 0, size, size);
-          this.contaFoto = canvas.toDataURL('image/jpeg', 0.8);
-        };
-        img.src = e.target.result;
-      };
+      reader.onload = (e) => { this.cropSrc = e.target.result; this.cropTipo = 'corretor'; this.cropModal = true; };
       reader.readAsDataURL(file);
+    },
+
+    cropImgLoaded() {
+      const img = this.$refs.cropPreviewImg;
+      if (!img) return;
+      this.cropImgNW = img.naturalWidth;
+      this.cropImgNH = img.naturalHeight;
+      this.cropScalePercent = 100;
+      this.cropX = 0; this.cropY = 0;
+      this._cropUpdateDisp();
+    },
+    _cropUpdateDisp() {
+      const base = 260 / Math.min(this.cropImgNW, this.cropImgNH);
+      const s = base * (this.cropScalePercent / 100);
+      this.cropImgDispW = this.cropImgNW * s;
+      this.cropImgDispH = this.cropImgNH * s;
+    },
+    cropClampOffset() {
+      this._cropUpdateDisp();
+      const maxX = Math.max(0, this.cropImgDispW / 2 - 130);
+      const maxY = Math.max(0, this.cropImgDispH / 2 - 130);
+      this.cropX = Math.max(-maxX, Math.min(maxX, this.cropX));
+      this.cropY = Math.max(-maxY, Math.min(maxY, this.cropY));
+    },
+    cropDragStart(e) {
+      this.cropDragging = true;
+      e.currentTarget.setPointerCapture(e.pointerId);
+      this.cropDragLX = e.clientX; this.cropDragLY = e.clientY;
+    },
+    cropDragMove(e) {
+      if (!this.cropDragging) return;
+      this.cropX += e.clientX - this.cropDragLX;
+      this.cropY += e.clientY - this.cropDragLY;
+      this.cropDragLX = e.clientX; this.cropDragLY = e.clientY;
+      this.cropClampOffset();
+    },
+    cropDragEnd() { this.cropDragging = false; },
+    cropWheel(e) {
+      this.cropScalePercent = Math.max(100, Math.min(300, this.cropScalePercent - e.deltaY * 0.15));
+      this.cropClampOffset();
+    },
+    confirmarCrop() {
+      const img = this.$refs.cropPreviewImg;
+      if (!img) return;
+      const base = 260 / Math.min(this.cropImgNW, this.cropImgNH);
+      const s = base * (this.cropScalePercent / 100);
+      const srcX = this.cropImgNW / 2 - (130 + this.cropX) / s;
+      const srcY = this.cropImgNH / 2 - (130 + this.cropY) / s;
+      const srcSize = 260 / s;
+      const outSize = this.cropTipo === 'corretor' ? 300 : 200;
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = outSize;
+      canvas.getContext('2d').drawImage(img, srcX, srcY, srcSize, srcSize, 0, 0, outSize, outSize);
+      const result = canvas.toDataURL('image/jpeg', this.cropTipo === 'corretor' ? 0.85 : 0.75);
+      if (this.cropTipo === 'corretor') this.contaFoto = result;
+      else this.editingCliente.foto = result;
+      this.cropModal = false;
     },
 
     salvarConta() {
@@ -4003,6 +4042,80 @@ function app() {
     </div>
   </div>
 </div>
+
+<!-- ===== CROP PHOTO MODAL ===== -->
+<div x-show="cropModal" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+     class="fixed inset-0 z-[9999] flex items-center justify-center p-4" style="background:rgba(0,0,0,0.75)"
+     @click.self="cropModal=false">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xs overflow-hidden">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+      <div>
+        <h3 class="font-bold text-gray-800 text-sm">Ajustar foto</h3>
+        <p class="text-xs text-gray-400 mt-0.5">Arraste para centralizar · Scroll/slider para zoom</p>
+      </div>
+      <button @click="cropModal=false" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 text-lg leading-none transition-colors">×</button>
+    </div>
+
+    <!-- Crop area -->
+    <div class="flex flex-col items-center px-5 py-6 gap-5">
+
+      <!-- Circle preview with drag -->
+      <div class="relative select-none"
+           style="width:260px;height:260px;border-radius:50%;overflow:hidden;background:#e5e7eb;cursor:grab;box-shadow:0 0 0 4px #345448,0 0 0 7px rgba(52,84,72,0.15)"
+           :style="cropDragging ? 'cursor:grabbing' : 'cursor:grab'"
+           @pointerdown="cropDragStart($event)"
+           @pointermove="cropDragMove($event)"
+           @pointerup="cropDragEnd($event)"
+           @pointercancel="cropDragEnd($event)"
+           @wheel.prevent="cropWheel($event)">
+
+        <img x-show="cropSrc" :src="cropSrc" x-ref="cropPreviewImg"
+             class="absolute pointer-events-none select-none"
+             :style="`width:${cropImgDispW}px;height:${cropImgDispH}px;left:${130 - cropImgDispW/2 + cropX}px;top:${130 - cropImgDispH/2 + cropY}px`"
+             @load="cropImgLoaded()" draggable="false" />
+
+        <!-- Loading placeholder -->
+        <div x-show="!cropImgDispW" class="absolute inset-0 flex items-center justify-center">
+          <i class="fa-solid fa-spinner fa-spin text-gray-300 text-2xl"></i>
+        </div>
+
+        <!-- Center crosshair guide -->
+        <div class="absolute inset-0 pointer-events-none flex items-center justify-center opacity-20">
+          <div class="absolute w-full h-px bg-white"></div>
+          <div class="absolute h-full w-px bg-white"></div>
+        </div>
+      </div>
+
+      <!-- Zoom slider -->
+      <div class="w-full flex items-center gap-3">
+        <i class="fa-solid fa-magnifying-glass text-gray-300 text-xs"></i>
+        <input type="range" min="100" max="300" step="1"
+               class="flex-1 accent-[#345448]"
+               :value="cropScalePercent"
+               @input="cropScalePercent = parseInt($event.target.value); cropClampOffset()" />
+        <i class="fa-solid fa-magnifying-glass-plus text-gray-400 text-sm"></i>
+      </div>
+      <div class="text-xs text-gray-400 -mt-3">Zoom: <span x-text="cropScalePercent"></span>%</div>
+
+    </div>
+
+    <!-- Actions -->
+    <div class="flex gap-3 px-5 pb-5">
+      <button @click="cropModal=false"
+              class="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors">
+        Cancelar
+      </button>
+      <button @click="confirmarCrop()"
+              class="flex-1 py-3 rounded-xl text-white text-sm font-bold shadow-lg transition-all hover:opacity-90"
+              style="background:linear-gradient(135deg,#345448,#4a7c62)">
+        <i class="fa-solid fa-check mr-1.5"></i>Confirmar
+      </button>
+    </div>
+  </div>
+</div>
+<!-- ===== /CROP PHOTO MODAL ===== -->
 
 <!-- Global Search Overlay -->
 <div x-show="globalSearch" x-transition:enter="transition ease-out duration-150"
