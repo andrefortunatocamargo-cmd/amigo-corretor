@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><title>Recuperar Dados</title>
+<style>body{font-family:sans-serif;padding:40px;max-width:600px;margin:0 auto;}
+button{background:#345448;color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-size:16px;margin:8px 0;}
+button:hover{background:#2a4338;}
+.ok{color:green;font-weight:bold;} .erro{color:red;font-weight:bold;}
+pre{background:#f5f5f5;padding:16px;border-radius:8px;font-size:12px;overflow:auto;max-height:200px;}
+</style>
+</head>
+<body>
+<h2>🔄 Recuperar Dados do AMiGO Corretor</h2>
+<p>Este arquivo deve ser aberto <strong>diretamente</strong> (file://) para acessar os dados antigos.</p>
+
+<div id="status"></div>
+
+<script>
+const key = 'amigo_corretor_clientes';
+const dados = localStorage.getItem(key);
+const status = document.getElementById('status');
+
+if (dados) {
+  const clientes = JSON.parse(dados);
+  status.innerHTML = `<p class="ok">✅ Encontrados ${clientes.length} lead(s) no localStorage local!</p>
+  <pre>${JSON.stringify(clientes, null, 2).substring(0, 500)}...</pre>
+  <p>Clique abaixo para exportar como arquivo JSON e importar no app:</p>
+  <button onclick="exportar()">📥 Baixar backup.json</button>`;
+} else {
+  status.innerHTML = `<p class="erro">❌ Nenhum dado encontrado nesta origem.</p>
+  <p>Tente abrir este arquivo diretamente pelo Finder (duplo clique).</p>`;
+}
+
+function exportar() {
+  const blob = new Blob([dados], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'amigo-backup-local.json';
+  a.click();
+}
+</script>
+</body>
+</html>
