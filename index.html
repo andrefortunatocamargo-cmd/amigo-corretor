@@ -2100,17 +2100,16 @@ tailwind.config = {
 </div>
 
 <!-- RODAPÉ -->
-<footer class="mt-8 border-t-2 border-green-100 bg-white hidden sm:block">
-  <div class="max-w-7xl mx-auto px-4 py-4">
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-      <!-- Logo -->
+<footer class="mt-8 bg-white hidden sm:block">
+  <!-- Versículo -->
+  <div class="border-t border-green-100 px-4 py-3">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
       <div class="flex items-center gap-2 text-green-700 flex-shrink-0">
         <i class="fa-solid fa-house-chimney text-green-500"></i>
         <span class="font-black text-sm">AMiGO <span class="text-green-500">Corretor</span></span>
         <span class="text-gray-300">|</span>
         <span class="text-gray-400 text-xs">André Fortunato Camargo</span>
       </div>
-      <!-- Versículo do dia -->
       <div class="flex flex-col items-start sm:items-end gap-0.5 max-w-lg">
         <div class="flex items-center gap-1.5">
           <i class="fa-solid fa-book-open text-green-500 text-xs"></i>
@@ -2119,6 +2118,31 @@ tailwind.config = {
           <span class="text-gray-300 text-xs">(NVI)</span>
         </div>
         <p class="text-gray-500 text-xs italic leading-snug text-left sm:text-right" x-text="versiculo.texto"></p>
+      </div>
+    </div>
+  </div>
+  <!-- Assinatura Fortunato Tech -->
+  <div style="background:linear-gradient(135deg,#0f1117,#1a2035)" class="px-4 py-3">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+          <div style="background:linear-gradient(135deg,#345448,#b48860)" class="w-6 h-6 rounded-md flex items-center justify-center">
+            <i class="fa-solid fa-microchip text-white text-[10px]"></i>
+          </div>
+          <div>
+            <span class="text-white font-black text-sm tracking-tight">FORTUNATO</span>
+            <span style="color:#b48860" class="font-black text-sm tracking-tight"> TECH</span>
+          </div>
+        </div>
+        <span class="text-gray-600 text-xs hidden md:block">|</span>
+        <span class="text-gray-400 text-xs hidden md:block">Soluções Digitais para o Mercado Imobiliário</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="text-gray-600 text-[10px]">© 2026 Fortunato Tech · Todos os direitos reservados</span>
+        <div class="flex items-center gap-1 px-2 py-1 rounded-full border border-gray-700">
+          <div class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></div>
+          <span class="text-gray-400 text-[10px] font-semibold">Sistema Online</span>
+        </div>
       </div>
     </div>
   </div>
