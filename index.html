@@ -481,7 +481,26 @@ tailwind.config = {
 </div>
 
 <!-- MAIN CONTENT -->
-<main class="max-w-7xl mx-auto px-4 py-4 sm:py-6 pb-24 sm:pb-6">
+<main class="max-w-7xl mx-auto px-4 py-4 sm:py-6 pb-24 sm:pb-6 sm:pr-[84px]" x-show="section==='vendas'">
+
+  <!-- Sub-nav mobile (Dashboard/Clientes/Agenda — só aparece em mobile dentro do section vendas) -->
+  <div class="sm:hidden flex items-center gap-2 mb-4 overflow-x-auto pb-1">
+    <button @click="page='dashboard'" class="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all"
+      :class="page==='dashboard' ? 'bg-green-700 text-white shadow' : 'bg-white text-gray-500 border border-gray-200'">
+      <i class="fa-solid fa-gauge-high text-xs"></i> Dashboard
+    </button>
+    <button @click="page='clientes'" class="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all"
+      :class="page==='clientes' ? 'bg-green-700 text-white shadow' : 'bg-white text-gray-500 border border-gray-200'">
+      <i class="fa-solid fa-users text-xs"></i> Clientes
+    </button>
+    <button @click="page='agenda'" class="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all"
+      :class="page==='agenda' ? 'bg-green-700 text-white shadow' : 'bg-white text-gray-500 border border-gray-200'">
+      <i class="fa-solid fa-calendar-days text-xs"></i> Agenda
+    </button>
+    <button @click="openClientModal()" class="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold bg-green-600 text-white shadow">
+      <i class="fa-solid fa-plus text-xs"></i> Novo
+    </button>
+  </div>
 
   <!-- ========== DASHBOARD ========== -->
   <div x-show="page==='dashboard'">
@@ -528,6 +547,41 @@ tailwind.config = {
         <p class="text-blue-500 text-xs font-semibold">Agendados</p>
       </div>
     </div>
+
+    <!-- ===== LEMBRETE CAPTAÇÕES ===== -->
+    <div x-show="captacoesPendentesHoje().length > 0" class="mb-5">
+      <div class="bg-purple-600 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm cursor-pointer hover:bg-purple-700 transition-colors"
+           @click="section='captacoes'">
+        <div class="w-10 h-10 rounded-xl bg-white bg-opacity-20 flex items-center justify-center flex-shrink-0">
+          <i class="fa-solid fa-map-location-dot text-white text-base"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-white font-black text-sm">Captações com ação pendente!</p>
+          <p class="text-purple-200 text-xs truncate"
+             x-text="captacoesPendentesHoje().length + ' ' + (captacoesPendentesHoje().length===1 ? 'imóvel precisa' : 'imóveis precisam') + ' de atenção hoje'"></p>
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <span class="w-7 h-7 rounded-full bg-white text-purple-700 font-black text-sm flex items-center justify-center"
+                x-text="captacoesPendentesHoje().length"></span>
+          <i class="fa-solid fa-arrow-right text-white text-xs opacity-70"></i>
+        </div>
+      </div>
+      <!-- Cards mini das captações pendentes (até 3) -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
+        <template x-for="cap in captacoesPendentesHoje().slice(0,3)" :key="cap.id">
+          <div @click="abrirTimelineCaptacao(cap)"
+               class="bg-white rounded-xl border border-purple-100 px-3 py-2.5 flex items-center gap-2 cursor-pointer hover:shadow-md transition-all">
+            <div class="w-2 h-2 rounded-full flex-shrink-0" :style="'background:'+captacaoStatusInfo(cap.status).cor"></div>
+            <div class="min-w-0 flex-1">
+              <p class="text-xs font-black text-gray-800 truncate" x-text="cap.endereco"></p>
+              <p class="text-[10px] text-gray-400 truncate" x-text="cap.proprietario || cap.bairro || '—'"></p>
+            </div>
+            <i class="fa-solid fa-list-check text-purple-400 text-xs flex-shrink-0"></i>
+          </div>
+        </template>
+      </div>
+    </div>
+    <!-- ===== /LEMBRETE CAPTAÇÕES ===== -->
 
     <!-- Priority Follow-ups -->
     <div class="grid lg:grid-cols-2 gap-6">
@@ -1320,34 +1374,427 @@ tailwind.config = {
 
 </main>
 
+<!-- ========== SIDEBAR DIREITA (desktop) ========== -->
+<aside class="hidden sm:flex fixed right-0 top-[110px] bottom-0 z-30 w-[72px] flex-col items-center py-4 gap-1 border-l border-green-900 border-opacity-30"
+       style="background:linear-gradient(180deg,#1a3a2a,#0f2519)">
+  <!-- Vendas -->
+  <button @click="section='vendas'; page='dashboard'"
+          class="group flex flex-col items-center gap-1 w-full py-3 px-1 rounded-none transition-all relative"
+          :class="section==='vendas' ? 'bg-white bg-opacity-10' : 'hover:bg-white hover:bg-opacity-5'">
+    <div class="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+         :class="section==='vendas' ? 'bg-green-500' : 'bg-white bg-opacity-10 group-hover:bg-opacity-20'">
+      <i class="fa-solid fa-handshake text-white text-sm"></i>
+    </div>
+    <span class="text-[9px] font-bold leading-tight text-center" :class="section==='vendas' ? 'text-white' : 'text-green-400'">Vendas &<br>Locações</span>
+    <div x-show="section==='vendas'" class="absolute left-0 top-2 bottom-2 w-0.5 bg-green-400 rounded-r"></div>
+  </button>
+
+  <!-- Captações -->
+  <button @click="section='captacoes'"
+          class="group flex flex-col items-center gap-1 w-full py-3 px-1 rounded-none transition-all relative"
+          :class="section==='captacoes' ? 'bg-white bg-opacity-10' : 'hover:bg-white hover:bg-opacity-5'">
+    <div class="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+         :class="section==='captacoes' ? 'bg-purple-500' : 'bg-white bg-opacity-10 group-hover:bg-opacity-20'">
+      <i class="fa-solid fa-map-location-dot text-white text-sm"></i>
+      <span x-show="captacoesPendentesHoje().length > 0"
+            class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center"
+            x-text="captacoesPendentesHoje().length"></span>
+    </div>
+    <span class="text-[9px] font-bold leading-tight text-center" :class="section==='captacoes' ? 'text-white' : 'text-green-400'">Captações</span>
+    <div x-show="section==='captacoes'" class="absolute left-0 top-2 bottom-2 w-0.5 bg-purple-400 rounded-r"></div>
+  </button>
+
+  <div class="flex-1"></div>
+
+  <!-- Configurações -->
+  <button @click="section='configuracoes'"
+          class="group flex flex-col items-center gap-1 w-full py-3 px-1 rounded-none transition-all relative"
+          :class="section==='configuracoes' ? 'bg-white bg-opacity-10' : 'hover:bg-white hover:bg-opacity-5'">
+    <div class="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+         :class="section==='configuracoes' ? 'bg-gray-500' : 'bg-white bg-opacity-10 group-hover:bg-opacity-20'">
+      <i class="fa-solid fa-gear text-white text-sm"></i>
+    </div>
+    <span class="text-[9px] font-bold leading-tight text-center" :class="section==='configuracoes' ? 'text-white' : 'text-green-400'">Config</span>
+    <div x-show="section==='configuracoes'" class="absolute left-0 top-2 bottom-2 w-0.5 bg-gray-400 rounded-r"></div>
+  </button>
+</aside>
+
+<!-- ========== SEÇÃO CAPTAÇÕES ========== -->
+<section x-show="section==='captacoes'" class="max-w-7xl mx-auto px-4 py-4 sm:py-6 pb-24 sm:pb-6 sm:pr-[84px]">
+
+  <!-- Header Captações -->
+  <div class="flex items-center justify-between mb-5">
+    <div>
+      <h1 class="text-xl font-black text-gray-800 flex items-center gap-2">
+        <span class="w-9 h-9 rounded-xl bg-purple-600 flex items-center justify-center">
+          <i class="fa-solid fa-map-location-dot text-white text-sm"></i>
+        </span>
+        Captações
+      </h1>
+      <p class="text-gray-400 text-sm mt-0.5">Acompanhamento de imóveis captados e em prospecção</p>
+    </div>
+    <button @click="novaCaptacao()"
+            class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white font-bold text-sm shadow-lg transition-all active:scale-95"
+            style="background:linear-gradient(135deg,#7c3aed,#9333ea)">
+      <i class="fa-solid fa-plus"></i>
+      <span class="hidden sm:inline">Nova Captação</span>
+    </button>
+  </div>
+
+  <!-- Filtros de Status -->
+  <div class="flex gap-2 overflow-x-auto pb-2 mb-4">
+    <template x-for="f in [
+      {v:'',label:'Todos'},
+      {v:'contato',label:'Em Contato'},
+      {v:'visita',label:'Visita'},
+      {v:'proposta',label:'Proposta'},
+      {v:'captado',label:'Captado'},
+      {v:'perdido',label:'Perdido'}
+    ]" :key="f.v">
+      <button @click="captacaoFiltroStatus=f.v"
+              class="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-all border"
+              :class="captacaoFiltroStatus===f.v ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-500 border-gray-200 hover:border-purple-300'">
+        <span x-text="f.label"></span>
+        <span x-show="f.v!==''" class="ml-1 opacity-70" x-text="'('+captacoes.filter(c=>c.status===f.v).length+')'"></span>
+        <span x-show="f.v===''" class="ml-1 opacity-70" x-text="'('+captacoes.length+')'"></span>
+      </button>
+    </template>
+  </div>
+
+  <!-- Busca -->
+  <div class="relative mb-4">
+    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 text-sm"></i>
+    <input x-model="captacaoBusca" type="text" placeholder="Buscar por endereço, bairro ou proprietário..."
+           class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-300">
+    <button x-show="captacaoBusca" @click="captacaoBusca=''" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500">
+      <i class="fa-solid fa-xmark text-xs"></i>
+    </button>
+  </div>
+
+  <!-- Estado vazio -->
+  <div x-show="captacoesFiltradas().length === 0" class="text-center py-16">
+    <div class="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+      <i class="fa-solid fa-map-location-dot text-purple-400 text-2xl"></i>
+    </div>
+    <p class="text-gray-400 font-semibold mb-2">Nenhuma captação encontrada</p>
+    <p class="text-gray-300 text-sm mb-4">Registre imóveis que você está prospectando para captação</p>
+    <button @click="novaCaptacao()" class="px-5 py-2.5 rounded-xl text-white font-bold text-sm" style="background:#7c3aed">
+      + Nova Captação
+    </button>
+  </div>
+
+  <!-- Lista de Captações -->
+  <div class="space-y-3">
+    <template x-for="cap in captacoesFiltradas()" :key="cap.id">
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+        <div class="flex items-stretch">
+          <!-- Barra lateral status -->
+          <div class="w-1.5 flex-shrink-0 rounded-l-2xl" :style="'background:' + captacaoStatusInfo(cap.status).cor"></div>
+
+          <!-- Conteúdo principal -->
+          <div class="flex-1 p-4 min-w-0">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0 flex-1">
+                <!-- Endereço -->
+                <div class="flex items-center gap-2 mb-1">
+                  <h3 class="font-black text-gray-800 text-sm truncate" x-text="cap.endereco"></h3>
+                  <span class="flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                        :style="'background:' + captacaoStatusInfo(cap.status).bg + ';color:' + captacaoStatusInfo(cap.status).cor"
+                        x-text="captacaoStatusInfo(cap.status).icon + ' ' + captacaoStatusInfo(cap.status).label"></span>
+                </div>
+                <!-- Bairro/Cidade -->
+                <p x-show="cap.bairro || cap.cidade" class="text-gray-400 text-xs mb-2"
+                   x-text="[cap.bairro, cap.cidade].filter(Boolean).join(', ')"></p>
+                <!-- Proprietário -->
+                <div x-show="cap.proprietario" class="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
+                  <i class="fa-solid fa-user text-gray-300 text-[10px]"></i>
+                  <span x-text="cap.proprietario"></span>
+                </div>
+                <!-- Próximo contato -->
+                <div class="flex items-center gap-3 mt-2">
+                  <div x-show="cap.proximoContato" class="flex items-center gap-1 text-xs"
+                       :class="cap.proximoContato <= todayStr() ? 'text-red-500 font-bold' : 'text-gray-400'">
+                    <i class="fa-solid fa-calendar text-[10px]"></i>
+                    <span x-text="'Próximo: ' + (cap.proximoContato ? new Date(cap.proximoContato+'T12:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}) : '—')"></span>
+                    <span x-show="cap.proximoContato < todayStr()" class="ml-1 text-[9px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-black">ATRASADO</span>
+                  </div>
+                  <!-- Tipo imóvel -->
+                  <span class="text-xs text-gray-300 capitalize" x-text="cap.tipo"></span>
+                  <!-- Valor -->
+                  <span x-show="cap.valorPretendido" class="text-xs font-bold text-green-700"
+                        x-text="'R$ ' + Number(cap.valorPretendido).toLocaleString('pt-BR',{minimumFractionDigits:0})"></span>
+                </div>
+                <!-- Próxima etapa -->
+                <div x-show="captacaoProximaEtapa(cap)" class="mt-2 flex items-center gap-1.5">
+                  <i class="fa-solid fa-arrow-right text-purple-400 text-[10px]"></i>
+                  <span class="text-[11px] text-purple-600 font-semibold" x-text="captacaoProximaEtapa(cap)?.etapa"></span>
+                </div>
+              </div>
+
+              <!-- Ações -->
+              <div class="flex flex-col gap-1.5 flex-shrink-0">
+                <button @click="abrirTimelineCaptacao(cap)"
+                        class="w-8 h-8 rounded-xl flex items-center justify-center text-purple-600 bg-purple-50 hover:bg-purple-100 transition-colors" title="Abrir timeline">
+                  <i class="fa-solid fa-list-check text-xs"></i>
+                </button>
+                <button @click="whatsappCaptacao(cap)"
+                        class="w-8 h-8 rounded-xl flex items-center justify-center text-green-600 bg-green-50 hover:bg-green-100 transition-colors" title="WhatsApp">
+                  <i class="fa-brands fa-whatsapp text-xs"></i>
+                </button>
+                <button @click="editarCaptacao(cap)"
+                        class="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 bg-gray-50 hover:bg-gray-100 transition-colors" title="Editar">
+                  <i class="fa-solid fa-pen text-xs"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Progress bar etapas -->
+            <div class="mt-3">
+              <div class="flex gap-1">
+                <template x-for="step in captacaoTimelineSteps()" :key="step.etapa">
+                  <div class="flex-1 h-1 rounded-full transition-all"
+                       :class="(cap.etapasFeitas||[]).includes(step.etapa) ? 'bg-purple-500' : 'bg-gray-200'"></div>
+                </template>
+              </div>
+              <p class="text-[10px] text-gray-300 mt-1"
+                 x-text="(cap.etapasFeitas||[]).length + '/' + captacaoTimelineSteps().length + ' etapas concluídas'"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+</section>
+
+<!-- ========== SEÇÃO CONFIGURAÇÕES ========== -->
+<section x-show="section==='configuracoes'" class="max-w-2xl mx-auto px-4 py-4 sm:py-6 pb-24 sm:pb-6 sm:pr-[84px]">
+
+  <div class="mb-6">
+    <h1 class="text-xl font-black text-gray-800 flex items-center gap-2">
+      <span class="w-9 h-9 rounded-xl bg-gray-700 flex items-center justify-center">
+        <i class="fa-solid fa-gear text-white text-sm"></i>
+      </span>
+      Configurações
+    </h1>
+    <p class="text-gray-400 text-sm mt-0.5">Personalize o sistema conforme suas preferências</p>
+  </div>
+
+  <div class="space-y-4">
+
+    <!-- === CONTA DO CORRETOR === -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-50 flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:#345448">
+          <i class="fa-solid fa-user text-white text-xs"></i>
+        </div>
+        <h2 class="font-black text-gray-800 text-sm">Conta do Corretor</h2>
+      </div>
+      <div class="p-5 space-y-4">
+        <!-- Foto -->
+        <div class="flex items-center gap-4">
+          <div class="w-16 h-16 rounded-full overflow-hidden border-4 cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+               style="border-color:#345448"
+               @click="$refs.configFotoInput.click()">
+            <img x-show="contaFoto" :src="contaFoto" class="w-full h-full object-cover">
+            <div x-show="!contaFoto" class="w-full h-full flex items-center justify-center text-white text-xl font-black"
+                 style="background:#345448" x-text="contaNome.split(' ').slice(0,2).map(w=>w[0]).join('')"></div>
+          </div>
+          <input type="file" accept="image/*" x-ref="configFotoInput" class="hidden" @change="carregarFotoCorretor($event)">
+          <div class="flex-1 space-y-1">
+            <button @click="$refs.configFotoInput.click()" class="text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors block" style="color:#345448;border-color:#345448">
+              📷 Alterar foto
+            </button>
+            <button x-show="contaFoto" @click="contaFoto=''" class="text-xs text-red-400 hover:text-red-600 block">Remover foto</button>
+          </div>
+        </div>
+        <!-- Dados -->
+        <div>
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Nome completo</label>
+          <input type="text" x-model="contaNome" class="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">CRECI</label>
+          <input type="text" x-model="contaCreci" class="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
+        </div>
+        <!-- Senha -->
+        <div class="border-t border-gray-100 pt-4">
+          <h3 class="text-sm font-bold text-gray-600 mb-3">🔒 Alterar senha</h3>
+          <div class="space-y-2">
+            <input type="password" x-model="contaSenhaAtual" placeholder="Senha atual" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
+            <input type="password" x-model="contaSenhaNova" placeholder="Nova senha (mín. 6 caracteres)" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
+            <input type="password" x-model="contaSenhaConfirm" placeholder="Confirmar nova senha" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
+          </div>
+        </div>
+        <div x-show="contaErro" class="px-3 py-2 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 font-semibold" x-text="contaErro"></div>
+        <div x-show="contaSucesso" class="px-3 py-2 bg-green-50 border border-green-200 rounded-xl text-xs text-green-700 font-semibold" x-text="contaSucesso"></div>
+        <button @click="salvarConta()" class="w-full py-3 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90" style="background:linear-gradient(135deg,#345448,#4a7a66)">
+          💾 Salvar alterações
+        </button>
+      </div>
+    </div>
+
+    <!-- === GOOGLE DRIVE === -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-50 flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+          <i class="fa-brands fa-google-drive text-white text-xs"></i>
+        </div>
+        <div class="flex-1">
+          <h2 class="font-black text-gray-800 text-sm">Backup Google Drive</h2>
+          <p class="text-[10px] text-gray-400" x-text="driveConectado ? '✅ Conectado: ' + driveEmail : 'Não conectado'"></p>
+        </div>
+      </div>
+      <div class="p-5 space-y-3">
+        <div x-show="!driveConectado" class="text-center py-2">
+          <p class="text-sm text-gray-500 mb-3">Salve backups automáticos no Google Drive.</p>
+          <button @click="conectarDrive()" class="w-full py-2.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2" style="background:#1a73e8">
+            <i class="fa-brands fa-google"></i> Entrar com Google
+          </button>
+        </div>
+        <div x-show="driveConectado" class="space-y-3">
+          <div class="p-3 rounded-xl border border-blue-100 bg-blue-50">
+            <p class="text-xs font-semibold text-blue-700 mb-1">Último backup</p>
+            <p class="text-sm font-bold text-gray-800" x-text="driveUltimoBackup || 'Nenhum backup ainda'"></p>
+          </div>
+          <div class="flex gap-2">
+            <button @click="fazerBackupDrive()" :disabled="driveLoading" class="flex-1 py-2.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50" style="background:#1a73e8">
+              <i class="fa-solid fa-cloud-arrow-up" :class="driveLoading ? 'animate-bounce' : ''"></i>
+              <span x-text="driveLoading ? 'Salvando...' : 'Fazer Backup'"></span>
+            </button>
+            <button @click="restaurarBackupDrive()" :disabled="driveLoading" class="flex-1 py-2.5 rounded-xl font-bold text-sm border-2 border-blue-200 text-blue-700 hover:bg-blue-50 flex items-center justify-center gap-2 disabled:opacity-50">
+              <i class="fa-solid fa-cloud-arrow-down"></i> Restaurar
+            </button>
+          </div>
+          <button @click="desconectarDrive()" class="w-full text-xs text-gray-400 hover:text-red-500 transition-colors py-1">
+            Desconectar conta Google
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- === WHATSAPP BUSINESS === -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-50 flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:#25D366">
+          <i class="fa-brands fa-whatsapp text-white text-xs"></i>
+        </div>
+        <h2 class="font-black text-gray-800 text-sm">Integração WhatsApp Business</h2>
+      </div>
+      <div class="p-5">
+        <p class="text-xs text-gray-500 mb-3">Cole a URL pública da sua planilha Google Sheets com os leads do WhatsApp.</p>
+        <input type="url" x-model="waSheetInput" placeholder="https://docs.google.com/spreadsheets/..."
+               class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 mb-3">
+        <div class="flex gap-2">
+          <button @click="waSheetUrl = waSheetInput; localStorage.setItem('wa_sheet_url', waSheetUrl); if(waSheetUrl) startWaPolling(); showToast('✅ WhatsApp Business configurado!')"
+                  class="flex-1 py-2.5 rounded-xl text-white font-bold text-sm" style="background:#25D366">
+            💾 Salvar
+          </button>
+          <button x-show="waSheetUrl" @click="waSheetUrl=''; waSheetInput=''; localStorage.removeItem('wa_sheet_url'); showToast('WA Business desativado')"
+                  class="py-2.5 px-4 rounded-xl border border-red-200 text-red-500 font-bold text-sm hover:bg-red-50">
+            Limpar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- === NOTIFICAÇÕES === -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="px-5 py-4 flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-yellow-500 flex items-center justify-center">
+          <i class="fa-solid fa-bell text-white text-xs"></i>
+        </div>
+        <div class="flex-1">
+          <h2 class="font-black text-gray-800 text-sm">Notificações</h2>
+          <p class="text-[10px] text-gray-400" x-text="notifPermissao === 'granted' ? '🔔 Notificações ativas' : '🔕 Notificações desativadas'"></p>
+        </div>
+        <button @click="notifPermissao === 'granted' ? showToast('🔔 Notificações já ativas') : pedirPermissaoNotif()"
+                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                :class="notifPermissao === 'granted' ? 'bg-green-100 text-green-700' : 'bg-yellow-500 text-white'">
+          <span x-text="notifPermissao === 'granted' ? 'Ativas ✓' : 'Ativar'"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- === APARÊNCIA === -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="px-5 py-4 flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center">
+          <i class="fa-solid fa-moon text-white text-xs"></i>
+        </div>
+        <div class="flex-1">
+          <h2 class="font-black text-gray-800 text-sm">Tema</h2>
+          <p class="text-[10px] text-gray-400" x-text="darkMode ? 'Modo escuro ativo' : 'Modo claro ativo'"></p>
+        </div>
+        <button @click="toggleDarkMode()"
+                class="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">
+          <span x-text="darkMode ? '☀️ Claro' : '🌙 Escuro'"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- === DADOS === -->
+    <div class="bg-white rounded-2xl shadow-sm border border-red-100 overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-50 flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-red-500 flex items-center justify-center">
+          <i class="fa-solid fa-database text-white text-xs"></i>
+        </div>
+        <h2 class="font-black text-gray-800 text-sm">Dados</h2>
+      </div>
+      <div class="p-5 space-y-2">
+        <p class="text-xs text-gray-400 mb-3" x-text="clientes.length + ' clientes · ' + captacoes.length + ' captações armazenados localmente'"></p>
+        <button @click="if(confirm('Exportar todos os dados como JSON?')) { const blob = new Blob([JSON.stringify({clientes,captacoes,feed:activityFeed},null,2)],{type:'application/json'}); const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='amigo-corretor-backup-'+todayStr()+'.json'; a.click(); }"
+                class="w-full py-2.5 rounded-xl font-bold text-sm border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
+          <i class="fa-solid fa-download"></i> Exportar dados (JSON)
+        </button>
+        <button @click="if(confirm('⚠️ Isso vai APAGAR todos os clientes e captações. Tem certeza?')) { clientes=[]; captacoes=[]; activityFeed=[]; localStorage.clear(); showToast('Dados apagados.'); }"
+                class="w-full py-2.5 rounded-xl font-bold text-sm border border-red-200 text-red-500 hover:bg-red-50 transition-colors flex items-center justify-center gap-2">
+          <i class="fa-solid fa-trash"></i> Limpar todos os dados
+        </button>
+      </div>
+    </div>
+
+    <!-- Versão -->
+    <p class="text-center text-xs text-gray-300 pb-4">AMiGO Corretor · by <a href="https://fortunatotech.netlify.app" class="text-green-500 font-semibold hover:underline">FORTUNATO TECH</a></p>
+
+  </div>
+</section>
+
 <!-- ========== BOTTOM NAV (mobile only) ========== -->
 <nav class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-2xl" style="padding-bottom: env(safe-area-inset-bottom)">
   <div class="flex items-stretch h-16">
-    <button @click="page='dashboard'"
+    <!-- Seção Vendas e Locações -->
+    <button @click="section='vendas'; page='dashboard'"
             class="flex-1 flex flex-col items-center justify-center gap-1 transition-colors"
-            :class="page==='dashboard' ? 'text-green-700' : 'text-gray-400'">
-      <i class="fa-solid fa-gauge-high text-lg"></i>
-      <span class="text-[10px] font-semibold">Dashboard</span>
+            :class="section==='vendas' ? 'text-green-700' : 'text-gray-400'">
+      <i class="fa-solid fa-handshake text-lg"></i>
+      <span class="text-[10px] font-semibold">Vendas</span>
     </button>
-    <button @click="page='clientes'"
-            class="flex-1 flex flex-col items-center justify-center gap-1 transition-colors"
-            :class="page==='clientes' ? 'text-green-700' : 'text-gray-400'">
-      <i class="fa-solid fa-users text-lg"></i>
-      <span class="text-[10px] font-semibold">Clientes</span>
+    <!-- Captações -->
+    <button @click="section='captacoes'"
+            class="relative flex-1 flex flex-col items-center justify-center gap-1 transition-colors"
+            :class="section==='captacoes' ? 'text-purple-600' : 'text-gray-400'">
+      <i class="fa-solid fa-map-location-dot text-lg"></i>
+      <span class="text-[10px] font-semibold">Captações</span>
+      <span x-show="captacoesPendentesHoje().length > 0"
+            class="absolute top-2 right-5 w-4 h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center"
+            x-text="captacoesPendentesHoje().length"></span>
     </button>
-    <button @click="page='agenda'"
-            class="flex-1 flex flex-col items-center justify-center gap-1 transition-colors"
-            :class="page==='agenda' ? 'text-green-700' : 'text-gray-400'">
-      <i class="fa-solid fa-calendar-days text-lg"></i>
-      <span class="text-[10px] font-semibold">Agenda</span>
-    </button>
-    <button @click="openClientModal()"
+    <!-- Nova Captação / Novo Cliente (context-aware) -->
+    <button @click="section==='captacoes' ? novaCaptacao() : openClientModal()"
             class="flex-1 flex flex-col items-center justify-center gap-1 transition-colors text-green-600">
       <div class="w-10 h-10 rounded-full flex items-center justify-center shadow-lg -mt-5" style="background:linear-gradient(135deg,var(--essense-green-l),var(--essense-green-d))">
         <i class="fa-solid fa-plus text-white text-lg"></i>
       </div>
       <span class="text-[10px] font-semibold text-green-700">Novo</span>
     </button>
+    <!-- Configurações -->
+    <button @click="section='configuracoes'"
+            class="flex-1 flex flex-col items-center justify-center gap-1 transition-colors"
+            :class="section==='configuracoes' ? 'text-green-700' : 'text-gray-400'">
+      <i class="fa-solid fa-gear text-lg"></i>
+      <span class="text-[10px] font-semibold">Config</span>
+    </button>
+    <!-- WA -->
     <button @click="waConfigOpen=true; waSheetInput=waSheetUrl"
             class="relative flex-1 flex flex-col items-center justify-center gap-1 transition-colors"
             :class="waSheetUrl ? 'text-[#25D366]' : 'text-gray-400'">
@@ -2188,6 +2635,14 @@ function app() {
     darkMode: localStorage.getItem('darkMode') === 'true',
     activityFeed: JSON.parse(localStorage.getItem('amigo_feed') || '[]'),
     page: 'dashboard',
+    section: 'vendas',
+    captacoes: JSON.parse(localStorage.getItem('amigo_captacoes') || '[]'),
+    captacaoBusca: '',
+    captacaoFiltroStatus: '',
+    showCaptacaoModal: false,
+    editingCaptacao: null,
+    showCaptacaoTimeline: false,
+    captacaoTimelineItem: null,
     clientes: [],
     busca: '',
     filtroTipo: '',
@@ -2378,6 +2833,7 @@ function app() {
       const saved = localStorage.getItem('amigo_corretor_clientes');
       if (saved) this.clientes = JSON.parse(saved);
       this.$watch('clientes', (val) => localStorage.setItem('amigo_corretor_clientes', JSON.stringify(val)));
+      this.$watch('captacoes', (val) => localStorage.setItem('amigo_captacoes', JSON.stringify(val)));
       this.versiculo = this.versiculos[Math.floor(Math.random() * this.versiculos.length)];
       const req = indexedDB.open('amigo_corretor_media', 1);
       req.onupgradeneeded = (e) => {
@@ -2416,6 +2872,156 @@ function app() {
       this.darkMode = !this.darkMode;
       localStorage.setItem('darkMode', this.darkMode);
       document.documentElement.classList.toggle('dark', this.darkMode);
+    },
+
+    // ============================================================
+    // CAPTAÇÕES
+    // ============================================================
+    captacoesFiltradas() {
+      let list = this.captacoes.filter(c => c.status !== 'perdido' || this.captacaoFiltroStatus === 'perdido');
+      if (this.captacaoFiltroStatus && this.captacaoFiltroStatus !== 'todos') {
+        list = list.filter(c => c.status === this.captacaoFiltroStatus);
+      }
+      if (this.captacaoBusca) {
+        const q = this.captacaoBusca.toLowerCase();
+        list = list.filter(c =>
+          (c.endereco||'').toLowerCase().includes(q) ||
+          (c.proprietario||'').toLowerCase().includes(q) ||
+          (c.bairro||'').toLowerCase().includes(q) ||
+          (c.cidade||'').toLowerCase().includes(q)
+        );
+      }
+      return list.sort((a, b) => {
+        // active first, then by proximoContato
+        const statusOrder = { contato: 0, visita: 1, proposta: 2, captado: 3, perdido: 4 };
+        if (statusOrder[a.status] !== statusOrder[b.status]) return statusOrder[a.status] - statusOrder[b.status];
+        return (a.proximoContato || '') < (b.proximoContato || '') ? -1 : 1;
+      });
+    },
+    captacoesPendentesHoje() {
+      const hoje = this.todayStr();
+      return this.captacoes.filter(c => c.status !== 'captado' && c.status !== 'perdido' && c.proximoContato <= hoje);
+    },
+    captacaoStatusInfo(status) {
+      const map = {
+        contato:  { label: 'Em Contato',       cor: '#3b82f6', bg: '#eff6ff', icon: '📞' },
+        visita:   { label: 'Visita Agendada',   cor: '#f59e0b', bg: '#fffbeb', icon: '🏠' },
+        proposta: { label: 'Proposta Enviada',  cor: '#8b5cf6', bg: '#f5f3ff', icon: '📝' },
+        captado:  { label: 'Captado ✓',         cor: '#16a34a', bg: '#f0fdf4', icon: '✅' },
+        perdido:  { label: 'Perdido',           cor: '#dc2626', bg: '#fef2f2', icon: '❌' },
+      };
+      return map[status] || map.contato;
+    },
+    captacaoTimelineSteps() {
+      return [
+        { etapa: 'Primeiro Contato',     dias: 0,  desc: 'Apresentação ao proprietário e levantamento das condições' },
+        { etapa: 'Visita ao Imóvel',     dias: 7,  desc: 'Visitar e avaliar o imóvel in loco' },
+        { etapa: 'Proposta de Captação', dias: 14, desc: 'Apresentar condições de captação e exclusividade' },
+        { etapa: 'Documentação',         dias: 21, desc: 'Recolher documentos do imóvel e do proprietário' },
+        { etapa: 'Assinatura',           dias: 28, desc: 'Assinar o contrato de captação/exclusividade' },
+      ];
+    },
+    captacaoProximaEtapa(captacao) {
+      const steps = this.captacaoTimelineSteps();
+      return steps.find(s => !(captacao.etapasFeitas||[]).includes(s.etapa)) || null;
+    },
+    novaCaptacao() {
+      this.editingCaptacao = {
+        id: null, endereco: '', bairro: '', cidade: '', tipo: 'apartamento',
+        proprietario: '', telefone: '', email: '',
+        valorPretendido: '', valorPretendidoTipo: 'venda',
+        quartos: '', vagas: '', area: '',
+        status: 'contato', etapasFeitas: [], acoesExtras: [],
+        notas: '', foto: '', dataCadastro: this.todayStr(),
+        proximoContato: this.todayStr(),
+      };
+      this.showCaptacaoModal = true;
+    },
+    editarCaptacao(cap) {
+      this.editingCaptacao = JSON.parse(JSON.stringify(cap));
+      this.showCaptacaoModal = true;
+    },
+    salvarCaptacao() {
+      if (!this.editingCaptacao.endereco.trim()) { this.showToast('Informe o endereço do imóvel'); return; }
+      if (this.editingCaptacao.id) {
+        const idx = this.captacoes.findIndex(c => c.id === this.editingCaptacao.id);
+        if (idx !== -1) this.captacoes[idx] = { ...this.editingCaptacao };
+      } else {
+        this.editingCaptacao.id = Date.now();
+        this.captacoes.unshift({ ...this.editingCaptacao });
+        this.addFeedItem('📸', `Nova captação: ${this.editingCaptacao.endereco}`);
+      }
+      this.showCaptacaoModal = false;
+      this.editingCaptacao = null;
+      this.showToast('✅ Captação salva!');
+    },
+    excluirCaptacao(id) {
+      if (!confirm('Excluir esta captação?')) return;
+      this.captacoes = this.captacoes.filter(c => c.id !== id);
+      this.showToast('Captação removida');
+    },
+    abrirTimelineCaptacao(cap) {
+      this.captacaoTimelineItem = JSON.parse(JSON.stringify(cap));
+      this.showCaptacaoTimeline = true;
+    },
+    marcarEtapaCaptacao(etapa) {
+      const cap = this.captacaoTimelineItem;
+      if (!cap) return;
+      if (!cap.etapasFeitas) cap.etapasFeitas = [];
+      const idx = cap.etapasFeitas.indexOf(etapa);
+      if (idx === -1) {
+        cap.etapasFeitas.push(etapa);
+        // auto-advance status
+        const done = cap.etapasFeitas.length;
+        if (done >= 5) cap.status = 'captado';
+        else if (done >= 3) cap.status = 'proposta';
+        else if (done >= 2) cap.status = 'visita';
+        else cap.status = 'contato';
+      } else {
+        cap.etapasFeitas.splice(idx, 1);
+      }
+      // Sync back to array
+      const arrIdx = this.captacoes.findIndex(c => c.id === cap.id);
+      if (arrIdx !== -1) {
+        this.captacoes[arrIdx].etapasFeitas = [...cap.etapasFeitas];
+        this.captacoes[arrIdx].status = cap.status;
+        this.captacaoTimelineItem = JSON.parse(JSON.stringify(this.captacoes[arrIdx]));
+      }
+    },
+    adicionarAcaoCaptacao() {
+      const cap = this.captacaoTimelineItem;
+      if (!cap) return;
+      const desc = prompt('Descrição da ação:');
+      if (!desc) return;
+      const data = prompt('Data (AAAA-MM-DD):', this.todayStr());
+      if (!data) return;
+      if (!cap.acoesExtras) cap.acoesExtras = [];
+      cap.acoesExtras.push({ id: Date.now(), descricao: desc, data, feito: false });
+      const arrIdx = this.captacoes.findIndex(c => c.id === cap.id);
+      if (arrIdx !== -1) {
+        this.captacoes[arrIdx].acoesExtras = [...cap.acoesExtras];
+        // update proximoContato if this action is sooner
+        const datas = cap.acoesExtras.filter(a => !a.feito).map(a => a.data).sort();
+        if (datas.length) this.captacoes[arrIdx].proximoContato = datas[0];
+        this.captacaoTimelineItem = JSON.parse(JSON.stringify(this.captacoes[arrIdx]));
+      }
+    },
+    toggleAcaoCaptacao(acaoId) {
+      const cap = this.captacaoTimelineItem;
+      if (!cap) return;
+      const a = (cap.acoesExtras||[]).find(x => x.id === acaoId);
+      if (a) a.feito = !a.feito;
+      const arrIdx = this.captacoes.findIndex(c => c.id === cap.id);
+      if (arrIdx !== -1) {
+        this.captacoes[arrIdx].acoesExtras = [...cap.acoesExtras];
+        this.captacaoTimelineItem = JSON.parse(JSON.stringify(this.captacoes[arrIdx]));
+      }
+    },
+    whatsappCaptacao(cap) {
+      const tel = (cap.telefone||'').replace(/\D/g,'');
+      if (!tel) { this.showToast('Sem telefone cadastrado'); return; }
+      const msg = encodeURIComponent(`Olá ${cap.proprietario||'proprietário'}, sou corretor de imóveis e gostaria de conversar sobre o imóvel em ${cap.endereco}.`);
+      window.open(`https://wa.me/55${tel}?text=${msg}`, '_blank');
     },
 
     // --- VENDIDO ---
@@ -4185,6 +4791,268 @@ function app() {
   </div>
 </div>
 <!-- ===== /CROP PHOTO MODAL ===== -->
+
+<!-- ===== MODAL NOVA/EDITAR CAPTAÇÃO ===== -->
+<div x-show="showCaptacaoModal" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+     class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 modal-overlay" style="background:rgba(0,0,0,0.5)"
+     @click.self="showCaptacaoModal=false">
+  <div class="bg-white sm:rounded-2xl rounded-t-2xl shadow-2xl w-full sm:max-w-lg max-h-[92dvh] overflow-y-auto" @click.stop x-show="editingCaptacao">
+
+    <!-- Header -->
+    <div class="px-5 py-4 flex items-center justify-between flex-shrink-0 rounded-t-2xl" style="background:linear-gradient(135deg,#7c3aed,#9333ea)">
+      <h2 class="text-white font-black text-base" x-text="editingCaptacao?.id ? 'Editar Captação' : 'Nova Captação'"></h2>
+      <button @click="showCaptacaoModal=false" class="text-white hover:text-purple-200 text-xl leading-none">×</button>
+    </div>
+
+    <div class="p-5 space-y-4" x-show="editingCaptacao">
+      <!-- Endereço -->
+      <div>
+        <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Endereço do Imóvel *</label>
+        <input type="text" x-model="editingCaptacao.endereco" placeholder="Rua, número, complemento"
+               class="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300">
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Bairro</label>
+          <input type="text" x-model="editingCaptacao.bairro" placeholder="Bairro"
+                 class="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300">
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Cidade</label>
+          <input type="text" x-model="editingCaptacao.cidade" placeholder="Cidade"
+                 class="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300">
+        </div>
+      </div>
+
+      <!-- Tipo -->
+      <div>
+        <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Tipo de Imóvel</label>
+        <select x-model="editingCaptacao.tipo" class="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white">
+          <option value="apartamento">Apartamento</option>
+          <option value="casa">Casa</option>
+          <option value="terreno">Terreno</option>
+          <option value="comercial">Sala Comercial</option>
+          <option value="galpao">Galpão</option>
+          <option value="chacara">Chácara/Sítio</option>
+        </select>
+      </div>
+
+      <!-- Proprietário -->
+      <div>
+        <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Nome do Proprietário</label>
+        <input type="text" x-model="editingCaptacao.proprietario" placeholder="Nome completo"
+               class="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300">
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Telefone/WhatsApp</label>
+          <input type="tel" x-model="editingCaptacao.telefone" placeholder="(11) 99999-9999"
+                 class="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300">
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Valor Pretendido (R$)</label>
+          <input type="number" x-model="editingCaptacao.valorPretendido" placeholder="Ex: 450000"
+                 class="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Quartos</label>
+          <input type="number" x-model="editingCaptacao.quartos" placeholder="0"
+                 class="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300">
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Vagas</label>
+          <input type="number" x-model="editingCaptacao.vagas" placeholder="0"
+                 class="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300">
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Área (m²)</label>
+          <input type="number" x-model="editingCaptacao.area" placeholder="0"
+                 class="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300">
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div>
+        <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</label>
+        <div class="grid grid-cols-3 gap-2 mt-1">
+          <template x-for="s in [
+            {v:'contato',l:'Em Contato',c:'#3b82f6'},
+            {v:'visita',l:'Visita',c:'#f59e0b'},
+            {v:'proposta',l:'Proposta',c:'#8b5cf6'},
+            {v:'captado',l:'Captado',c:'#16a34a'},
+            {v:'perdido',l:'Perdido',c:'#dc2626'}
+          ]" :key="s.v">
+            <button @click="editingCaptacao.status=s.v" type="button"
+                    class="py-1.5 rounded-lg text-xs font-bold border-2 transition-all"
+                    :style="editingCaptacao.status===s.v ? 'background:'+s.c+';color:#fff;border-color:'+s.c : 'background:#fff;border-color:#e5e7eb;color:#6b7280'"
+                    x-text="s.l"></button>
+          </template>
+        </div>
+      </div>
+
+      <!-- Próximo Contato -->
+      <div>
+        <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Data do Próximo Contato</label>
+        <input type="date" x-model="editingCaptacao.proximoContato"
+               class="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300">
+      </div>
+
+      <!-- Notas -->
+      <div>
+        <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Observações</label>
+        <textarea x-model="editingCaptacao.notas" rows="3" placeholder="Características, condições, pendências..."
+                  class="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 resize-none"></textarea>
+      </div>
+
+      <!-- Botões -->
+      <div class="flex gap-3 pt-2">
+        <button @click="showCaptacaoModal=false" type="button"
+                class="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-500 font-semibold text-sm hover:bg-gray-50 transition-colors">
+          Cancelar
+        </button>
+        <template x-if="editingCaptacao?.id">
+          <button @click="excluirCaptacao(editingCaptacao.id); showCaptacaoModal=false" type="button"
+                  class="py-2.5 px-4 rounded-xl border border-red-200 text-red-500 font-semibold text-sm hover:bg-red-50 transition-colors">
+            <i class="fa-solid fa-trash text-xs"></i>
+          </button>
+        </template>
+        <button @click="salvarCaptacao()" type="button"
+                class="flex-1 py-2.5 rounded-xl text-white font-black text-sm transition-all hover:opacity-90 active:scale-95"
+                style="background:linear-gradient(135deg,#7c3aed,#9333ea)">
+          💾 Salvar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ===== /MODAL CAPTAÇÃO ===== -->
+
+<!-- ===== MODAL TIMELINE CAPTAÇÃO ===== -->
+<div x-show="showCaptacaoTimeline" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+     class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 modal-overlay" style="background:rgba(0,0,0,0.55)"
+     @click.self="showCaptacaoTimeline=false">
+  <div class="bg-white sm:rounded-2xl rounded-t-2xl shadow-2xl w-full sm:max-w-md max-h-[90dvh] flex flex-col" @click.stop x-show="captacaoTimelineItem">
+
+    <!-- Header -->
+    <div class="px-5 py-4 flex items-center justify-between flex-shrink-0 rounded-t-2xl" style="background:linear-gradient(135deg,#7c3aed,#9333ea)">
+      <div class="min-w-0">
+        <h2 class="text-white font-black text-sm truncate" x-text="captacaoTimelineItem?.endereco"></h2>
+        <p class="text-purple-200 text-xs" x-text="captacaoTimelineItem ? captacaoStatusInfo(captacaoTimelineItem.status).label : ''"></p>
+      </div>
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <button @click="editarCaptacao(captacaoTimelineItem); showCaptacaoTimeline=false"
+                class="w-8 h-8 rounded-lg bg-white bg-opacity-20 flex items-center justify-center hover:bg-opacity-30 transition-colors" title="Editar">
+          <i class="fa-solid fa-pen text-white text-xs"></i>
+        </button>
+        <button @click="showCaptacaoTimeline=false" class="text-white hover:text-purple-200 text-xl leading-none">×</button>
+      </div>
+    </div>
+
+    <!-- Body scrollable -->
+    <div class="flex-1 overflow-y-auto p-5 space-y-4">
+
+      <!-- Info resumida -->
+      <div class="flex items-center gap-3 p-3 bg-purple-50 rounded-xl">
+        <i class="fa-solid fa-user text-purple-400"></i>
+        <div class="min-w-0 flex-1">
+          <p class="text-sm font-bold text-gray-800 truncate" x-text="captacaoTimelineItem?.proprietario || 'Sem proprietário'"></p>
+          <p x-show="captacaoTimelineItem?.telefone" class="text-xs text-gray-400" x-text="captacaoTimelineItem?.telefone"></p>
+        </div>
+        <button x-show="captacaoTimelineItem?.telefone" @click="whatsappCaptacao(captacaoTimelineItem)"
+                class="w-9 h-9 rounded-xl bg-green-500 flex items-center justify-center hover:bg-green-600 transition-colors">
+          <i class="fa-brands fa-whatsapp text-white text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Timeline de etapas -->
+      <div>
+        <h3 class="text-xs font-black text-gray-500 uppercase tracking-wide mb-3">Etapas do Processo</h3>
+        <div class="space-y-2">
+          <template x-for="step in captacaoTimelineSteps()" :key="step.etapa">
+            <div @click="marcarEtapaCaptacao(step.etapa)"
+                 class="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all hover:bg-gray-50 border"
+                 :class="(captacaoTimelineItem?.etapasFeitas||[]).includes(step.etapa)
+                   ? 'border-purple-200 bg-purple-50'
+                   : 'border-gray-100 bg-white'">
+              <div class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 border-2 transition-all"
+                   :class="(captacaoTimelineItem?.etapasFeitas||[]).includes(step.etapa)
+                     ? 'bg-purple-600 border-purple-600'
+                     : 'bg-white border-gray-300'">
+                <i x-show="(captacaoTimelineItem?.etapasFeitas||[]).includes(step.etapa)"
+                   class="fa-solid fa-check text-white text-[9px]"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold" :class="(captacaoTimelineItem?.etapasFeitas||[]).includes(step.etapa) ? 'text-purple-700 line-through' : 'text-gray-700'" x-text="step.etapa"></p>
+                <p class="text-xs text-gray-400 truncate" x-text="step.desc"></p>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Ações extras / followup -->
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-xs font-black text-gray-500 uppercase tracking-wide">Agendamentos</h3>
+          <button @click="adicionarAcaoCaptacao()"
+                  class="text-xs font-bold px-2.5 py-1 rounded-lg text-purple-600 bg-purple-50 hover:bg-purple-100 transition-colors flex items-center gap-1">
+            <i class="fa-solid fa-plus text-[10px]"></i> Adicionar
+          </button>
+        </div>
+        <div x-show="!(captacaoTimelineItem?.acoesExtras?.length)" class="text-center py-4 text-gray-300 text-xs">
+          Nenhum agendamento. Adicione lembretes de contato.
+        </div>
+        <div class="space-y-2">
+          <template x-for="acao in (captacaoTimelineItem?.acoesExtras||[])" :key="acao.id">
+            <div @click="toggleAcaoCaptacao(acao.id)"
+                 class="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border"
+                 :class="acao.feito ? 'border-green-100 bg-green-50 opacity-60' : (acao.data <= todayStr() ? 'border-red-200 bg-red-50' : 'border-gray-100 bg-white')">
+              <div class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 border-2 transition-all"
+                   :class="acao.feito ? 'bg-green-500 border-green-500' : (acao.data <= todayStr() ? 'border-red-400' : 'border-gray-300')">
+                <i x-show="acao.feito" class="fa-solid fa-check text-white text-[9px]"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold" :class="acao.feito ? 'text-green-700 line-through' : 'text-gray-700'" x-text="acao.descricao"></p>
+                <p class="text-xs" :class="acao.feito ? 'text-green-400' : (acao.data <= todayStr() ? 'text-red-500 font-bold' : 'text-gray-400')"
+                   x-text="new Date(acao.data+'T12:00').toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'})"></p>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Notas -->
+      <div x-show="captacaoTimelineItem?.notas">
+        <h3 class="text-xs font-black text-gray-500 uppercase tracking-wide mb-2">Observações</h3>
+        <p class="text-sm text-gray-600 bg-gray-50 rounded-xl p-3" x-text="captacaoTimelineItem?.notas"></p>
+      </div>
+    </div>
+
+    <!-- Footer: atualizar próximo contato -->
+    <div class="px-5 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="flex-1">
+          <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Próximo contato</label>
+          <input type="date" x-show="captacaoTimelineItem"
+                 :value="captacaoTimelineItem?.proximoContato"
+                 @change="const i=captacoes.findIndex(c=>c.id===captacaoTimelineItem.id); if(i!==-1){captacoes[i].proximoContato=$event.target.value; captacaoTimelineItem=JSON.parse(JSON.stringify(captacoes[i]))}"
+                 class="w-full mt-0.5 px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white">
+        </div>
+        <button @click="showCaptacaoTimeline=false"
+                class="flex-shrink-0 py-2.5 px-4 rounded-xl text-white font-bold text-sm mt-4"
+                style="background:linear-gradient(135deg,#7c3aed,#9333ea)">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ===== /TIMELINE CAPTAÇÃO ===== -->
 
 <!-- VENDIDO Modal -->
 <div x-show="vendidoModal" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
