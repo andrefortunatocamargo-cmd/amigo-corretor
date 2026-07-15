@@ -1249,6 +1249,10 @@ tailwind.config = {
               <button @click="openClientModal(c)" class="w-8 h-8 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg flex items-center justify-center transition-colors" title="Editar">
                 <i class="fa-solid fa-pen text-xs"></i>
               </button>
+              <button @click="openTimeline(c); $nextTick(()=>{ showVincularImovel=true })" x-show="(c.imoveisVisitados||[]).length > 0" class="w-8 h-8 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center transition-colors relative" :title="(c.imoveisVisitados||[]).length + ' imóvel(is) mostrado(s)'">
+                <i class="fa-solid fa-building text-xs"></i>
+                <span class="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 text-white text-[9px] font-black rounded-full flex items-center justify-center" x-text="(c.imoveisVisitados||[]).length"></span>
+              </button>
               <button @click="openGaleriaCliente(c)" x-show="(c.mediaCount || 0) > 0" class="w-8 h-8 bg-purple-50 hover:bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center transition-colors relative" title="Ver mídias">
                 <i class="fa-solid fa-photo-film text-xs"></i>
                 <span class="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center" x-text="c.mediaCount"></span>
@@ -1477,6 +1481,23 @@ tailwind.config = {
       <i x-show="section==='captacoes'" class="fa-solid fa-chevron-right text-white text-opacity-40 text-xs flex-shrink-0"></i>
     </button>
 
+    <button @click="section='imoveis'; menuOpen=false"
+            class="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-150 text-left relative"
+            :class="section==='imoveis' ? 'bg-white bg-opacity-15' : 'hover:bg-white hover:bg-opacity-8'">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 relative transition-all"
+           :class="section==='imoveis' ? 'bg-white bg-opacity-20' : 'bg-white bg-opacity-5'">
+        <i class="fa-solid fa-building text-base" :class="section==='imoveis' ? 'text-white' : 'text-white text-opacity-50'"></i>
+        <span x-show="imoveis.filter(i=>i.status==='disponivel').length > 0"
+              class="absolute -top-1 -right-1 w-4 h-4 bg-amber-400 text-white text-[8px] font-black rounded-full flex items-center justify-center"
+              x-text="imoveis.filter(i=>i.status==='disponivel').length"></span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="font-bold text-sm transition-all" :class="section==='imoveis' ? 'text-white' : 'text-white text-opacity-55'">Carteira de Imóveis</p>
+        <p class="text-[11px] transition-all" :class="section==='imoveis' ? 'text-amber-300' : 'text-white text-opacity-30'">Imóveis da sua carteira</p>
+      </div>
+      <i x-show="section==='imoveis'" class="fa-solid fa-chevron-right text-white text-opacity-40 text-xs flex-shrink-0"></i>
+    </button>
+
   </nav>
 
   <!-- Divisor -->
@@ -1655,6 +1676,251 @@ tailwind.config = {
 </section>
 
 <!-- ========== SEÇÃO CONFIGURAÇÕES ========== -->
+<!-- ========== CARTEIRA DE IMÓVEIS ========== -->
+<section x-show="section==='imoveis'" class="max-w-5xl mx-auto px-4 py-4 sm:py-6 pb-24 sm:pb-6">
+
+  <!-- Header -->
+  <div class="mb-5 flex items-center justify-between gap-3">
+    <div>
+      <h1 class="text-xl font-black text-gray-800 flex items-center gap-2">
+        <span class="w-9 h-9 rounded-xl flex items-center justify-center text-white" style="background:#b48860"><i class="fa-solid fa-building text-base"></i></span>
+        Carteira de Imóveis
+      </h1>
+      <p class="text-xs text-gray-500 mt-0.5" x-text="imoveis.length + ' imóvel(is) cadastrado(s) · ' + imoveis.filter(i=>i.status==='disponivel').length + ' disponível(is)'"></p>
+    </div>
+    <button @click="abrirImovelModal()" class="flex items-center gap-2 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-colors" style="background:#b48860">
+      <i class="fa-solid fa-plus"></i> Novo Imóvel
+    </button>
+  </div>
+
+  <!-- Filtros -->
+  <div class="flex flex-wrap gap-2 mb-4">
+    <div class="relative flex-1 min-w-48">
+      <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+      <input x-model="imoveisBusca" type="text" placeholder="Buscar por endereço, bairro..."
+        class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-300 text-sm">
+    </div>
+    <select x-model="imoveisFiltroTipo" class="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+      <option value="">Todos os tipos</option>
+      <option value="apartamento">Apartamento</option>
+      <option value="casa">Casa</option>
+      <option value="terreno">Terreno</option>
+      <option value="comercial">Comercial</option>
+      <option value="rural">Rural</option>
+    </select>
+    <select x-model="imoveisFiltroStatus" class="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+      <option value="">Todos status</option>
+      <option value="disponivel">✅ Disponível</option>
+      <option value="reservado">⏳ Reservado</option>
+      <option value="vendido">🏆 Vendido</option>
+      <option value="alugado">🔑 Alugado</option>
+      <option value="suspenso">⛔ Suspenso</option>
+    </select>
+  </div>
+
+  <!-- Cards grid -->
+  <template x-if="imoveisFiltrados().length === 0">
+    <div class="text-center py-16 text-gray-400">
+      <i class="fa-solid fa-building text-4xl mb-3 block"></i>
+      <p class="font-semibold">Nenhum imóvel encontrado</p>
+      <p class="text-sm mt-1">Cadastre os imóveis da sua carteira para vinculá-los aos clientes</p>
+      <button @click="abrirImovelModal()" class="mt-4 text-sm font-bold px-4 py-2 rounded-xl text-white" style="background:#b48860">+ Cadastrar primeiro imóvel</button>
+    </div>
+  </template>
+
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <template x-for="im in imoveisFiltrados()" :key="im.id">
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+        <!-- Status bar -->
+        <div class="h-1.5" :style="'background:' + getImovelStatusColor(im.status)"></div>
+        <div class="p-4">
+          <!-- Header card -->
+          <div class="flex items-start justify-between mb-2">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm flex-shrink-0" :style="'background:' + getImovelTipoColor(im.tipo)">
+                <span x-text="getImovelTipoIcon(im.tipo)"></span>
+              </div>
+              <div>
+                <p class="font-bold text-gray-800 text-sm leading-tight" x-text="im.bairro || im.endereco || 'Sem endereço'"></p>
+                <p class="text-xs text-gray-500" x-text="im.endereco"></p>
+              </div>
+            </div>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+              :style="'background:' + getImovelStatusColor(im.status) + '22; color:' + getImovelStatusColor(im.status)"
+              x-text="getImovelStatusLabel(im.status)"></span>
+          </div>
+
+          <!-- Detalhes -->
+          <div class="flex flex-wrap gap-1.5 mb-3">
+            <span x-show="im.quartos" class="text-[11px] bg-gray-50 border border-gray-100 text-gray-600 px-2 py-0.5 rounded-full" x-text="im.quartos + ' qtos'"></span>
+            <span x-show="im.area" class="text-[11px] bg-gray-50 border border-gray-100 text-gray-600 px-2 py-0.5 rounded-full" x-text="im.area + ' m²'"></span>
+            <span x-show="im.vagas" class="text-[11px] bg-gray-50 border border-gray-100 text-gray-600 px-2 py-0.5 rounded-full" x-text="im.vagas + ' vaga(s)'"></span>
+            <span x-show="im.tipo" class="text-[11px] bg-gray-50 border border-gray-100 text-gray-600 px-2 py-0.5 rounded-full capitalize" x-text="im.tipo"></span>
+          </div>
+
+          <!-- Valor -->
+          <p class="font-black text-lg mb-3" :style="'color:#b48860'" x-text="im.valor ? 'R$ ' + Number(im.valor).toLocaleString('pt-BR', {minimumFractionDigits:0,maximumFractionDigits:0}) : 'Valor a consultar'"></p>
+
+          <!-- Clientes que visitaram -->
+          <div x-show="getClientesQueVisitaram(im.id).length > 0" class="mb-3 p-2 bg-blue-50 border border-blue-100 rounded-lg">
+            <p class="text-[10px] font-bold text-blue-600 mb-1"><i class="fa-solid fa-users mr-1"></i>Clientes que visitaram</p>
+            <div class="flex flex-wrap gap-1">
+              <template x-for="c in getClientesQueVisitaram(im.id)" :key="c.id">
+                <span class="text-[10px] bg-white border border-blue-200 text-blue-700 px-1.5 py-0.5 rounded-full font-semibold" x-text="c.nome.split(' ')[0]"></span>
+              </template>
+            </div>
+          </div>
+
+          <!-- Observação -->
+          <p x-show="im.obs" class="text-xs text-gray-400 italic mb-3 truncate" x-text="im.obs"></p>
+
+          <!-- Ações -->
+          <div class="flex gap-1.5">
+            <button @click="abrirImovelModal(im)" class="flex-1 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
+              <i class="fa-solid fa-pen mr-1"></i> Editar
+            </button>
+            <button @click="deleteImovel(im.id)" class="w-8 h-8 rounded-lg flex items-center justify-center text-red-400 hover:bg-red-50 border border-gray-100 transition-colors">
+              <i class="fa-solid fa-trash text-xs"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+
+</section>
+
+<!-- ========== MODAL NOVO/EDITAR IMÓVEL ========== -->
+<div x-show="showImovelModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4" style="background:rgba(0,0,0,0.5)">
+  <div class="bg-white sm:rounded-2xl rounded-t-2xl shadow-2xl w-full sm:max-w-lg max-h-[90dvh] overflow-y-auto" @click.stop>
+    <div class="px-6 py-4 flex items-center justify-between text-white rounded-t-2xl" style="background:#b48860">
+      <h2 class="font-bold text-lg" x-text="editingImovel?.id && imoveis.find(i=>i.id===editingImovel.id) ? 'Editar Imóvel' : 'Novo Imóvel'"></h2>
+      <button @click="showImovelModal=false" class="text-white hover:opacity-70"><i class="fa-solid fa-xmark text-xl"></i></button>
+    </div>
+    <div class="p-5 space-y-3" x-show="editingImovel">
+      <div class="grid grid-cols-2 gap-3">
+        <div class="col-span-2">
+          <label class="text-xs font-bold text-gray-600 block mb-1">Endereço / Nome do imóvel</label>
+          <input x-model="editingImovel.endereco" type="text" placeholder="Ex: Rua das Flores, 123 — Apto 42"
+            class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-gray-600 block mb-1">Bairro</label>
+          <input x-model="editingImovel.bairro" type="text" placeholder="Ex: Moema"
+            class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-gray-600 block mb-1">Tipo</label>
+          <select x-model="editingImovel.tipo" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+            <option value="">Selecionar</option>
+            <option value="apartamento">Apartamento</option>
+            <option value="casa">Casa</option>
+            <option value="terreno">Terreno</option>
+            <option value="comercial">Comercial</option>
+            <option value="rural">Rural</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-bold text-gray-600 block mb-1">Valor (R$)</label>
+          <input x-model="editingImovel.valor" type="number" placeholder="Ex: 850000"
+            class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-gray-600 block mb-1">Status</label>
+          <select x-model="editingImovel.status" class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+            <option value="disponivel">✅ Disponível</option>
+            <option value="reservado">⏳ Reservado</option>
+            <option value="vendido">🏆 Vendido</option>
+            <option value="alugado">🔑 Alugado</option>
+            <option value="suspenso">⛔ Suspenso</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-bold text-gray-600 block mb-1">Quartos</label>
+          <input x-model="editingImovel.quartos" type="number" min="0" max="20" placeholder="0"
+            class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-gray-600 block mb-1">Área (m²)</label>
+          <input x-model="editingImovel.area" type="number" placeholder="Ex: 85"
+            class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-gray-600 block mb-1">Vagas de garagem</label>
+          <input x-model="editingImovel.vagas" type="number" min="0" max="10" placeholder="0"
+            class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+        </div>
+        <div class="col-span-2">
+          <label class="text-xs font-bold text-gray-600 block mb-1">Observações / Diferenciais</label>
+          <textarea x-model="editingImovel.obs" rows="2" placeholder="Ex: Sol da manhã, reformado, próx. ao metrô..."
+            class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 resize-none"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="px-5 pb-5 flex gap-3">
+      <button @click="showImovelModal=false" class="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">Cancelar</button>
+      <button @click="salvarImovel()" class="flex-1 text-white py-2.5 rounded-xl text-sm font-bold transition-colors hover:opacity-90" style="background:#b48860">
+        <i class="fa-solid fa-check mr-1"></i> Salvar Imóvel
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MODAL VINCULAR IMÓVEL AO LEAD ========== -->
+<div x-show="showVincularImovel" class="fixed inset-0 flex items-end sm:items-center justify-center sm:p-4" style="background:rgba(0,0,0,0.5);z-index:9000">
+  <div class="bg-white sm:rounded-2xl rounded-t-2xl shadow-2xl w-full sm:max-w-md max-h-[80dvh] overflow-y-auto" @click.stop>
+    <div class="px-5 py-4 flex items-center justify-between border-b border-gray-100">
+      <div>
+        <h2 class="font-bold text-gray-800">Imóveis Visitados</h2>
+        <p class="text-xs text-gray-500 mt-0.5" x-text="timelineCliente?.nome"></p>
+      </div>
+      <button @click="showVincularImovel=false" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <div class="p-4">
+      <!-- Imóveis já vinculados -->
+      <div x-show="(timelineCliente?.imoveisVisitados||[]).length > 0" class="mb-4">
+        <p class="text-xs font-bold text-gray-500 mb-2">VINCULADOS A ESTE LEAD</p>
+        <div class="space-y-2">
+          <template x-for="ivid in (timelineCliente?.imoveisVisitados||[])" :key="ivid">
+            <div class="flex items-center gap-2 p-2.5 bg-blue-50 border border-blue-100 rounded-xl">
+              <span class="text-sm" x-text="getImovelTipoIcon(imoveis.find(i=>i.id===ivid)?.tipo)"></span>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-bold text-gray-800 truncate" x-text="imoveis.find(i=>i.id===ivid)?.bairro || imoveis.find(i=>i.id===ivid)?.endereco || 'Imóvel removido'"></p>
+                <p class="text-[10px] text-gray-500" x-text="imoveis.find(i=>i.id===ivid) ? 'R$ ' + Number(imoveis.find(i=>i.id===ivid).valor||0).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) : ''"></p>
+              </div>
+              <button @click="desvincularImovel(ivid)" class="w-6 h-6 flex items-center justify-center text-red-400 hover:text-red-600 transition-colors">
+                <i class="fa-solid fa-xmark text-xs"></i>
+              </button>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Adicionar imóvel -->
+      <p class="text-xs font-bold text-gray-500 mb-2">ADICIONAR DA CARTEIRA</p>
+      <div x-show="imoveis.filter(i=>!(timelineCliente?.imoveisVisitados||[]).includes(i.id)).length === 0" class="text-xs text-gray-400 py-3 text-center">
+        Todos os imóveis já foram vinculados ou a carteira está vazia.
+        <button @click="showVincularImovel=false; section='imoveis'" class="block mx-auto mt-2 text-amber-600 font-semibold hover:underline">Cadastrar imóvel →</button>
+      </div>
+      <div class="space-y-2">
+        <template x-for="im in imoveis.filter(i=>!(timelineCliente?.imoveisVisitados||[]).includes(i.id))" :key="im.id">
+          <button @click="vincularImovel(im.id)" class="w-full flex items-center gap-2.5 p-2.5 rounded-xl border border-gray-100 hover:border-amber-300 hover:bg-amber-50 transition-all text-left">
+            <span class="text-sm flex-shrink-0" x-text="getImovelTipoIcon(im.tipo)"></span>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-bold text-gray-800 truncate" x-text="(im.bairro || im.endereco || 'S/ endereço') + (im.quartos ? ' · ' + im.quartos + 'q' : '') + (im.area ? ' · ' + im.area + 'm²' : '')"></p>
+              <p class="text-[10px] text-gray-500" x-text="im.valor ? 'R$ ' + Number(im.valor).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) : 'Valor a consultar'"></p>
+            </div>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+              :style="'background:' + getImovelStatusColor(im.status) + '22; color:' + getImovelStatusColor(im.status)"
+              x-text="getImovelStatusLabel(im.status)"></span>
+            <i class="fa-solid fa-plus text-amber-500 text-xs flex-shrink-0"></i>
+          </button>
+        </template>
+      </div>
+    </div>
+  </div>
+</div>
+
 <section x-show="section==='configuracoes'" class="max-w-2xl mx-auto px-4 py-4 sm:py-6 pb-24 sm:pb-6">
 
   <div class="mb-6">
@@ -2254,7 +2520,24 @@ tailwind.config = {
 
       </div><!-- fim aba timeline -->
 
+      <!-- Imóveis visitados (resumo) -->
+      <div x-show="(timelineCliente?.imoveisVisitados||[]).length > 0" class="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-xl">
+        <p class="text-xs font-bold text-amber-700 mb-2"><i class="fa-solid fa-building mr-1"></i>Imóveis mostrados para este cliente</p>
+        <div class="flex flex-wrap gap-1.5">
+          <template x-for="ivid in (timelineCliente?.imoveisVisitados||[])" :key="ivid">
+            <span class="text-[11px] bg-white border border-amber-200 text-amber-800 px-2 py-0.5 rounded-full font-semibold"
+              x-text="(imoveis.find(i=>i.id===ivid)?.bairro || imoveis.find(i=>i.id===ivid)?.endereco || '—') + (imoveis.find(i=>i.id===ivid)?.quartos ? ' · ' + imoveis.find(i=>i.id===ivid).quartos + 'q' : '')">
+            </span>
+          </template>
+        </div>
+      </div>
+
       <div class="mt-4 flex gap-2">
+        <button @click="showVincularImovel=true" class="flex-1 border border-amber-200 text-amber-700 py-2 rounded-xl text-sm font-semibold hover:bg-amber-50 transition-colors flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-building text-xs"></i>
+          Imóveis
+          <span x-show="(timelineCliente?.imoveisVisitados||[]).length > 0" class="bg-amber-600 text-white text-[9px] font-black px-1.5 rounded-full" x-text="(timelineCliente?.imoveisVisitados||[]).length"></span>
+        </button>
         <button @click="openClientModal(timelineCliente); showTimeline=false" class="flex-1 border border-gray-200 text-gray-600 py-2 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
           <i class="fa-solid fa-pen mr-1"></i> Editar
         </button>
@@ -2809,6 +3092,13 @@ function app() {
     menuOpen: false,
     section: 'vendas',
     captacoes: JSON.parse(localStorage.getItem('amigo_captacoes') || '[]'),
+    imoveis: JSON.parse(localStorage.getItem('amigo_imoveis') || '[]'),
+    imoveisBusca: '',
+    imoveisFiltroStatus: '',
+    imoveisFiltroTipo: '',
+    showImovelModal: false,
+    editingImovel: null,
+    showVincularImovel: false,
     captacaoBusca: '',
     captacaoFiltroStatus: '',
     showCaptacaoModal: false,
@@ -3799,6 +4089,88 @@ function app() {
       this.clientes[idx] = c;
       this.timelineCliente = c;
       this.save();
+    },
+
+    // ===== CARTEIRA DE IMÓVEIS =====
+    imoveisFiltrados() {
+      const b = this.imoveisBusca.toLowerCase();
+      return this.imoveis.filter(im => {
+        const matchBusca = !b || (im.endereco||'').toLowerCase().includes(b) || (im.bairro||'').toLowerCase().includes(b);
+        const matchTipo = !this.imoveisFiltroTipo || im.tipo === this.imoveisFiltroTipo;
+        const matchStatus = !this.imoveisFiltroStatus || im.status === this.imoveisFiltroStatus;
+        return matchBusca && matchTipo && matchStatus;
+      }).sort((a,b) => (b.id||'').localeCompare(a.id||''));
+    },
+
+    abrirImovelModal(imovel = null) {
+      this.editingImovel = imovel
+        ? { ...imovel }
+        : { id: '', endereco: '', bairro: '', tipo: 'apartamento', valor: '', quartos: '', area: '', vagas: '', status: 'disponivel', obs: '' };
+      this.showImovelModal = true;
+    },
+
+    salvarImovel() {
+      if (!this.editingImovel) return;
+      const idx = this.imoveis.findIndex(i => i.id === this.editingImovel.id);
+      if (idx !== -1) {
+        this.imoveis[idx] = { ...this.editingImovel };
+      } else {
+        this.imoveis.push({ ...this.editingImovel, id: Date.now().toString() });
+      }
+      localStorage.setItem('amigo_imoveis', JSON.stringify(this.imoveis));
+      this.showImovelModal = false;
+      this.showToast('Imóvel salvo ✅');
+    },
+
+    deleteImovel(id) {
+      if (!confirm('Remover este imóvel da carteira?')) return;
+      this.imoveis = this.imoveis.filter(i => i.id !== id);
+      // Remove vínculo de todos os clientes
+      this.clientes.forEach((c, idx) => {
+        if ((c.imoveisVisitados||[]).includes(id)) {
+          this.clientes[idx] = { ...c, imoveisVisitados: c.imoveisVisitados.filter(x => x !== id) };
+        }
+      });
+      localStorage.setItem('amigo_imoveis', JSON.stringify(this.imoveis));
+      this.save();
+    },
+
+    vincularImovel(imovelId) {
+      const idx = this.clientes.findIndex(c => c.id === this.timelineCliente.id);
+      if (idx === -1) return;
+      const c = { ...this.clientes[idx] };
+      if (!c.imoveisVisitados) c.imoveisVisitados = [];
+      if (!c.imoveisVisitados.includes(imovelId)) c.imoveisVisitados.push(imovelId);
+      this.clientes[idx] = c;
+      this.timelineCliente = c;
+      this.save();
+    },
+
+    desvincularImovel(imovelId) {
+      const idx = this.clientes.findIndex(c => c.id === this.timelineCliente.id);
+      if (idx === -1) return;
+      const c = { ...this.clientes[idx] };
+      c.imoveisVisitados = (c.imoveisVisitados||[]).filter(x => x !== imovelId);
+      this.clientes[idx] = c;
+      this.timelineCliente = c;
+      this.save();
+    },
+
+    getClientesQueVisitaram(imovelId) {
+      return this.clientes.filter(c => (c.imoveisVisitados||[]).includes(imovelId));
+    },
+
+    getImovelStatusColor(status) {
+      return { disponivel:'#16a34a', reservado:'#f59e0b', vendido:'#b48860', alugado:'#3b82f6', suspenso:'#6b7280' }[status] || '#6b7280';
+    },
+    getImovelStatusLabel(status) {
+      return { disponivel:'Disponível', reservado:'Reservado', vendido:'Vendido', alugado:'Alugado', suspenso:'Suspenso' }[status] || status;
+    },
+    getImovelTipoColor(tipo) {
+      return { apartamento:'#3b82f6', casa:'#16a34a', terreno:'#92400e', comercial:'#7c3aed', rural:'#065f46' }[tipo] || '#6b7280';
+    },
+    getImovelTipoIcon(tipo) {
+      return { apartamento:'🏢', casa:'🏠', terreno:'🌱', comercial:'🏪', rural:'🌾' }[tipo] || '🏗️';
     },
 
     getCanalIcon(canal) {
