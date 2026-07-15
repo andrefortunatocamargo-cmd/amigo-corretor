@@ -1011,17 +1011,27 @@ tailwind.config = {
                     <p x-show="c.valorInteresse && Number(c.valorInteresse) > 0" class="text-[10px] font-semibold" :style="'color:' + grupo.cor"
                        x-text="'R$ ' + Number(c.valorInteresse).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0})"></p>
                   </div>
-                  <!-- Botão avançar / voltar pipeline -->
-                  <div class="flex gap-1 flex-shrink-0">
-                    <button x-show="grupo.key !== 'atendimento'"
-                      @click.stop="mudarPipeline(c.id, grupo.prev)"
-                      class="w-6 h-6 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-200 transition-colors" title="Voltar etapa">
-                      <i class="fa-solid fa-chevron-left text-[9px]"></i>
-                    </button>
-                    <button x-show="grupo.key !== 'proposta'"
-                      @click.stop="mudarPipeline(c.id, grupo.next)"
-                      class="w-6 h-6 rounded-lg flex items-center justify-center text-white transition-colors" :style="'background:' + grupo.cor" :title="'Avançar para ' + grupo.nextLabel">
-                      <i class="fa-solid fa-chevron-right text-[9px]"></i>
+                  <!-- Botão avançar / voltar / VENDIDO -->
+                  <div class="flex flex-col gap-1 flex-shrink-0 items-end">
+                    <div class="flex gap-1">
+                      <button x-show="grupo.key !== 'atendimento'"
+                        @click.stop="mudarPipeline(c.id, grupo.prev)"
+                        class="w-6 h-6 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-200 transition-colors" title="Voltar etapa">
+                        <i class="fa-solid fa-chevron-left text-[9px]"></i>
+                      </button>
+                      <button x-show="grupo.key !== 'proposta'"
+                        @click.stop="mudarPipeline(c.id, grupo.next)"
+                        class="w-6 h-6 rounded-lg flex items-center justify-center text-white transition-colors" :style="'background:' + grupo.cor" :title="'Avançar para ' + grupo.nextLabel">
+                        <i class="fa-solid fa-chevron-right text-[9px]"></i>
+                      </button>
+                    </div>
+                    <!-- BOTÃO VENDIDO -->
+                    <button @click.stop="abrirVendido(c.id)"
+                      class="vendido-btn flex items-center gap-1 px-2 py-0.5 rounded-lg text-white font-black text-[10px] shadow-md transition-all active:scale-95"
+                      style="background:linear-gradient(135deg,#b48860,#e0a84e);box-shadow:0 2px 8px rgba(180,136,96,0.5)"
+                      title="Marcar como VENDIDO">
+                      <i class="fa-solid fa-trophy text-[9px]"></i>
+                      <span>VENDIDO</span>
                     </button>
                   </div>
                 </div>
@@ -2222,6 +2232,7 @@ function app() {
     mediaDragOver: false,
     kanbanDragging: null,
     kanbanDragOver: null,
+    vendidoModal: false, vendidoClienteId: null, vendidoValor: '', vendidoNome: '',
     globalSearch: false,
     globalSearchQuery: '',
     showContaPanel: false,
@@ -2405,6 +2416,40 @@ function app() {
       this.darkMode = !this.darkMode;
       localStorage.setItem('darkMode', this.darkMode);
       document.documentElement.classList.toggle('dark', this.darkMode);
+    },
+
+    // --- VENDIDO ---
+    abrirVendido(clienteId) {
+      const c = this.clientes.find(c => c.id === clienteId);
+      if (!c) return;
+      this.vendidoClienteId = clienteId;
+      this.vendidoNome = c.nome;
+      this.vendidoValor = c.valorInteresse || '';
+      this.vendidoModal = true;
+    },
+    confirmarVendido() {
+      const idx = this.clientes.findIndex(c => c.id === this.vendidoClienteId);
+      if (idx === -1) return;
+      const c = { ...this.clientes[idx] };
+      c.status = 'concluido';
+      c.pipeline = 'proposta';
+      c.dataFechamento = this.todayStr();
+      if (this.vendidoValor) c.valorFechado = this.vendidoValor;
+      // Concluir todas as etapas de follow-up
+      const steps = this.timelines[c.tipo] || [];
+      c.etapasFeitas = steps.map(s => s.etapa);
+      // Marcar ações extras como feitas
+      if (c.acoesExtras) c.acoesExtras = c.acoesExtras.map(a => ({ ...a, feito: true }));
+      this.clientes[idx] = c;
+      this.save();
+      const valorFmt = this.vendidoValor ? ' · R$ ' + Number(this.vendidoValor).toLocaleString('pt-BR', {minimumFractionDigits: 0}) : '';
+      this.addFeedItem('🏆', `VENDIDO! ${c.nome}${valorFmt}`);
+      this.vendidoModal = false;
+      this.vendidoClienteId = null;
+      this.vendidoValor = '';
+      this.vendidoNome = '';
+      this.$nextTick(() => { this.launchConfetti(); });
+      setTimeout(() => this.showToast('🏆 PARABÉNS! Negócio fechado com sucesso!'), 300);
     },
 
     // --- Kanban Drag & Drop ---
@@ -4140,6 +4185,39 @@ function app() {
   </div>
 </div>
 <!-- ===== /CROP PHOTO MODAL ===== -->
+
+<!-- VENDIDO Modal -->
+<div x-show="vendidoModal" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4"
+     style="background:rgba(0,0,0,0.6);backdrop-filter:blur(4px)"
+     @click.self="vendidoModal=false">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden" @click.stop>
+    <div class="px-6 py-5 text-center" style="background:linear-gradient(135deg,#b48860,#e0a84e)">
+      <div class="text-5xl mb-2">🏆</div>
+      <h2 class="text-white font-black text-xl tracking-wide drop-shadow">NEGÓCIO FECHADO!</h2>
+      <p class="text-yellow-100 text-sm mt-1 font-medium" x-text="vendidoNome"></p>
+    </div>
+    <div class="px-6 py-5">
+      <p class="text-gray-500 text-sm text-center mb-4">Parabéns! Informe o valor final do fechamento (opcional):</p>
+      <label class="block text-xs font-semibold text-gray-600 mb-1">Valor de Fechamento (R$)</label>
+      <input type="number" x-model="vendidoValor" placeholder="Ex: 450000"
+        class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+        @keydown.enter="confirmarVendido()" />
+    </div>
+    <div class="px-6 pb-5 flex gap-3">
+      <button @click="vendidoModal=false"
+        class="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-500 text-sm font-semibold hover:bg-gray-50 transition-colors">
+        Cancelar
+      </button>
+      <button @click="confirmarVendido()"
+        class="flex-1 py-2.5 rounded-xl text-white text-sm font-black transition-all active:scale-95"
+        style="background:linear-gradient(135deg,#b48860,#e0a84e);box-shadow:0 4px 14px rgba(180,136,96,0.5)">
+        🏆 CONFIRMAR VENDA
+      </button>
+    </div>
+  </div>
+</div>
+<!-- ===== /VENDIDO MODAL ===== -->
 
 <!-- Global Search Overlay -->
 <div x-show="globalSearch" x-transition:enter="transition ease-out duration-150"
