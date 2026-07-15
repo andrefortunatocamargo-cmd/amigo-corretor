@@ -2085,6 +2085,82 @@ tailwind.config = {
       </div>
       <div x-show="timelineCliente?.observacao" class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-xl text-sm italic text-gray-700" x-text="timelineCliente?.observacao"></div>
 
+      <!-- Tabs -->
+      <div class="flex rounded-xl bg-gray-100 p-1 mb-4 gap-1">
+        <button @click="timelineAba='timeline'"
+          :class="timelineAba==='timeline' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+          class="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-timeline text-[11px]"></i> Timeline
+        </button>
+        <button @click="timelineAba='historico'"
+          :class="timelineAba==='historico' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+          class="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-clock-rotate-left text-[11px]"></i> Histórico
+          <span x-show="(timelineCliente?.contatoLog||[]).length > 0"
+            class="bg-blue-100 text-blue-700 text-[9px] font-black px-1.5 rounded-full"
+            x-text="(timelineCliente?.contatoLog||[]).length"></span>
+        </button>
+      </div>
+
+      <!-- ===== ABA HISTÓRICO ===== -->
+      <div x-show="timelineAba==='historico'">
+
+        <!-- Formulário rápido -->
+        <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 mb-4">
+          <p class="text-xs font-bold text-blue-700 mb-2"><i class="fa-solid fa-plus mr-1"></i>Registrar contato</p>
+          <div class="flex gap-2 mb-2">
+            <select x-model="novoContato.canal" class="px-2 py-1.5 rounded-lg border border-blue-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-300">
+              <option value="ligacao">📞 Ligação</option>
+              <option value="whatsapp">💬 WhatsApp</option>
+              <option value="visita">🏠 Visita</option>
+              <option value="email">📧 E-mail</option>
+              <option value="reuniao">👥 Reunião</option>
+              <option value="outro">📝 Outro</option>
+            </select>
+            <input x-model="novoContato.nota" type="text" placeholder="O que aconteceu? (ex: cliente pediu prazo, mostrei 2 imóveis...)"
+              @keydown.enter="addContatoLog()"
+              class="flex-1 px-2 py-1.5 rounded-lg border border-blue-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-300">
+          </div>
+          <button @click="addContatoLog()"
+            :disabled="!novoContato.nota.trim()"
+            class="w-full py-1.5 rounded-lg text-xs font-bold text-white transition-colors"
+            :class="novoContato.nota.trim() ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-200 cursor-not-allowed'">
+            Salvar registro
+          </button>
+        </div>
+
+        <!-- Lista de entradas -->
+        <div x-show="(timelineCliente?.contatoLog||[]).length === 0" class="text-center py-8 text-gray-400">
+          <i class="fa-solid fa-clock-rotate-left text-2xl mb-2 block"></i>
+          <p class="text-xs">Nenhum contato registrado ainda.</p>
+          <p class="text-xs mt-1">Use o formulário acima para registrar interações.</p>
+        </div>
+
+        <div class="space-y-2">
+          <template x-for="entrada in (timelineCliente?.contatoLog||[])" :key="entrada.id">
+            <div class="flex items-start gap-3 p-3 bg-white border border-gray-100 rounded-xl group">
+              <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 text-sm">
+                <span x-text="getCanalIcon(entrada.canal)"></span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-0.5">
+                  <span class="text-[10px] font-bold text-blue-600 uppercase" x-text="getCanalLabel(entrada.canal)"></span>
+                  <span class="text-[10px] text-gray-400" x-text="formatDateBR(entrada.data)"></span>
+                </div>
+                <p class="text-xs text-gray-700 leading-relaxed" x-text="entrada.nota"></p>
+              </div>
+              <button @click="deleteContatoLog(entrada.id)"
+                class="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center text-gray-300 hover:text-red-400 transition-all flex-shrink-0">
+                <i class="fa-solid fa-trash text-[10px]"></i>
+              </button>
+            </div>
+          </template>
+        </div>
+      </div>
+      <!-- ===== FIM ABA HISTÓRICO ===== -->
+
+      <!-- ===== ABA TIMELINE ===== -->
+      <div x-show="timelineAba==='timeline'">
       <h3 class="font-bold text-gray-700 mb-1 flex items-center gap-2"><i class="fa-solid fa-timeline text-green-600"></i> Timeline de Follow-ups</h3>
       <p class="text-xs text-gray-400 mb-4 flex items-center gap-1"><i class="fa-solid fa-left-right"></i> Arraste um follow-up para a esquerda ou direita para mudar a data</p>
       <div class="relative timeline-line space-y-3 pl-8">
@@ -2175,6 +2251,8 @@ tailwind.config = {
           </template>
         </div>
       </div>
+
+      </div><!-- fim aba timeline -->
 
       <div class="mt-4 flex gap-2">
         <button @click="openClientModal(timelineCliente); showTimeline=false" class="flex-1 border border-gray-200 text-gray-600 py-2 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
@@ -2842,6 +2920,8 @@ function app() {
     agendaView: 'agenda',
     historicoSearch: '',
     resultadosAba: 'fechados',
+    timelineAba: 'timeline',
+    novoContato: { canal: 'ligacao', nota: '' },
     calStatusAberto: null,
     calClickTimer: null,
     pipelineOpcoes: [
@@ -3696,6 +3776,38 @@ function app() {
       return (cliente?.etapasAcoes || {})[etapa] || '';
     },
 
+    addContatoLog() {
+      const nota = this.novoContato.nota.trim();
+      if (!nota) return;
+      const idx = this.clientes.findIndex(c => c.id === this.timelineCliente.id);
+      if (idx === -1) return;
+      const c = { ...this.clientes[idx] };
+      if (!c.contatoLog) c.contatoLog = [];
+      c.contatoLog.unshift({ id: Date.now().toString(), data: this.todayStr(), canal: this.novoContato.canal, nota });
+      this.clientes[idx] = c;
+      this.timelineCliente = c;
+      this.novoContato = { canal: 'ligacao', nota: '' };
+      this.save();
+      this.showToast('Contato registrado ✅');
+    },
+
+    deleteContatoLog(entradaId) {
+      const idx = this.clientes.findIndex(c => c.id === this.timelineCliente.id);
+      if (idx === -1) return;
+      const c = { ...this.clientes[idx] };
+      c.contatoLog = (c.contatoLog || []).filter(e => e.id !== entradaId);
+      this.clientes[idx] = c;
+      this.timelineCliente = c;
+      this.save();
+    },
+
+    getCanalIcon(canal) {
+      return { ligacao: '📞', whatsapp: '💬', visita: '🏠', email: '📧', reuniao: '👥', outro: '📝' }[canal] || '📝';
+    },
+    getCanalLabel(canal) {
+      return { ligacao: 'Ligação', whatsapp: 'WhatsApp', visita: 'Visita', email: 'E-mail', reuniao: 'Reunião', outro: 'Outro' }[canal] || canal;
+    },
+
     desmarcarFeito(clienteId, etapa) {
       const idx = this.clientes.findIndex(c => c.id === clienteId);
       if (idx === -1) return;
@@ -3784,6 +3896,16 @@ function app() {
       const telFull = tel.length === 11 ? '55' + tel : tel;
       const msg = encodeURIComponent(this.waMensagem);
       window.open(`https://wa.me/${telFull}?text=${msg}`, '_blank');
+      // Auto-log no histórico de contato
+      const cidx = this.clientes.findIndex(c => c.id === this.waCliente.id);
+      if (cidx !== -1) {
+        const cc = { ...this.clientes[cidx] };
+        if (!cc.contatoLog) cc.contatoLog = [];
+        cc.contatoLog.unshift({ id: Date.now().toString(), data: this.todayStr(), canal: 'whatsapp', nota: '📤 Mensagem enviada via WhatsApp' });
+        this.clientes[cidx] = cc;
+        if (this.timelineCliente?.id === this.waCliente.id) this.timelineCliente = cc;
+        this.save();
+      }
       this.showWhatsApp = false;
       if (this.waStep && !this.waStep.isExtra) {
         setTimeout(() => this.abrirConfirmarAcao(this.waCliente.id, this.waStep.etapa), 300);
@@ -3993,6 +4115,8 @@ function app() {
       this.timelineMedia = [];
       this.timelineCliente = this.clientes.find(c => c.id === cliente.id);
       this.showTimeline = true;
+      this.timelineAba = 'timeline';
+      this.novoContato = { canal: 'ligacao', nota: '' };
       if (!this.idb) return;
       const tx = this.idb.transaction('media', 'readonly');
       const result = [];
