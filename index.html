@@ -770,26 +770,8 @@ tailwind.config = {
       </div>
 
 
-    <!-- ========== ATIVIDADE RECENTE ========== -->
-    <div class="bg-white rounded-2xl shadow p-4 mb-6 mt-6">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="font-bold text-gray-800 text-sm">⚡ Atividade Recente</h3>
-        <button @click="activityFeed = []; localStorage.removeItem('amigo_feed')" class="text-xs text-gray-400 hover:text-red-400">Limpar</button>
-      </div>
-      <div x-show="activityFeed.length === 0" class="text-center text-gray-400 text-xs py-4">Nenhuma atividade ainda</div>
-      <template x-for="item in activityFeed.slice(0,8)" :key="item.id">
-        <div class="flex items-start gap-2 py-2 border-b border-gray-50 last:border-0">
-          <span class="text-base" x-text="item.icon"></span>
-          <div class="flex-1 min-w-0">
-            <p class="text-xs text-gray-700 leading-snug" x-text="item.text"></p>
-            <p class="text-[10px] text-gray-400 mt-0.5" x-text="feedTimeAgo(item.time)"></p>
-          </div>
-        </div>
-      </template>
-    </div>
-
     <!-- ========== PAINÉIS INFERIORES DO DASHBOARD ========== -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-6">
 
       <!-- PAINEL: ÚLTIMOS CONTATOS + BUSCA -->
       <div class="bg-white rounded-2xl shadow-sm border border-green-100 overflow-hidden flex flex-col" style="max-height:480px">
@@ -1051,6 +1033,34 @@ tailwind.config = {
         <!-- Footer -->
         <div class="px-4 py-2.5 border-t border-gray-50 flex-shrink-0 bg-gray-50">
           <p class="text-[10px] text-gray-400 text-center" x-text="negociosFechados().length + ' negócio(s) fechado(s) · ' + statsResultados().comValor + ' com valor informado'"></p>
+        </div>
+      </div>
+
+      <!-- ========== ATIVIDADE RECENTE (3ª coluna) ========== -->
+      <div class="bg-white rounded-2xl shadow-sm border border-green-100 flex flex-col" style="max-height:480px">
+        <div class="px-4 py-3 border-b border-gray-50 flex items-center justify-between flex-shrink-0">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background:#f59e0b">
+              <i class="fa-solid fa-bolt text-white text-xs"></i>
+            </div>
+            <p class="font-black text-gray-800 text-sm">Atividade Recente</p>
+          </div>
+          <button @click="activityFeed = []; localStorage.removeItem('amigo_feed')" class="text-[10px] text-gray-300 hover:text-red-400 transition-colors">Limpar</button>
+        </div>
+        <div class="overflow-y-auto flex-1 px-3 py-2">
+          <div x-show="activityFeed.length === 0" class="text-center text-gray-300 text-xs py-8">
+            <i class="fa-solid fa-clock-rotate-left text-2xl mb-2 block"></i>
+            Nenhuma atividade ainda
+          </div>
+          <template x-for="item in activityFeed.slice(0,10)" :key="item.id">
+            <div class="flex items-start gap-2 py-2 border-b border-gray-50 last:border-0">
+              <span class="text-sm flex-shrink-0 mt-0.5" x-text="item.icon"></span>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs text-gray-700 leading-snug" x-text="item.text"></p>
+                <p class="text-[10px] text-gray-400 mt-0.5" x-text="feedTimeAgo(item.time)"></p>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
 
