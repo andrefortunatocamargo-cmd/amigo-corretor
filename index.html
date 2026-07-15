@@ -1065,7 +1065,19 @@ tailwind.config = {
                   </div>
                   <!-- Info -->
                   <div class="flex-1 min-w-0 cursor-pointer" @click="openClientModal(c)">
-                    <p class="text-xs font-bold text-gray-800 truncate" x-text="c.nome"></p>
+                    <div class="flex items-center gap-1 mb-0.5">
+                      <p class="text-xs font-bold text-gray-800 truncate" x-text="c.nome"></p>
+                      <template x-if="getTemperatura(c)">
+                        <span class="text-[9px] font-bold px-1.5 py-0 rounded-full flex-shrink-0"
+                          :class="{
+                            'bg-red-100 text-red-700': getTemperatura(c)?.label === 'quente',
+                            'bg-amber-100 text-amber-700': getTemperatura(c)?.label === 'morno',
+                            'bg-blue-100 text-blue-700': getTemperatura(c)?.label === 'frio'
+                          }"
+                          x-text="getTemperatura(c)?.emoji">
+                        </span>
+                      </template>
+                    </div>
                     <p x-show="c.valorInteresse && Number(c.valorInteresse) > 0" class="text-[10px] font-semibold" :style="'color:' + grupo.cor"
                        x-text="'R$ ' + Number(c.valorInteresse).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0})"></p>
                   </div>
@@ -1160,6 +1172,12 @@ tailwind.config = {
             <option value="concluido">Concluído</option>
             <option value="perdido">Perdido</option>
           </select>
+          <select x-model="filtroTemperatura" class="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400 text-sm">
+            <option value="">🌡️ Temperatura</option>
+            <option value="quente">🔥 Quente (≤7d)</option>
+            <option value="morno">☀️ Morno (8–30d)</option>
+            <option value="frio">🧊 Frio (31+d)</option>
+          </select>
         </div>
         <button @click="openClientModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2">
           <i class="fa-solid fa-plus"></i> Novo Cliente
@@ -1190,7 +1208,17 @@ tailwind.config = {
                   <p class="text-xs text-gray-500" x-text="c.telefone || 'Sem telefone'"></p>
                 </div>
               </div>
-              <div class="flex items-center gap-1">
+              <div class="flex items-center gap-1.5">
+                <template x-if="getTemperatura(c)">
+                  <span class="text-[11px] font-bold px-2 py-0.5 rounded-full"
+                    :class="{
+                      'bg-red-100 text-red-700': getTemperatura(c)?.label === 'quente',
+                      'bg-amber-100 text-amber-700': getTemperatura(c)?.label === 'morno',
+                      'bg-blue-100 text-blue-700': getTemperatura(c)?.label === 'frio'
+                    }"
+                    x-text="getTemperatura(c)?.emoji + ' ' + getTemperatura(c)?.dias + 'd'">
+                  </span>
+                </template>
                 <span class="w-2 h-2 rounded-full" :class="c.ativo ? 'bg-green-400' : (c.status === 'concluido' ? 'bg-blue-400' : 'bg-red-400')"></span>
               </div>
             </div>
@@ -2713,6 +2741,7 @@ function app() {
     busca: '',
     filtroTipo: '',
     filtroStatus: '',
+    filtroTemperatura: '',
     showClientModal: false,
     showTimeline: false,
     showWhatsApp: false,
@@ -3274,7 +3303,8 @@ function app() {
         const matchBusca = !this.busca || c.nome.toLowerCase().includes(this.busca.toLowerCase()) || (c.telefone||'').includes(this.busca);
         const matchTipo = !this.filtroTipo || c.tipo === this.filtroTipo;
         const matchStatus = !this.filtroStatus || c.status === this.filtroStatus;
-        return matchBusca && matchTipo && matchStatus;
+        const matchTemp = !this.filtroTemperatura || (this.getTemperatura(c)?.label === this.filtroTemperatura);
+        return matchBusca && matchTipo && matchStatus && matchTemp;
       }).sort((a,b) => {
         const pa = this.getProximoFollowup(a);
         const pb = this.getProximoFollowup(b);
@@ -3329,6 +3359,23 @@ function app() {
       if (!cliente.ativo) return null;
       const timeline = this.getTimeline(cliente);
       return timeline.find(s => !s.feito) || null;
+    },
+
+    getTemperatura(cliente) {
+      if (!cliente.ativo || cliente.status !== 'ativo') return null;
+      const timeline = this.getTimeline(cliente);
+      const feitas = timeline.filter(s => s.feito);
+      let ultimaData = null;
+      if (feitas.length > 0) {
+        ultimaData = feitas[feitas.length - 1].data;
+      } else {
+        ultimaData = cliente.dataInicio || null;
+      }
+      if (!ultimaData) return { label: 'frio', emoji: '🧊', dias: 999 };
+      const dias = Math.floor((new Date(this.todayStr()) - new Date(ultimaData)) / 86400000);
+      if (dias <= 7)  return { label: 'quente', emoji: '🔥', dias };
+      if (dias <= 30) return { label: 'morno',  emoji: '☀️', dias };
+      return             { label: 'frio',   emoji: '🧊', dias };
     },
 
     getAllPendingFollowups() {
