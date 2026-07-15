@@ -2961,9 +2961,17 @@ function app() {
           { label: '🔄 Atualização', msg: `Olá, ${nome}! Tudo bem? 😊\n\nQueria te dar um retorno sobre a indicação que você me fez. Estou cuidando com muito carinho!\n\nQualquer dúvida, estou à disposição. 🏠` },
         ],
       };
-      return templates[cliente.tipo] || [
+      const universais = [
+        { label: '🔍 Buscando imóvel', msg: `Olá, ${nome}! Tudo bem? 😊\n\nEstou em busca ativa de imóveis que combinam com o seu perfil.\n\nAssim que encontrar algo que encaixe no que você procura, te aviso imediatamente! Tem algum detalhe prioritário que devo considerar? 🏠` },
+        { label: '🤝 Parceria', msg: `Olá, ${nome}! Tudo bem? 😊\n\nQue tal conversarmos sobre uma parceria? Acredito que temos oportunidades que se complementam muito bem.\n\nPodemos marcar uma reunião rápida para alinhar? 🤝` },
+        { label: '🏦 Em financiamento', msg: `Oi, ${nome}! Como vai? 😊\n\nPassei para saber como está andando o seu financiamento.\n\nSe precisar de orientação, simulações ou indicação de correspondente bancário de confiança, posso te ajudar! 🏦` },
+        { label: '📲 Tentativa de contato', msg: `Olá, ${nome}! Tentei entrar em contato mas não consegui falar com você.\n\nQuando tiver um momento livre, pode me retornar? Tenho informações importantes que quero compartilhar com você! 📲` },
+        { label: '❌ Desqualificado', msg: `Olá, ${nome}! Tudo bem? 😊\n\nEntendo que por enquanto não avançamos no negócio — sem problema nenhum!\n\nFico totalmente à disposição sempre que precisar. Se sua situação mudar ou surgir uma nova oportunidade, pode me chamar. Até logo! 👋` },
+      ];
+      const especificos = templates[cliente.tipo] || [
         { label: '👋 Olá', msg: `Olá, ${nome}! Tudo bem? 😊\n\nPassei para dar um alô e saber como você está.\n\nPodemos conversar? 😊` },
       ];
+      return [...especificos, ...universais];
     },
 
     openWhatsApp(cliente, step = null) {
