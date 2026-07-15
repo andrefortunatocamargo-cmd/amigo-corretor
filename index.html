@@ -258,7 +258,7 @@ tailwind.config = {
 <div x-show="loggedIn">
 
 <!-- HEADER -->
-<header class="gradient-header text-white shadow-xl sticky top-0 z-40">
+<header class="gradient-header text-white shadow-xl sticky top-0 z-40 sm:pl-[72px]">
 
   <!-- Faixa superior: Essense + botões de acesso rápido -->
   <div class="bg-white border-b border-gray-100 px-3 py-1.5">
@@ -458,7 +458,7 @@ tailwind.config = {
 </header>
 
 <!-- ALERT BAR -->
-<div class="bg-green-800 border-b border-green-900">
+<div class="bg-green-800 border-b border-green-900 sm:pl-[72px]">
   <div class="max-w-7xl mx-auto px-4 py-1.5 flex items-center gap-3">
     <span class="text-green-300 text-xs font-black tracking-widest uppercase hidden sm:flex items-center gap-1.5">
       <i class="fa-solid fa-house-chimney text-green-400"></i> AMiGO Corretor
@@ -481,7 +481,7 @@ tailwind.config = {
 </div>
 
 <!-- MAIN CONTENT -->
-<main class="max-w-7xl mx-auto px-4 py-4 sm:py-6 pb-24 sm:pb-6 sm:pr-[84px]" x-show="section==='vendas'">
+<main class="max-w-7xl mx-auto px-4 py-4 sm:py-6 pb-24 sm:pb-6 sm:pl-[80px]" x-show="section==='vendas'">
 
   <!-- Sub-nav mobile (Dashboard/Clientes/Agenda — só aparece em mobile dentro do section vendas) -->
   <div class="sm:hidden flex items-center gap-2 mb-4 overflow-x-auto pb-1">
@@ -1374,53 +1374,70 @@ tailwind.config = {
 
 </main>
 
-<!-- ========== SIDEBAR DIREITA (desktop) ========== -->
-<aside class="hidden sm:flex fixed right-0 top-[110px] bottom-0 z-30 w-[72px] flex-col items-center py-4 gap-1 border-l border-green-900 border-opacity-30"
-       style="background:linear-gradient(180deg,#1a3a2a,#0f2519)">
-  <!-- Vendas -->
-  <button @click="section='vendas'; page='dashboard'"
-          class="group flex flex-col items-center gap-1 w-full py-3 px-1 rounded-none transition-all relative"
-          :class="section==='vendas' ? 'bg-white bg-opacity-10' : 'hover:bg-white hover:bg-opacity-5'">
-    <div class="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
-         :class="section==='vendas' ? 'bg-green-500' : 'bg-white bg-opacity-10 group-hover:bg-opacity-20'">
-      <i class="fa-solid fa-handshake text-white text-sm"></i>
-    </div>
-    <span class="text-[9px] font-bold leading-tight text-center" :class="section==='vendas' ? 'text-white' : 'text-green-400'">Vendas &<br>Locações</span>
-    <div x-show="section==='vendas'" class="absolute left-0 top-2 bottom-2 w-0.5 bg-green-400 rounded-r"></div>
-  </button>
+<!-- ========== SIDEBAR ESQUERDA — padrão Pipedrive/Linear ========== -->
+<aside class="hidden sm:flex fixed left-0 top-0 bottom-0 z-[45] w-[72px] flex-col items-center pt-0 pb-3"
+       style="background:linear-gradient(180deg,#162b1e 0%,#1a3325 100%);border-right:1px solid rgba(255,255,255,0.06)">
 
-  <!-- Captações -->
-  <button @click="section='captacoes'"
-          class="group flex flex-col items-center gap-1 w-full py-3 px-1 rounded-none transition-all relative"
-          :class="section==='captacoes' ? 'bg-white bg-opacity-10' : 'hover:bg-white hover:bg-opacity-5'">
-    <div class="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all"
-         :class="section==='captacoes' ? 'bg-purple-500' : 'bg-white bg-opacity-10 group-hover:bg-opacity-20'">
-      <i class="fa-solid fa-map-location-dot text-white text-sm"></i>
-      <span x-show="captacoesPendentesHoje().length > 0"
-            class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center"
-            x-text="captacoesPendentesHoje().length"></span>
+  <!-- Logo topo -->
+  <div class="w-full flex items-center justify-center py-3.5 flex-shrink-0 border-b border-white border-opacity-5 mb-2">
+    <div class="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-lg">
+      <i class="fa-solid fa-house-chimney text-green-700 text-sm"></i>
     </div>
-    <span class="text-[9px] font-bold leading-tight text-center" :class="section==='captacoes' ? 'text-white' : 'text-green-400'">Captações</span>
-    <div x-show="section==='captacoes'" class="absolute left-0 top-2 bottom-2 w-0.5 bg-purple-400 rounded-r"></div>
-  </button>
+  </div>
 
-  <div class="flex-1"></div>
+  <!-- Itens de navegação -->
+  <div class="flex-1 flex flex-col items-center gap-0.5 w-full px-2">
 
-  <!-- Configurações -->
-  <button @click="section='configuracoes'"
-          class="group flex flex-col items-center gap-1 w-full py-3 px-1 rounded-none transition-all relative"
-          :class="section==='configuracoes' ? 'bg-white bg-opacity-10' : 'hover:bg-white hover:bg-opacity-5'">
-    <div class="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
-         :class="section==='configuracoes' ? 'bg-gray-500' : 'bg-white bg-opacity-10 group-hover:bg-opacity-20'">
-      <i class="fa-solid fa-gear text-white text-sm"></i>
-    </div>
-    <span class="text-[9px] font-bold leading-tight text-center" :class="section==='configuracoes' ? 'text-white' : 'text-green-400'">Config</span>
-    <div x-show="section==='configuracoes'" class="absolute left-0 top-2 bottom-2 w-0.5 bg-gray-400 rounded-r"></div>
-  </button>
+    <!-- Vendas & Locações -->
+    <button @click="section='vendas'; page='dashboard'" title="Vendas & Locações"
+            class="group w-full flex flex-col items-center gap-1 py-2.5 px-1.5 rounded-xl transition-all duration-150"
+            :class="section==='vendas' ? 'bg-white bg-opacity-15' : 'hover:bg-white hover:bg-opacity-8'">
+      <div class="relative w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+           :class="section==='vendas' ? 'text-white' : 'text-white text-opacity-45 group-hover:text-opacity-80'">
+        <i class="fa-solid fa-handshake text-sm"></i>
+      </div>
+      <span class="text-[8px] font-bold leading-tight text-center transition-all"
+            :class="section==='vendas' ? 'text-white' : 'text-white text-opacity-40 group-hover:text-opacity-70'">Vendas</span>
+    </button>
+
+    <!-- Captações -->
+    <button @click="section='captacoes'" title="Captações"
+            class="group w-full flex flex-col items-center gap-1 py-2.5 px-1.5 rounded-xl transition-all duration-150"
+            :class="section==='captacoes' ? 'bg-white bg-opacity-15' : 'hover:bg-white hover:bg-opacity-8'">
+      <div class="relative w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+           :class="section==='captacoes' ? 'text-white' : 'text-white text-opacity-45 group-hover:text-opacity-80'">
+        <i class="fa-solid fa-map-location-dot text-sm"></i>
+        <span x-show="captacoesPendentesHoje().length > 0"
+              class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-400 text-white text-[8px] font-black rounded-full flex items-center justify-center border border-green-900"
+              x-text="captacoesPendentesHoje().length"></span>
+      </div>
+      <span class="text-[8px] font-bold leading-tight text-center transition-all"
+            :class="section==='captacoes' ? 'text-white' : 'text-white text-opacity-40 group-hover:text-opacity-70'">Captações</span>
+    </button>
+
+  </div>
+
+  <!-- Divisor -->
+  <div class="w-8 border-t my-1.5" style="border-color:rgba(255,255,255,0.08)"></div>
+
+  <!-- Configurações — ancorada no rodapé -->
+  <div class="flex flex-col items-center gap-0.5 w-full px-2">
+    <button @click="section='configuracoes'" title="Configurações"
+            class="group w-full flex flex-col items-center gap-1 py-2.5 px-1.5 rounded-xl transition-all duration-150"
+            :class="section==='configuracoes' ? 'bg-white bg-opacity-15' : 'hover:bg-white hover:bg-opacity-8'">
+      <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+           :class="section==='configuracoes' ? 'text-white' : 'text-white text-opacity-45 group-hover:text-opacity-80'">
+        <i class="fa-solid fa-gear text-sm"></i>
+      </div>
+      <span class="text-[8px] font-bold leading-tight text-center transition-all"
+            :class="section==='configuracoes' ? 'text-white' : 'text-white text-opacity-40 group-hover:text-opacity-70'">Config</span>
+    </button>
+  </div>
+
 </aside>
 
 <!-- ========== SEÇÃO CAPTAÇÕES ========== -->
-<section x-show="section==='captacoes'" class="max-w-7xl mx-auto px-4 py-4 sm:py-6 pb-24 sm:pb-6 sm:pr-[84px]">
+<section x-show="section==='captacoes'" class="max-w-7xl mx-auto px-4 py-4 sm:py-6 pb-24 sm:pb-6 sm:pl-[80px]">
 
   <!-- Header Captações -->
   <div class="flex items-center justify-between mb-5">
@@ -1567,7 +1584,7 @@ tailwind.config = {
 </section>
 
 <!-- ========== SEÇÃO CONFIGURAÇÕES ========== -->
-<section x-show="section==='configuracoes'" class="max-w-2xl mx-auto px-4 py-4 sm:py-6 pb-24 sm:pb-6 sm:pr-[84px]">
+<section x-show="section==='configuracoes'" class="max-w-2xl mx-auto px-4 py-4 sm:py-6 pb-24 sm:pb-6 sm:pl-[80px]">
 
   <div class="mb-6">
     <h1 class="text-xl font-black text-gray-800 flex items-center gap-2">
