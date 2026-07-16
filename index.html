@@ -2674,9 +2674,12 @@ tailwind.config = {
         <p class="text-xs font-semibold text-gray-600 mb-2">Outras mensagens rápidas:</p>
         <div class="flex flex-wrap gap-1.5">
           <template x-for="tmpl in getTemplates(waCliente)" :key="tmpl.label">
-            <button @click="waMensagem = tmpl.msg"
-              class="text-xs bg-white border border-gray-200 hover:border-green-400 hover:text-green-700 px-2 py-1 rounded-lg transition-colors"
-              x-text="tmpl.label"></button>
+            <button @click="waMensagem = tmpl.msg; if (tmpl.pipeline) waPipelinePendente = tmpl.pipeline"
+              :class="tmpl.pipeline && waPipelinePendente === tmpl.pipeline && waPipelinePendente !== (waCliente?.pipeline || 'atendimento')
+                ? 'bg-green-50 border-green-400 text-green-700'
+                : 'bg-white border-gray-200 hover:border-green-400 hover:text-green-700'"
+              class="text-xs border px-2 py-1 rounded-lg transition-colors"
+              x-text="tmpl.label + (tmpl.pipeline && tmpl.pipeline !== (waCliente?.pipeline || 'atendimento') ? ' →' : '')"></button>
           </template>
         </div>
       </div>
@@ -4347,41 +4350,41 @@ function app() {
       const nome = (cliente.nome || '').split(' ')[0];
       const templates = {
         venda: [
-          { label: '👋 Primeiro contato', msg: `Olá, ${nome}! Tudo bem? 😊\n\nSou corretor e fiquei feliz em ter sua oportunidade de te atender. Quero entender melhor o que você procura para encontrar o imóvel ideal para você.\n\nPodemos conversar melhor? 🏠` },
-          { label: '🏠 Enviando opções', msg: `Olá, ${nome}! 👋\n\nSelecionei algumas opções de imóveis que combinam com o que você me contou. Posso te enviar agora?\n\nMe fala o que prefere: WhatsApp ou e-mail? 📲` },
-          { label: '📅 Agendar visita', msg: `Oi, ${nome}! Como vai?\n\nQue tal agendarmos uma visita? Tenho algumas opções excelentes que você vai adorar pessoalmente!\n\nQuais dias e horários são melhores para você? 🗓️` },
-          { label: '🔄 Follow-up', msg: `Olá, ${nome}! Tudo bem? 😊\n\nPassei para dar um alô e saber se você ainda tem interesse em encontrar o imóvel dos seus sonhos!\n\nTenho novidades interessantes para te mostrar. Podemos conversar? 🏡` },
+          { label: '👋 Primeiro contato', pipeline: 'atendimento', msg: `Olá, ${nome}! Tudo bem? 😊\n\nSou corretor e fiquei feliz em ter sua oportunidade de te atender. Quero entender melhor o que você procura para encontrar o imóvel ideal para você.\n\nPodemos conversar melhor? 🏠` },
+          { label: '🏠 Enviando opções', pipeline: 'atendimento', msg: `Olá, ${nome}! 👋\n\nSelecionei algumas opções de imóveis que combinam com o que você me contou. Posso te enviar agora?\n\nMe fala o que prefere: WhatsApp ou e-mail? 📲` },
+          { label: '📅 Agendar visita', pipeline: 'visita', msg: `Oi, ${nome}! Como vai?\n\nQue tal agendarmos uma visita? Tenho algumas opções excelentes que você vai adorar pessoalmente!\n\nQuais dias e horários são melhores para você? 🗓️` },
+          { label: '🔄 Follow-up', pipeline: 'atendimento', msg: `Olá, ${nome}! Tudo bem? 😊\n\nPassei para dar um alô e saber se você ainda tem interesse em encontrar o imóvel dos seus sonhos!\n\nTenho novidades interessantes para te mostrar. Podemos conversar? 🏡` },
         ],
         locacao: [
-          { label: '🔑 Primeiro contato', msg: `Olá, ${nome}! Tudo bem? 😊\n\nVi que você tem interesse em locação. Tenho ótimas opções disponíveis!\n\nMe conta um pouco mais sobre o que você procura: bairro, tamanho, valor? 🔑` },
-          { label: '📋 Enviando opções', msg: `Oi, ${nome}! 👋\n\nSelecionei imóveis para locação dentro do seu perfil. Posso te apresentar as opções?\n\nQual o melhor canal para te enviar as fotos e detalhes? 📱` },
-          { label: '🔄 Follow-up locação', msg: `Olá, ${nome}! Como vai?\n\nPassei para saber se você ainda está buscando imóvel para alugar. Tenho novidades no mercado!\n\nPodemos conversar? 😊` },
+          { label: '🔑 Primeiro contato', pipeline: 'atendimento', msg: `Olá, ${nome}! Tudo bem? 😊\n\nVi que você tem interesse em locação. Tenho ótimas opções disponíveis!\n\nMe conta um pouco mais sobre o que você procura: bairro, tamanho, valor? 🔑` },
+          { label: '📋 Enviando opções', pipeline: 'atendimento', msg: `Oi, ${nome}! 👋\n\nSelecionei imóveis para locação dentro do seu perfil. Posso te apresentar as opções?\n\nQual o melhor canal para te enviar as fotos e detalhes? 📱` },
+          { label: '🔄 Follow-up locação', pipeline: 'atendimento', msg: `Olá, ${nome}! Como vai?\n\nPassei para saber se você ainda está buscando imóvel para alugar. Tenho novidades no mercado!\n\nPodemos conversar? 😊` },
         ],
         captacao: [
-          { label: '📸 Apresentação', msg: `Olá, ${nome}! Tudo bem? 😊\n\nGostaria de apresentar meu trabalho como corretor para cuidar da venda/locação do seu imóvel.\n\nPosso fazer uma visita para avaliarmos juntos? 🏠` },
-          { label: '📊 Proposta', msg: `Oi, ${nome}! 👋\n\nPreparei uma proposta de captação para o seu imóvel com nossa estratégia de marketing e divulgação.\n\nPodemos marcar uma reunião para apresentar? 📋` },
-          { label: '🔄 Acompanhamento', msg: `Olá, ${nome}! Como vai?\n\nPassei para dar uma atualização sobre as visitas e interessados no seu imóvel.\n\nQuer que eu te passe um relatório? 📊` },
+          { label: '📸 Apresentação', pipeline: 'atendimento', msg: `Olá, ${nome}! Tudo bem? 😊\n\nGostaria de apresentar meu trabalho como corretor para cuidar da venda/locação do seu imóvel.\n\nPosso fazer uma visita para avaliarmos juntos? 🏠` },
+          { label: '📊 Proposta captação', pipeline: 'proposta', msg: `Oi, ${nome}! 👋\n\nPreparei uma proposta de captação para o seu imóvel com nossa estratégia de marketing e divulgação.\n\nPodemos marcar uma reunião para apresentar? 📋` },
+          { label: '🔄 Acompanhamento', pipeline: 'atendimento', msg: `Olá, ${nome}! Como vai?\n\nPassei para dar uma atualização sobre as visitas e interessados no seu imóvel.\n\nQuer que eu te passe um relatório? 📊` },
         ],
         buscar_locacao: [
-          { label: '🔍 Buscando imóvel', msg: `Olá, ${nome}! Tudo bem? 😊\n\nEstou buscando imóveis para locação que combinem com o que você me pediu.\n\nVou te enviar as melhores opções que encontrar! Pode me confirmar os requisitos principais? 🔍` },
+          { label: '🔍 Buscando imóvel', pipeline: 'atendimento', msg: `Olá, ${nome}! Tudo bem? 😊\n\nEstou buscando imóveis para locação que combinem com o que você me pediu.\n\nVou te enviar as melhores opções que encontrar! Pode me confirmar os requisitos principais? 🔍` },
         ],
         buscar_venda: [
-          { label: '🎯 Buscando imóvel', msg: `Olá, ${nome}! Como vai? 😊\n\nEstou garimpando imóveis à venda dentro do seu perfil e orçamento.\n\nAssim que encontrar algo especial te chamo! Tem algum detalhe que devo priorizar? 🎯` },
+          { label: '🎯 Buscando imóvel', pipeline: 'atendimento', msg: `Olá, ${nome}! Como vai? 😊\n\nEstou garimpando imóveis à venda dentro do seu perfil e orçamento.\n\nAssim que encontrar algo especial te chamo! Tem algum detalhe que devo priorizar? 🎯` },
         ],
         parceiro: [
-          { label: '🤝 Proposta parceria', msg: `Olá, ${nome}! Tudo bem? 😊\n\nQueria conversar sobre uma parceria para ampliarmos nossas oportunidades juntos.\n\nTemos clientes e imóveis que podem se complementar. Podemos marcar uma reunião? 🤝` },
-          { label: '📊 Check-in mensal', msg: `Oi, ${nome}! Como estão os negócios? 😊\n\nPassei para fazer nosso check-in mensal e ver se surgiu alguma oportunidade de parceria.\n\nTenho alguns clientes interessantes por aqui. E você? 🏠` },
+          { label: '🤝 Proposta parceria', pipeline: 'proposta', msg: `Olá, ${nome}! Tudo bem? 😊\n\nQueria conversar sobre uma parceria para ampliarmos nossas oportunidades juntos.\n\nTemos clientes e imóveis que podem se complementar. Podemos marcar uma reunião? 🤝` },
+          { label: '📊 Check-in mensal', pipeline: 'atendimento', msg: `Oi, ${nome}! Como estão os negócios? 😊\n\nPassei para fazer nosso check-in mensal e ver se surgiu alguma oportunidade de parceria.\n\nTenho alguns clientes interessantes por aqui. E você? 🏠` },
         ],
         amigo: [
-          { label: '⭐ Agradecimento', msg: `Oi, ${nome}! 😊\n\nMuito obrigado pela indicação! Significa muito para mim.\n\nVou dar o melhor atendimento possível! Se precisar de qualquer coisa, pode contar comigo. 🌟` },
-          { label: '🔄 Atualização', msg: `Olá, ${nome}! Tudo bem? 😊\n\nQueria te dar um retorno sobre a indicação que você me fez. Estou cuidando com muito carinho!\n\nQualquer dúvida, estou à disposição. 🏠` },
+          { label: '⭐ Agradecimento', pipeline: 'atendimento', msg: `Oi, ${nome}! 😊\n\nMuito obrigado pela indicação! Significa muito para mim.\n\nVou dar o melhor atendimento possível! Se precisar de qualquer coisa, pode contar comigo. 🌟` },
+          { label: '🔄 Atualização', pipeline: 'atendimento', msg: `Olá, ${nome}! Tudo bem? 😊\n\nQueria te dar um retorno sobre a indicação que você me fez. Estou cuidando com muito carinho!\n\nQualquer dúvida, estou à disposição. 🏠` },
         ],
       };
       const universais = [
-        { label: '🔍 Buscando imóvel', msg: `Olá, ${nome}! Tudo bem? 😊\n\nEstou em busca ativa de imóveis que combinam com o seu perfil.\n\nAssim que encontrar algo que encaixe no que você procura, te aviso imediatamente! Tem algum detalhe prioritário que devo considerar? 🏠` },
-        { label: '🤝 Parceria', msg: `Olá, ${nome}! Tudo bem? 😊\n\nQue tal conversarmos sobre uma parceria? Acredito que temos oportunidades que se complementam muito bem.\n\nPodemos marcar uma reunião rápida para alinhar? 🤝` },
-        { label: '🏦 Em financiamento', msg: `Oi, ${nome}! Como vai? 😊\n\nPassei para saber como está andando o seu financiamento.\n\nSe precisar de orientação, simulações ou indicação de correspondente bancário de confiança, posso te ajudar! 🏦` },
-        { label: '📲 Tentativa de contato', msg: `Olá, ${nome}! Tentei entrar em contato mas não consegui falar com você.\n\nQuando tiver um momento livre, pode me retornar? Tenho informações importantes que quero compartilhar com você! 📲` },
+        { label: '🔍 Buscando imóvel', pipeline: 'atendimento', msg: `Olá, ${nome}! Tudo bem? 😊\n\nEstou em busca ativa de imóveis que combinam com o seu perfil.\n\nAssim que encontrar algo que encaixe no que você procura, te aviso imediatamente! Tem algum detalhe prioritário que devo considerar? 🏠` },
+        { label: '🤝 Parceria', pipeline: 'atendimento', msg: `Olá, ${nome}! Tudo bem? 😊\n\nQue tal conversarmos sobre uma parceria? Acredito que temos oportunidades que se complementam muito bem.\n\nPodemos marcar uma reunião rápida para alinhar? 🤝` },
+        { label: '🏦 Em financiamento', pipeline: 'proposta', msg: `Oi, ${nome}! Como vai? 😊\n\nPassei para saber como está andando o seu financiamento.\n\nSe precisar de orientação, simulações ou indicação de correspondente bancário de confiança, posso te ajudar! 🏦` },
+        { label: '📲 Tentativa de contato', pipeline: 'atendimento', msg: `Olá, ${nome}! Tentei entrar em contato mas não consegui falar com você.\n\nQuando tiver um momento livre, pode me retornar? Tenho informações importantes que quero compartilhar com você! 📲` },
         { label: '❌ Desqualificado', msg: `Olá, ${nome}! Tudo bem? 😊\n\nEntendo que por enquanto não avançamos no negócio — sem problema nenhum!\n\nFico totalmente à disposição sempre que precisar. Se sua situação mudar ou surgir uma nova oportunidade, pode me chamar. Até logo! 👋` },
       ];
       const especificos = templates[cliente.tipo] || [
