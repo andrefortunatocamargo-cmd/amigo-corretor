@@ -1604,36 +1604,36 @@ tailwind.config = {
   </div>
 
   <!-- Card Resumo -->
-  <div x-data="{ get m() { return $root.getMetricasFunil($root.metricasFiltro) } }" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
       <p class="text-xs text-gray-500 mb-1">Total de Leads</p>
-      <p class="text-2xl font-black text-gray-800" x-text="m.totalLeads"></p>
+      <p class="text-2xl font-black text-gray-800" x-text="getMetricasFunil(metricasFiltro).totalLeads"></p>
     </div>
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
       <p class="text-xs text-gray-500 mb-1">Taxa de Fechamento</p>
-      <p class="text-2xl font-black" style="color:#345448" x-text="m.taxaFechamento + '%'"></p>
+      <p class="text-2xl font-black" style="color:#345448" x-text="getMetricasFunil(metricasFiltro).taxaFechamento + '%'"></p>
     </div>
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
       <p class="text-xs text-gray-500 mb-1">Tempo Médio Total</p>
-      <p class="text-2xl font-black text-gray-800" x-text="m.tempoMedioTotalDias > 0 ? m.tempoMedioTotalDias + 'd' : '—'"></p>
+      <p class="text-2xl font-black text-gray-800" x-text="getMetricasFunil(metricasFiltro).tempoMedioTotalDias > 0 ? getMetricasFunil(metricasFiltro).tempoMedioTotalDias + 'd' : '—'"></p>
     </div>
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
       <p class="text-xs text-gray-500 mb-1">Negócios Fechados</p>
-      <p class="text-2xl font-black text-gray-800" x-text="m.fechados + ' / ' + m.totalLeads"></p>
+      <p class="text-2xl font-black text-gray-800" x-text="getMetricasFunil(metricasFiltro).fechados + ' / ' + getMetricasFunil(metricasFiltro).totalLeads"></p>
     </div>
   </div>
 
   <!-- Funil Visual -->
-  <div x-data="{ get m() { return $root.getMetricasFunil($root.metricasFiltro) } }" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-5">
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-5">
     <h2 class="text-sm font-bold text-gray-700 mb-4">Funil de Conversão</h2>
     <div class="grid grid-cols-3 gap-4">
-      <template x-for="(etapa, i) in m.etapas" :key="etapa.key">
+      <template x-for="(etapa, i) in getMetricasFunil(metricasFiltro).etapas" :key="etapa.key">
         <div class="flex flex-col items-center text-center">
           <!-- Barra proporcional -->
           <div class="w-full flex flex-col items-center mb-3">
             <div class="w-full bg-gray-100 rounded-xl overflow-hidden" style="height:80px; display:flex; align-items:flex-end">
               <div class="w-full rounded-xl transition-all"
-                   :style="'background:' + etapa.cor + '; height:' + Math.max(12, (m.totalLeads > 0 ? Math.round(etapa.total/m.totalLeads*100) : 0)) + '%; min-height:12px'"></div>
+                   :style="'background:' + etapa.cor + '; height:' + Math.max(12, (getMetricasFunil(metricasFiltro).totalLeads > 0 ? Math.round(etapa.total/getMetricasFunil(metricasFiltro).totalLeads*100) : 0)) + '%; min-height:12px'"></div>
             </div>
           </div>
           <span class="text-lg mb-1" x-text="etapa.icone"></span>
@@ -1669,7 +1669,7 @@ tailwind.config = {
   </div>
 
   <!-- Tabela de detalhes por etapa -->
-  <div x-data="{ get m() { return $root.getMetricasFunil($root.metricasFiltro) } }" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-5 overflow-x-auto">
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-5 overflow-x-auto">
     <h2 class="text-sm font-bold text-gray-700 mb-3">Detalhes por Etapa</h2>
     <table class="w-full text-xs min-w-[500px]">
       <thead>
@@ -1683,7 +1683,7 @@ tailwind.config = {
         </tr>
       </thead>
       <tbody>
-        <template x-for="etapa in m.etapas" :key="etapa.key">
+        <template x-for="etapa in getMetricasFunil(metricasFiltro).etapas" :key="etapa.key">
           <tr class="border-b border-gray-50 hover:bg-gray-50">
             <td class="py-2.5 pr-3">
               <div class="flex items-center gap-2">
@@ -1705,47 +1705,64 @@ tailwind.config = {
   </div>
 
   <!-- Comparativo Vendas vs Locações -->
-  <div x-data="{ get c() { return $root.getMetricasComparativo() } }" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-    <template x-for="(tipo, key) in { venda: 'Vendas', locacao: 'Locações' }" :key="key">
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-        <h3 class="text-sm font-bold text-gray-700 mb-3" x-text="key === 'venda' ? '🏷️ Vendas' : '🔑 Locações'"></h3>
-        <div class="space-y-2">
-          <div class="flex justify-between items-center text-sm">
-            <span class="text-gray-500">Total de leads</span>
-            <span class="font-bold text-gray-800" x-text="c[key].totalLeads"></span>
-          </div>
-          <div class="flex justify-between items-center text-sm">
-            <span class="text-gray-500">Taxa de fechamento</span>
-            <span class="font-bold" style="color:#345448" x-text="c[key].taxaFechamento + '%'"></span>
-          </div>
-          <div class="flex justify-between items-center text-sm">
-            <span class="text-gray-500">Tempo médio total</span>
-            <span class="font-bold text-gray-800" x-text="c[key].tempoMedioTotalDias > 0 ? c[key].tempoMedioTotalDias + 'd' : '—'"></span>
-          </div>
-          <div class="flex justify-between items-center text-sm">
-            <span class="text-gray-500">Fechados / Perdidos</span>
-            <span class="font-bold text-gray-800" x-text="c[key].fechados + ' / ' + c[key].perdidos"></span>
-          </div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+      <h3 class="text-sm font-bold text-gray-700 mb-3">🏷️ Vendas</h3>
+      <div class="space-y-2">
+        <div class="flex justify-between items-center text-sm">
+          <span class="text-gray-500">Total de leads</span>
+          <span class="font-bold text-gray-800" x-text="getMetricasFunil('venda').totalLeads"></span>
+        </div>
+        <div class="flex justify-between items-center text-sm">
+          <span class="text-gray-500">Taxa de fechamento</span>
+          <span class="font-bold" style="color:#345448" x-text="getMetricasFunil('venda').taxaFechamento + '%'"></span>
+        </div>
+        <div class="flex justify-between items-center text-sm">
+          <span class="text-gray-500">Tempo médio total</span>
+          <span class="font-bold text-gray-800" x-text="getMetricasFunil('venda').tempoMedioTotalDias > 0 ? getMetricasFunil('venda').tempoMedioTotalDias + 'd' : '—'"></span>
+        </div>
+        <div class="flex justify-between items-center text-sm">
+          <span class="text-gray-500">Fechados / Perdidos</span>
+          <span class="font-bold text-gray-800" x-text="getMetricasFunil('venda').fechados + ' / ' + getMetricasFunil('venda').perdidos"></span>
         </div>
       </div>
-    </template>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+      <h3 class="text-sm font-bold text-gray-700 mb-3">🔑 Locações</h3>
+      <div class="space-y-2">
+        <div class="flex justify-between items-center text-sm">
+          <span class="text-gray-500">Total de leads</span>
+          <span class="font-bold text-gray-800" x-text="getMetricasFunil('locacao').totalLeads"></span>
+        </div>
+        <div class="flex justify-between items-center text-sm">
+          <span class="text-gray-500">Taxa de fechamento</span>
+          <span class="font-bold" style="color:#345448" x-text="getMetricasFunil('locacao').taxaFechamento + '%'"></span>
+        </div>
+        <div class="flex justify-between items-center text-sm">
+          <span class="text-gray-500">Tempo médio total</span>
+          <span class="font-bold text-gray-800" x-text="getMetricasFunil('locacao').tempoMedioTotalDias > 0 ? getMetricasFunil('locacao').tempoMedioTotalDias + 'd' : '—'"></span>
+        </div>
+        <div class="flex justify-between items-center text-sm">
+          <span class="text-gray-500">Fechados / Perdidos</span>
+          <span class="font-bold text-gray-800" x-text="getMetricasFunil('locacao').fechados + ' / ' + getMetricasFunil('locacao').perdidos"></span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Entradas por mês (últimos 6 meses) -->
-  <div x-data="{ get m() { return $root.getMetricasFunil($root.metricasFiltro) } }" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
     <h2 class="text-sm font-bold text-gray-700 mb-4">Entradas & Fechamentos por Mês</h2>
-    <div x-data="{ get maxV() { return Math.max(1, ...this.m.volPorMes.map(v => Math.max(v.entradas, v.fechamentos))) }" class="flex items-end gap-3 h-32">
-      <template x-for="v in m.volPorMes" :key="v.mes">
+    <div class="flex items-end gap-3 h-32">
+      <template x-for="v in getMetricasFunil(metricasFiltro).volPorMes" :key="v.mes">
         <div class="flex-1 flex flex-col items-center gap-1 h-full">
           <div class="w-full flex-1 flex items-end gap-0.5">
-            <!-- Barra entradas -->
             <div class="flex-1 rounded-t-md transition-all"
                  style="background:#345448; opacity:0.85"
-                 :style="'height:' + (maxV > 0 ? Math.max(4, Math.round(v.entradas/maxV*100)) : 4) + '%'"></div>
-            <!-- Barra fechamentos -->
+                 :style="'height:' + Math.max(4, Math.round(v.entradas / Math.max(1, ...getMetricasFunil(metricasFiltro).volPorMes.map(x => Math.max(x.entradas, x.fechamentos))) * 100)) + '%'"></div>
             <div class="flex-1 rounded-t-md transition-all"
                  style="background:#b48860; opacity:0.85"
-                 :style="'height:' + (maxV > 0 ? Math.max(4, Math.round(v.fechamentos/maxV*100)) : 4) + '%'"></div>
+                 :style="'height:' + Math.max(4, Math.round(v.fechamentos / Math.max(1, ...getMetricasFunil(metricasFiltro).volPorMes.map(x => Math.max(x.entradas, x.fechamentos))) * 100)) + '%'"></div>
           </div>
           <p class="text-[9px] text-gray-400 text-center leading-tight" x-text="v.mes"></p>
         </div>
