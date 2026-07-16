@@ -1533,6 +1533,21 @@ tailwind.config = {
       <i x-show="section==='imoveis'" class="fa-solid fa-chevron-right text-white text-opacity-40 text-xs flex-shrink-0"></i>
     </button>
 
+    <!-- Métricas -->
+    <button @click="section='metricas'; menuOpen=false"
+            class="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-150 text-left"
+            :class="section==='metricas' ? 'bg-white bg-opacity-15' : 'hover:bg-white hover:bg-opacity-8'">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all"
+           :class="section==='metricas' ? 'bg-white bg-opacity-20' : 'bg-white bg-opacity-5'">
+        <span class="text-base leading-none">📊</span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="font-bold text-sm transition-all" :class="section==='metricas' ? 'text-white' : 'text-white text-opacity-55'">Métricas</p>
+        <p class="text-[11px] transition-all" :class="section==='metricas' ? 'text-amber-300' : 'text-white text-opacity-30'">Análise do funil</p>
+      </div>
+      <i x-show="section==='metricas'" class="fa-solid fa-chevron-right text-white text-opacity-40 text-xs flex-shrink-0"></i>
+    </button>
+
   </nav>
 
   <!-- Divisor -->
@@ -1562,6 +1577,194 @@ tailwind.config = {
 
 </div>
 <!-- ========== /DRAWER DE MENU ========== -->
+
+<!-- ========== SEÇÃO MÉTRICAS ========== -->
+<section x-show="section==='metricas'" class="max-w-7xl mx-auto px-4 py-4 sm:py-6 pb-24 sm:pb-6">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-5">
+    <div>
+      <h1 class="text-xl font-black text-gray-800 flex items-center gap-2">
+        <span class="w-9 h-9 rounded-xl flex items-center justify-center text-lg" style="background:#345448">📊</span>
+        Métricas & Funil
+      </h1>
+      <p class="text-gray-500 text-sm mt-0.5">Análise de conversão e performance do pipeline</p>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="flex gap-2 mb-5">
+    <template x-for="f in [{k:'todos',l:'Todos'},{k:'venda',l:'Vendas'},{k:'locacao',l:'Locações'}]" :key="f.k">
+      <button @click="metricasFiltro=f.k"
+              class="px-4 py-2 rounded-xl text-sm font-semibold border transition-all"
+              :class="metricasFiltro===f.k ? 'text-white border-transparent' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'"
+              :style="metricasFiltro===f.k ? 'background:#345448' : ''"
+              x-text="f.l"></button>
+    </template>
+  </div>
+
+  <!-- Card Resumo -->
+  <div x-data="{ get m() { return $root.getMetricasFunil($root.metricasFiltro) } }" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+      <p class="text-xs text-gray-500 mb-1">Total de Leads</p>
+      <p class="text-2xl font-black text-gray-800" x-text="m.totalLeads"></p>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+      <p class="text-xs text-gray-500 mb-1">Taxa de Fechamento</p>
+      <p class="text-2xl font-black" style="color:#345448" x-text="m.taxaFechamento + '%'"></p>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+      <p class="text-xs text-gray-500 mb-1">Tempo Médio Total</p>
+      <p class="text-2xl font-black text-gray-800" x-text="m.tempoMedioTotalDias > 0 ? m.tempoMedioTotalDias + 'd' : '—'"></p>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+      <p class="text-xs text-gray-500 mb-1">Negócios Fechados</p>
+      <p class="text-2xl font-black text-gray-800" x-text="m.fechados + ' / ' + m.totalLeads"></p>
+    </div>
+  </div>
+
+  <!-- Funil Visual -->
+  <div x-data="{ get m() { return $root.getMetricasFunil($root.metricasFiltro) } }" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-5">
+    <h2 class="text-sm font-bold text-gray-700 mb-4">Funil de Conversão</h2>
+    <div class="grid grid-cols-3 gap-4">
+      <template x-for="(etapa, i) in m.etapas" :key="etapa.key">
+        <div class="flex flex-col items-center text-center">
+          <!-- Barra proporcional -->
+          <div class="w-full flex flex-col items-center mb-3">
+            <div class="w-full bg-gray-100 rounded-xl overflow-hidden" style="height:80px; display:flex; align-items:flex-end">
+              <div class="w-full rounded-xl transition-all"
+                   :style="'background:' + etapa.cor + '; height:' + Math.max(12, (m.totalLeads > 0 ? Math.round(etapa.total/m.totalLeads*100) : 0)) + '%; min-height:12px'"></div>
+            </div>
+          </div>
+          <span class="text-lg mb-1" x-text="etapa.icone"></span>
+          <p class="font-bold text-sm text-gray-800" x-text="etapa.label"></p>
+          <p class="text-2xl font-black mt-1" :style="'color:' + etapa.cor" x-text="etapa.ativos"></p>
+          <p class="text-[10px] text-gray-400 mb-2">leads ativos</p>
+          <!-- Benchmarks -->
+          <template x-if="etapa.key==='atendimento'">
+            <div class="flex items-center gap-1 text-xs mb-1">
+              <span x-text="etapa.tempoMedioDias > 7 ? '⚠️' : '✅'"></span>
+              <span :class="etapa.tempoMedioDias > 7 ? 'text-red-500' : 'text-green-600'" x-text="etapa.tempoMedioDias + 'd médio'"></span>
+            </div>
+          </template>
+          <template x-if="etapa.key==='visita'">
+            <div class="flex items-center gap-1 text-xs mb-1">
+              <span x-text="etapa.tempoMedioDias > 14 ? '⚠️' : '✅'"></span>
+              <span :class="etapa.tempoMedioDias > 14 ? 'text-red-500' : 'text-green-600'" x-text="etapa.tempoMedioDias + 'd médio'"></span>
+            </div>
+          </template>
+          <template x-if="etapa.key==='proposta'">
+            <div class="flex items-center gap-1 text-xs mb-1">
+              <span x-text="etapa.tempoMedioDias > 30 ? '⚠️' : '✅'"></span>
+              <span :class="etapa.tempoMedioDias > 30 ? 'text-red-500' : 'text-green-600'" x-text="etapa.tempoMedioDias + 'd médio'"></span>
+            </div>
+          </template>
+          <div class="text-[10px] text-gray-400">
+            <span class="text-green-600 font-semibold" x-text="etapa.taxaConversao + '%'"></span> conv ·
+            <span class="text-red-400 font-semibold" x-text="etapa.taxaPerda + '%'"></span> perda
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+
+  <!-- Tabela de detalhes por etapa -->
+  <div x-data="{ get m() { return $root.getMetricasFunil($root.metricasFiltro) } }" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-5 overflow-x-auto">
+    <h2 class="text-sm font-bold text-gray-700 mb-3">Detalhes por Etapa</h2>
+    <table class="w-full text-xs min-w-[500px]">
+      <thead>
+        <tr class="text-gray-400 border-b border-gray-100">
+          <th class="text-left py-2 pr-3 font-semibold">Etapa</th>
+          <th class="text-center py-2 px-2 font-semibold">Total</th>
+          <th class="text-center py-2 px-2 font-semibold">Ativos</th>
+          <th class="text-center py-2 px-2 font-semibold">Perdidos</th>
+          <th class="text-center py-2 px-2 font-semibold">Taxa Conv.</th>
+          <th class="text-center py-2 px-2 font-semibold">Tempo Médio</th>
+        </tr>
+      </thead>
+      <tbody>
+        <template x-for="etapa in m.etapas" :key="etapa.key">
+          <tr class="border-b border-gray-50 hover:bg-gray-50">
+            <td class="py-2.5 pr-3">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full flex-shrink-0" :style="'background:' + etapa.cor"></div>
+                <span class="font-semibold text-gray-700" x-text="etapa.label"></span>
+              </div>
+            </td>
+            <td class="text-center py-2.5 px-2 text-gray-700 font-semibold" x-text="etapa.total"></td>
+            <td class="text-center py-2.5 px-2 text-blue-600 font-semibold" x-text="etapa.ativos"></td>
+            <td class="text-center py-2.5 px-2 text-red-500 font-semibold" x-text="etapa.perdidos"></td>
+            <td class="text-center py-2.5 px-2">
+              <span class="font-semibold text-green-600" x-text="etapa.taxaConversao + '%'"></span>
+            </td>
+            <td class="text-center py-2.5 px-2 text-gray-600" x-text="etapa.tempoMedioDias > 0 ? etapa.tempoMedioDias + 'd' : '—'"></td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Comparativo Vendas vs Locações -->
+  <div x-data="{ get c() { return $root.getMetricasComparativo() } }" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+    <template x-for="(tipo, key) in { venda: 'Vendas', locacao: 'Locações' }" :key="key">
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <h3 class="text-sm font-bold text-gray-700 mb-3" x-text="key === 'venda' ? '🏷️ Vendas' : '🔑 Locações'"></h3>
+        <div class="space-y-2">
+          <div class="flex justify-between items-center text-sm">
+            <span class="text-gray-500">Total de leads</span>
+            <span class="font-bold text-gray-800" x-text="c[key].totalLeads"></span>
+          </div>
+          <div class="flex justify-between items-center text-sm">
+            <span class="text-gray-500">Taxa de fechamento</span>
+            <span class="font-bold" style="color:#345448" x-text="c[key].taxaFechamento + '%'"></span>
+          </div>
+          <div class="flex justify-between items-center text-sm">
+            <span class="text-gray-500">Tempo médio total</span>
+            <span class="font-bold text-gray-800" x-text="c[key].tempoMedioTotalDias > 0 ? c[key].tempoMedioTotalDias + 'd' : '—'"></span>
+          </div>
+          <div class="flex justify-between items-center text-sm">
+            <span class="text-gray-500">Fechados / Perdidos</span>
+            <span class="font-bold text-gray-800" x-text="c[key].fechados + ' / ' + c[key].perdidos"></span>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <!-- Entradas por mês (últimos 6 meses) -->
+  <div x-data="{ get m() { return $root.getMetricasFunil($root.metricasFiltro) } }" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+    <h2 class="text-sm font-bold text-gray-700 mb-4">Entradas & Fechamentos por Mês</h2>
+    <div x-data="{ get maxV() { return Math.max(1, ...this.m.volPorMes.map(v => Math.max(v.entradas, v.fechamentos))) }" class="flex items-end gap-3 h-32">
+      <template x-for="v in m.volPorMes" :key="v.mes">
+        <div class="flex-1 flex flex-col items-center gap-1 h-full">
+          <div class="w-full flex-1 flex items-end gap-0.5">
+            <!-- Barra entradas -->
+            <div class="flex-1 rounded-t-md transition-all"
+                 style="background:#345448; opacity:0.85"
+                 :style="'height:' + (maxV > 0 ? Math.max(4, Math.round(v.entradas/maxV*100)) : 4) + '%'"></div>
+            <!-- Barra fechamentos -->
+            <div class="flex-1 rounded-t-md transition-all"
+                 style="background:#b48860; opacity:0.85"
+                 :style="'height:' + (maxV > 0 ? Math.max(4, Math.round(v.fechamentos/maxV*100)) : 4) + '%'"></div>
+          </div>
+          <p class="text-[9px] text-gray-400 text-center leading-tight" x-text="v.mes"></p>
+        </div>
+      </template>
+    </div>
+    <div class="flex gap-4 mt-3">
+      <div class="flex items-center gap-1.5 text-xs text-gray-500">
+        <div class="w-3 h-3 rounded-sm" style="background:#345448; opacity:0.85"></div>
+        <span>Entradas</span>
+      </div>
+      <div class="flex items-center gap-1.5 text-xs text-gray-500">
+        <div class="w-3 h-3 rounded-sm" style="background:#b48860; opacity:0.85"></div>
+        <span>Fechamentos</span>
+      </div>
+    </div>
+  </div>
+
+</section>
+<!-- ========== /SEÇÃO MÉTRICAS ========== -->
 
 <!-- ========== SEÇÃO CAPTAÇÕES ========== -->
 <section x-show="section==='captacoes'" class="max-w-7xl mx-auto px-4 py-4 sm:py-6 pb-24 sm:pb-6">
@@ -3344,6 +3547,8 @@ function app() {
     mediaDragOver: false,
     kanbanDragging: null,
     kanbanDragOver: null,
+    metricasFiltro: 'todos',
+    metricasPeriodo: '12',
     substatusPopover: null,
     showSubstatusModal: false,
     substatusModalCliente: null,
@@ -5306,11 +5511,155 @@ function app() {
       const idx = this.clientes.findIndex(c => c.id === clienteId);
       if (idx === -1 || !novoPipeline) return;
       const nome = this.clientes[idx].nome || 'Lead';
-      this.clientes[idx] = { ...this.clientes[idx], pipeline: novoPipeline };
+      const c = { ...this.clientes[idx] };
+      const antigoStage = c.pipeline || 'atendimento';
+      c.pipeline = novoPipeline;
+      if (!c.pipelineLog) c.pipelineLog = [];
+      c.pipelineLog.push({ stage: novoPipeline, data: this.todayStr() });
+      this.clientes[idx] = c;
       this.save();
       const labels = { atendimento: 'Em Atendimento', visita: 'Visita Agendada', proposta: 'Proposta' };
       this.addFeedItem('📋', nome + ' → ' + (labels[novoPipeline] || novoPipeline));
       this.showToast('✅ Lead movido para ' + labels[novoPipeline]);
+    },
+
+    getLeadsFiltrados(filtro) {
+      const tipos = filtro === 'venda' ? ['venda'] : filtro === 'locacao' ? ['locacao'] : ['venda', 'locacao'];
+      return this.clientes.filter(c => tipos.includes(c.tipo));
+    },
+
+    getTempoNaEtapa(cliente, stage) {
+      const parseDate = s => s ? new Date(s + 'T00:00:00') : null;
+      const today = new Date(this.todayStr() + 'T00:00:00');
+      const diffDias = (a, b) => Math.max(0, Math.round((b - a) / 86400000));
+      const log = cliente.pipelineLog || [];
+      // Encontra entrada no stage
+      let entradaIdx = -1;
+      for (let i = 0; i < log.length; i++) {
+        if (log[i].stage === stage) { entradaIdx = i; break; }
+      }
+      let inicio = null;
+      if (entradaIdx >= 0) {
+        inicio = parseDate(log[entradaIdx].data);
+      } else if (stage === 'atendimento') {
+        inicio = parseDate(cliente.dataInicio);
+      } else {
+        return 0;
+      }
+      if (!inicio) return 0;
+      // Fim: quando entrou no próximo stage, ou dataFechamento, ou hoje
+      const stagesOrder = ['atendimento', 'visita', 'proposta'];
+      const stagePos = stagesOrder.indexOf(stage);
+      let fim = null;
+      // Procurar entrada em stage posterior no log
+      for (let i = entradaIdx + 1; i < log.length; i++) {
+        const pos = stagesOrder.indexOf(log[i].stage);
+        if (pos > stagePos) { fim = parseDate(log[i].data); break; }
+      }
+      if (!fim && (cliente.status === 'concluido' || cliente.status === 'perdido') && cliente.dataFechamento) {
+        fim = parseDate(cliente.dataFechamento);
+      }
+      if (!fim) fim = today;
+      return diffDias(inicio, fim);
+    },
+
+    getMetricasFunil(filtro) {
+      const leads = this.getLeadsFiltrados(filtro || 'todos');
+      const stages = ['atendimento', 'visita', 'proposta'];
+      const today = new Date(this.todayStr() + 'T00:00:00');
+      const parseDate = s => s ? new Date(s + 'T00:00:00') : null;
+      const diffDias = (a, b) => Math.max(0, Math.round((b - a) / 86400000));
+
+      // Para cada etapa calcular métricas
+      const etapas = stages.map(stage => {
+        const stagesOrder = ['atendimento', 'visita', 'proposta'];
+        const stagePos = stagesOrder.indexOf(stage);
+        // leads que passaram por este stage
+        const passaram = leads.filter(c => {
+          if ((c.pipelineLog || []).some(e => e.stage === stage)) return true;
+          if (stage === 'atendimento') return true; // todos começam em atendimento
+          return false;
+        });
+        const ativos = leads.filter(c => c.status === 'ativo' && (c.pipeline || 'atendimento') === stage);
+        const perdidos = leads.filter(c => c.status === 'perdido' && (() => {
+          const log = c.pipelineLog || [];
+          if (log.some(e => e.stage === stage)) {
+            // O último stage antes de ser perdido
+            const lastStage = (c.pipeline || 'atendimento');
+            return lastStage === stage;
+          }
+          return stage === 'atendimento';
+        })());
+        const convertidos = passaram.filter(c => {
+          const log = c.pipelineLog || [];
+          return log.some(e => stagesOrder.indexOf(e.stage) > stagePos);
+        });
+        // Tempo médio
+        const tempos = passaram.map(c => this.getTempoNaEtapa(c, stage)).filter(t => t > 0);
+        const tempoMedio = tempos.length > 0 ? Math.round(tempos.reduce((a,b) => a+b, 0) / tempos.length) : 0;
+        const sorted = [...tempos].sort((a,b) => a-b);
+        const tempoMediana = sorted.length > 0 ? sorted[Math.floor(sorted.length/2)] : 0;
+        const taxaConversao = passaram.length > 0 ? Math.round(convertidos.length / passaram.length * 100) : 0;
+        const taxaPerda = passaram.length > 0 ? Math.round(perdidos.length / passaram.length * 100) : 0;
+        const labels = { atendimento: 'Atendimento', visita: 'Visita', proposta: 'Proposta' };
+        const icones = { atendimento: '📋', visita: '🏠', proposta: '📝' };
+        const cores = { atendimento: '#3b82f6', visita: '#f59e0b', proposta: '#8b5cf6' };
+        return {
+          key: stage,
+          label: labels[stage],
+          icone: icones[stage],
+          cor: cores[stage],
+          total: passaram.length,
+          ativos: ativos.length,
+          convertidos: convertidos.length,
+          perdidos: perdidos.length,
+          taxaConversao,
+          taxaPerda,
+          tempoMedioDias: tempoMedio,
+          tempoMedianaDias: tempoMediana,
+          distribuicao: leads.length > 0 ? Math.round(passaram.length / leads.length * 100) : 0,
+        };
+      });
+
+      const fechados = leads.filter(c => c.status === 'concluido');
+      const perdidosTotais = leads.filter(c => c.status === 'perdido');
+      const taxaFechamento = leads.length > 0 ? Math.round(fechados.length / leads.length * 100) : 0;
+      // Tempo médio total (dataInicio até dataFechamento)
+      const temposTotais = fechados.map(c => {
+        const ini = parseDate(c.dataInicio);
+        const fim = parseDate(c.dataFechamento);
+        return ini && fim ? diffDias(ini, fim) : 0;
+      }).filter(t => t > 0);
+      const tempoMedioTotal = temposTotais.length > 0 ? Math.round(temposTotais.reduce((a,b)=>a+b,0)/temposTotais.length) : 0;
+
+      // Volume por mês (últimos 6 meses)
+      const volPorMes = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(1);
+        d.setMonth(d.getMonth() - i);
+        const ano = d.getFullYear();
+        const mes = d.getMonth(); // 0-indexed
+        const label = d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }).replace('. ','/')
+          .replace('.','');
+        const entradas = leads.filter(c => {
+          if (!c.dataInicio) return false;
+          const dd = parseDate(c.dataInicio);
+          return dd && dd.getFullYear() === ano && dd.getMonth() === mes;
+        }).length;
+        const fecMes = fechados.filter(c => {
+          if (!c.dataFechamento) return false;
+          const dd = parseDate(c.dataFechamento);
+          return dd && dd.getFullYear() === ano && dd.getMonth() === mes;
+        }).length;
+        volPorMes.push({ mes: label, entradas, fechamentos: fecMes });
+      }
+
+      return { etapas, totalLeads: leads.length, fechados: fechados.length, perdidos: perdidosTotais.length, taxaFechamento, tempoMedioTotalDias: tempoMedioTotal, volPorMes };
+    },
+
+    getMetricasComparativo() {
+      return { venda: this.getMetricasFunil('venda'), locacao: this.getMetricasFunil('locacao') };
     },
 
     statsResultados() {
