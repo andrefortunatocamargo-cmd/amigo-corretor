@@ -664,6 +664,32 @@ tailwind.config = {
       </div>
     </div>
 
+    <!-- REATIVAÇÃO DE LEADS FRIOS -->
+    <div x-show="getLeadsParaReativar().length > 0" class="mt-4 bg-white rounded-2xl shadow-sm border border-blue-200 overflow-hidden">
+      <div class="px-4 py-3 flex items-center gap-2" style="background:linear-gradient(135deg,#1e40af,#1d4ed8)">
+        <i class="fa-solid fa-rotate-right text-white text-sm"></i>
+        <h2 class="text-white font-bold text-sm">REATIVAÇÃO — Leads sem contato</h2>
+        <span class="ml-auto bg-white text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full" x-text="getLeadsParaReativar().length"></span>
+      </div>
+      <div class="p-3 space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
+        <template x-for="c in getLeadsParaReativar()" :key="c.id">
+          <div class="flex items-center gap-3 p-3 rounded-xl bg-blue-50 border border-blue-100">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0" :style="'background:' + getTipoColor(c.tipo)">
+              <span x-text="getTipoIcon(c.tipo)"></span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-bold text-gray-800 text-sm truncate" x-text="c.nome"></p>
+              <p class="text-xs text-blue-700 font-semibold" x-text="'🧊 Frio há ' + getTemperatura(c)?.dias + ' dias sem contato'"></p>
+              <p class="text-[10px] text-gray-400 truncate" x-text="c.imovel || getTipoLabel(c.tipo)"></p>
+            </div>
+            <button @click="openWhatsApp(c, null, 'reativacao')" class="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg text-white text-xs font-bold transition-colors" style="background:#1d4ed8" title="Enviar mensagem de reativação">
+              <i class="fa-brands fa-whatsapp"></i> Reativar
+            </button>
+          </div>
+        </template>
+      </div>
+    </div>
+
     <!-- Próximos 7 dias -->
     <div class="mt-6 bg-white rounded-2xl shadow-sm border border-blue-100 overflow-hidden">
       <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-3 flex items-center gap-2 flex-wrap">
@@ -2366,6 +2392,14 @@ tailwind.config = {
             class="bg-blue-100 text-blue-700 text-[9px] font-black px-1.5 rounded-full"
             x-text="(timelineCliente?.contatoLog||[]).length"></span>
         </button>
+        <button @click="timelineAba='docs'"
+          :class="timelineAba==='docs' ? 'bg-white text-amber-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+          class="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-file-check text-[11px]"></i> Docs
+          <span x-show="getDocsPendentes(timelineCliente) > 0"
+            class="bg-red-100 text-red-600 text-[9px] font-black px-1.5 rounded-full"
+            x-text="getDocsPendentes(timelineCliente)"></span>
+        </button>
       </div>
 
       <!-- ===== ABA HISTÓRICO ===== -->
@@ -2424,6 +2458,53 @@ tailwind.config = {
         </div>
       </div>
       <!-- ===== FIM ABA HISTÓRICO ===== -->
+
+      <!-- ===== ABA DOCS ===== -->
+      <div x-show="timelineAba==='docs'">
+        <div class="mb-3 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-bold text-gray-700">Checklist de documentação</p>
+            <p class="text-[11px] text-gray-400 mt-0.5" x-text="getDocsChecklist(timelineCliente).filter(d=>d.ok).length + '/' + getDocsChecklist(timelineCliente).length + ' documentos recebidos'"></p>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <div class="text-xs font-bold text-amber-700 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-100"
+              x-show="getDocsPendentes(timelineCliente) > 0"
+              x-text="getDocsPendentes(timelineCliente) + ' pendente(s)'"></div>
+            <div class="text-xs font-bold text-green-700 px-2 py-0.5 rounded-full bg-green-50 border border-green-100"
+              x-show="getDocsPendentes(timelineCliente) === 0">
+              ✅ Completo
+            </div>
+          </div>
+        </div>
+
+        <!-- Barra de progresso -->
+        <div class="w-full bg-gray-100 rounded-full h-1.5 mb-4">
+          <div class="h-1.5 rounded-full transition-all duration-500"
+            :style="'width:' + (getDocsChecklist(timelineCliente).filter(d=>d.ok).length / Math.max(getDocsChecklist(timelineCliente).length,1) * 100) + '%; background:' + (getDocsPendentes(timelineCliente)===0 ? '#16a34a' : '#f59e0b')">
+          </div>
+        </div>
+
+        <!-- Lista de docs -->
+        <div class="space-y-2">
+          <template x-for="doc in getDocsChecklist(timelineCliente)" :key="doc.id">
+            <div class="flex items-center gap-3 p-2.5 rounded-xl border transition-all cursor-pointer"
+              :class="doc.ok ? 'bg-green-50 border-green-200' : 'bg-white border-gray-100 hover:border-amber-200'"
+              @click="toggleDoc(timelineCliente, doc.id)">
+              <div class="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition-all"
+                :class="doc.ok ? 'bg-green-500' : 'bg-gray-100 border border-gray-200'">
+                <i x-show="doc.ok" class="fa-solid fa-check text-white text-[10px]"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-semibold" :class="doc.ok ? 'text-green-700 line-through' : 'text-gray-700'" x-text="doc.nome"></p>
+                <p class="text-[10px] text-gray-400" x-text="doc.desc"></p>
+              </div>
+              <span x-show="doc.obrigatorio && !doc.ok" class="text-[9px] font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded-full border border-red-100">obrigatório</span>
+            </div>
+          </template>
+        </div>
+        <p class="text-[10px] text-gray-400 text-center mt-3">Toque em cada item para marcar como recebido</p>
+      </div>
+      <!-- ===== FIM ABA DOCS ===== -->
 
       <!-- ===== ABA TIMELINE ===== -->
       <div x-show="timelineAba==='timeline'">
@@ -2575,8 +2656,21 @@ tailwind.config = {
         <p class="text-xs text-gray-400 mt-0.5">Você pode editar antes de enviar.</p>
       </div>
 
-      <!-- Mensagens rápidas -->
-      <div class="p-3 bg-gray-50 rounded-xl">
+      <!-- Templates de reativação (contexto especial) -->
+      <div x-show="waContexto === 'reativacao'" class="p-3 rounded-xl border border-blue-100" style="background:#eff6ff">
+        <p class="text-xs font-bold text-blue-700 mb-2"><i class="fa-solid fa-rotate-right mr-1"></i>Opções de mensagem de reativação:</p>
+        <div class="space-y-1.5">
+          <template x-for="(msg, i) in (waTemplatesReativacao || [])" :key="i">
+            <button @click="waMensagem = msg"
+              class="w-full text-left text-xs p-2 rounded-lg border transition-all"
+              :class="waMensagem === msg ? 'border-blue-400 bg-blue-50 text-blue-800 font-semibold' : 'border-blue-100 bg-white text-gray-600 hover:border-blue-300'"
+              x-text="'Opção ' + (i+1) + ': ' + msg.substring(0, 60) + '...'"></button>
+          </template>
+        </div>
+      </div>
+
+      <!-- Mensagens rápidas (contexto normal) -->
+      <div x-show="waContexto !== 'reativacao'" class="p-3 bg-gray-50 rounded-xl">
         <p class="text-xs font-semibold text-gray-600 mb-2">Outras mensagens rápidas:</p>
         <div class="flex flex-wrap gap-1.5">
           <template x-for="tmpl in getTemplates(waCliente)" :key="tmpl.label">
@@ -3118,6 +3212,8 @@ function app() {
     timelineCliente: null,
     waCliente: null,
     waStep: null,
+    waContexto: null,
+    waTemplatesReativacao: null,
     waMensagem: '',
     waObservacao: '',
     waPipelinePendente: null,
@@ -3731,6 +3827,14 @@ function app() {
       return timeline.find(s => !s.feito) || null;
     },
 
+    getLeadsParaReativar() {
+      return this.clientes.filter(c => {
+        if (!c.ativo || c.status !== 'ativo') return false;
+        const temp = this.getTemperatura(c);
+        return temp && temp.label === 'frio';
+      }).sort((a, b) => (this.getTemperatura(b)?.dias || 0) - (this.getTemperatura(a)?.dias || 0));
+    },
+
     getTemperatura(cliente) {
       if (!cliente.ativo || cliente.status !== 'ativo') return null;
       const timeline = this.getTimeline(cliente);
@@ -4091,6 +4195,54 @@ function app() {
       this.save();
     },
 
+    // ===== CHECKLIST DE DOCUMENTAÇÃO =====
+    getDocsTemplate(tipo) {
+      const base = [
+        { id: 'rg',       nome: 'RG ou CNH', desc: 'Documento de identidade com foto', obrigatorio: true },
+        { id: 'cpf',      nome: 'CPF', desc: 'Cadastro de Pessoa Física', obrigatorio: true },
+        { id: 'renda',    nome: 'Comprovante de renda', desc: 'Últimos 3 holerites ou declaração IR', obrigatorio: true },
+        { id: 'resi',     nome: 'Comprovante de residência', desc: 'Conta de luz, água ou telefone', obrigatorio: true },
+        { id: 'estadociv',nome: 'Estado civil', desc: 'Certidão de casamento, divórcio ou nascimento', obrigatorio: false },
+      ];
+      const venda = [
+        { id: 'extrato',  nome: 'Extratos bancários', desc: 'Últimos 3 meses', obrigatorio: true },
+        { id: 'ir',       nome: 'Declaração de IR', desc: 'Último exercício + recibo', obrigatorio: false },
+        { id: 'matricula',nome: 'Matrícula do imóvel', desc: 'Fornecida pelo vendedor (certidão atualizada)', obrigatorio: true },
+        { id: 'iptu',     nome: 'IPTU em dia', desc: 'Comprovante de quitação', obrigatorio: false },
+        { id: 'corretagem',nome:'Contrato de corretagem', desc: 'Assinado pelo comprador', obrigatorio: true },
+      ];
+      const locacao = [
+        { id: 'fiador',   nome: 'Dados do fiador ou garantia', desc: 'Fiador, seguro ou caução', obrigatorio: true },
+        { id: 'extrato',  nome: 'Extratos bancários', desc: 'Últimos 2 meses', obrigatorio: false },
+        { id: 'contrato', nome: 'Contrato de locação', desc: 'Assinado por ambas as partes', obrigatorio: true },
+      ];
+      if (tipo === 'locacao') return [...base, ...locacao];
+      return [...base, ...venda];
+    },
+
+    getDocsChecklist(cliente) {
+      if (!cliente) return [];
+      const template = this.getDocsTemplate(cliente.tipo);
+      const marcados = cliente.docsMarcados || {};
+      return template.map(d => ({ ...d, ok: !!marcados[d.id] }));
+    },
+
+    getDocsPendentes(cliente) {
+      if (!cliente) return 0;
+      return this.getDocsChecklist(cliente).filter(d => d.obrigatorio && !d.ok).length;
+    },
+
+    toggleDoc(cliente, docId) {
+      const idx = this.clientes.findIndex(c => c.id === cliente.id);
+      if (idx === -1) return;
+      const c = { ...this.clientes[idx] };
+      if (!c.docsMarcados) c.docsMarcados = {};
+      c.docsMarcados[docId] = !c.docsMarcados[docId];
+      this.clientes[idx] = c;
+      this.timelineCliente = c;
+      this.save();
+    },
+
     // ===== CARTEIRA DE IMÓVEIS =====
     imoveisFiltrados() {
       const b = this.imoveisBusca.toLowerCase();
@@ -4238,14 +4390,27 @@ function app() {
       return [...especificos, ...universais];
     },
 
-    openWhatsApp(cliente, step = null) {
+    openWhatsApp(cliente, step = null, contexto = null) {
       this.waCliente = cliente;
       this.waStep = step;
+      this.waContexto = contexto;
       this.waPipelinePendente = cliente.pipeline || 'atendimento';
       this.waObservacao = cliente.observacao || '';
       const nome = (cliente.nome || '').split(' ')[0];
-      const templates = this.getTemplates(cliente);
-      this.waMensagem = templates[0]?.msg || `Olá, ${nome}! Tudo bem? Passando para dar um alô! 😊`;
+      const dias = this.getTemperatura(cliente)?.dias || 0;
+      if (contexto === 'reativacao') {
+        const msgs = [
+          `Olá, ${nome}! Tudo bem? Aqui é o André, da Essense Imóveis. Faz um tempinho que não nos falamos — queria saber como você está e se ainda está em busca do imóvel ideal. Tenho novidades que podem te interessar! 🏡`,
+          `Oi, ${nome}! André, da Essense. Estava revisando minha agenda e vi que faz ${dias} dias sem nos falarmos. Surgiu uma oportunidade nova que combina bastante com o que você procura. Podemos conversar?`,
+          `${nome}, bom dia! Sou o André, da Essense Imóveis. Sei que a busca pelo imóvel ideal leva tempo — queria apenas reforçar que estou à disposição. Alguma novidade no seu cenário? Posso te ajudar! 😊`,
+        ];
+        this.waMensagem = msgs[0];
+        this.waTemplatesReativacao = msgs;
+      } else {
+        this.waTemplatesReativacao = null;
+        const templates = this.getTemplates(cliente);
+        this.waMensagem = templates[0]?.msg || `Olá, ${nome}! Tudo bem? Passando para dar um alô! 😊`;
+      }
       this.showWhatsApp = true;
     },
 
