@@ -1081,6 +1081,7 @@ tailwind.config = {
                      draggable="true"
                      @dragstart="kanbanDragStart(c.id)"
                      @dragend="kanbanDragEnd()"
+                     @dblclick.stop="pipelineQuickCliente = c; showPipelineQuick = true"
                      :class="kanbanDragging === c.id ? 'opacity-40 scale-95' : ''">
                   <!-- Drag handle -->
                   <span class="text-gray-300 text-sm cursor-grab flex-shrink-0 leading-none" style="font-size:14px">⠿</span>
@@ -3091,6 +3092,36 @@ tailwind.config = {
 </div>
 
 <!-- ========== POPUP VERSÍCULO ========== -->
+<!-- Modal Pipeline Rápido (duplo clique no card) -->
+<div x-show="showPipelineQuick" x-transition class="fixed inset-0 flex items-end sm:items-center justify-center sm:p-4 z-50" style="background:rgba(0,0,0,0.45)" @click.self="showPipelineQuick=false">
+  <div class="bg-white w-full sm:max-w-xs rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden" @click.stop>
+    <div class="px-5 pt-5 pb-3 border-b border-gray-100 flex items-center justify-between">
+      <div>
+        <p class="text-xs text-gray-500 font-medium">Mover no Kanban</p>
+        <p class="text-sm font-bold text-gray-800 truncate" x-text="pipelineQuickCliente?.nome"></p>
+      </div>
+      <button @click="showPipelineQuick=false" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <div class="p-4 space-y-2">
+      <template x-for="op in pipelineOpcoes" :key="op.value">
+        <button @click="mudarPipeline(pipelineQuickCliente.id, op.value); showPipelineQuick=false; showToast('Movido para ' + op.label + ' ✅')"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-sm font-bold transition-all"
+          :class="(pipelineQuickCliente?.pipeline || 'atendimento') === op.value
+            ? 'text-white border-transparent shadow-md'
+            : 'bg-white text-gray-600 hover:border-opacity-60'"
+          :style="(pipelineQuickCliente?.pipeline || 'atendimento') === op.value
+            ? 'background:' + op.cor + '; border-color:' + op.cor
+            : 'border-color:' + op.cor + '40; color:' + op.cor">
+          <span class="text-lg" x-text="op.icone"></span>
+          <span x-text="op.label"></span>
+          <i x-show="(pipelineQuickCliente?.pipeline || 'atendimento') === op.value" class="fa-solid fa-check ml-auto"></i>
+          <span x-show="(pipelineQuickCliente?.pipeline || 'atendimento') !== op.value" class="ml-auto text-xs opacity-50">Mover →</span>
+        </button>
+      </template>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Substatus -->
 <div x-show="showSubstatusModal" x-transition class="fixed inset-0 flex items-end sm:items-center justify-center sm:p-4 z-50" style="background:rgba(0,0,0,0.45)" @click.self="showSubstatusModal=false">
   <div class="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden" @click.stop>
@@ -3316,6 +3347,8 @@ function app() {
     substatusPopover: null,
     showSubstatusModal: false,
     substatusModalCliente: null,
+    showPipelineQuick: false,
+    pipelineQuickCliente: null,
     substatusOpcoes: [
       { id: 'primeiro_contato',   label: 'Primeiro contato',   emoji: '🔑' },
       { id: 'enviando_opcoes',    label: 'Enviando opções',    emoji: '📋' },
