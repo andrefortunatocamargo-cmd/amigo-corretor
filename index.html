@@ -755,6 +755,7 @@ tailwind.config = {
                     @dragstart="item.isExtra ? $event.preventDefault() : (item.data < todayStr() ? $event.dataTransfer.setData('text','') || true : startCalDrag($event, item))"
                     @dragend="calDragOver = null; calDraggingId = null"
                     @click.stop="if(!item.isExtra) openWhatsApp(item.cliente, item)"
+                    @dblclick.stop="if(!item.isExtra) { calStatusAberto = calStatusAberto === item.id ? null : item.id }"
                   >
                     <!-- Barra de cor do pipeline -->
                     <div class="w-full h-1.5 rounded-full mb-0.5 transition-colors duration-200"
