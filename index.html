@@ -1820,102 +1820,144 @@ tailwind.config = {
         </span>
         Agenda de Visitas
       </h1>
-      <p class="text-gray-400 text-sm mt-0.5">Leads em estágio de visita · clique em qualquer card para editar</p>
+      <p class="text-gray-400 text-sm mt-0.5">Vendas, locações e captações · ordenadas por data e hora</p>
     </div>
-    <button @click="window.print()"
-      class="flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-semibold transition-colors print:hidden">
-      <i class="fa-solid fa-print text-xs"></i> Imprimir
-    </button>
+    <!-- Ações -->
+    <div class="flex gap-2 print:hidden">
+      <button @click="compartilharAgendaWhatsApp()"
+        class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-white text-sm font-semibold transition-colors"
+        style="background:#25d366">
+        <i class="fa-brands fa-whatsapp text-base"></i>
+        <span class="hidden sm:inline">Enviar</span>
+      </button>
+      <button @click="window.print()"
+        class="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-semibold transition-colors">
+        <i class="fa-solid fa-print text-xs"></i>
+        <span class="hidden sm:inline">Imprimir</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="flex gap-2 mb-5 print:hidden">
+    <template x-for="f in [{k:'todos',l:'Todos',e:'📋'},{k:'clientes',l:'Vendas & Locações',e:'🏠'},{k:'captacoes',l:'Captações',e:'🔍'}]" :key="f.k">
+      <button @click="agendaFiltro=f.k"
+        class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all"
+        :class="agendaFiltro===f.k ? 'text-white border-transparent' : 'bg-white text-gray-600 border-gray-200'"
+        :style="agendaFiltro===f.k ? 'background:#f59e0b' : ''"
+        x-text="f.e + ' ' + f.l + ' (' + getVisitasAgendadas(f.k).length + ')'"></button>
+    </template>
   </div>
 
   <!-- Vazio -->
-  <template x-if="getVisitasAgendadas().length === 0">
+  <template x-if="getVisitasAgendadas(agendaFiltro).length === 0">
     <div class="bg-white rounded-2xl border border-dashed border-gray-200 py-16 text-center">
       <i class="fa-solid fa-calendar-xmark text-4xl text-gray-200 mb-3 block"></i>
       <p class="text-gray-500 font-semibold">Nenhuma visita agendada</p>
-      <p class="text-gray-400 text-sm mt-1">Mova um lead para "Visita Agendada" no kanban para aparecer aqui</p>
+      <p class="text-gray-400 text-sm mt-1">Mova leads para "Visita" ou agende visitas de captação</p>
     </div>
   </template>
 
-  <!-- Cards de visita -->
-  <div class="space-y-4">
-    <template x-for="c in getVisitasAgendadas()" :key="c.id">
+  <!-- Cards de visita agrupados por dia -->
+  <div class="space-y-6">
+    <template x-for="c in getVisitasAgendadas(agendaFiltro)" :key="c._tipo + c.id">
       <div class="bg-white rounded-2xl shadow-sm border overflow-hidden print-card"
-           style="border-color:#f59e0b40">
-        <!-- Topo colorido com nome e data/hora -->
-        <div class="px-4 py-3 flex items-center justify-between" style="background:linear-gradient(135deg,#f59e0b15,#f59e0b08)">
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-black flex-shrink-0"
-                 :style="'background:' + getAvatarColor(c.nome)">
-              <span x-text="getInitials(c.nome)"></span>
+           :style="c._tipo === 'captacao' ? 'border-color:#a855f740' : 'border-color:#f59e0b40'">
+
+        <!-- Topo: badge tipo + nome + data/hora -->
+        <div class="px-4 py-3 flex items-center justify-between"
+             :style="c._tipo === 'captacao' ? 'background:linear-gradient(135deg,#a855f710,#a855f706)' : 'background:linear-gradient(135deg,#f59e0b12,#f59e0b06)'">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white text-base font-black flex-shrink-0"
+                 :style="c._tipo === 'captacao' ? 'background:#a855f7' : 'background:' + getAvatarColor(c.nome || c.endereco)">
+              <span x-text="c._tipo === 'captacao' ? '🔍' : getInitials(c.nome)"></span>
             </div>
-            <div>
-              <p class="font-black text-gray-800" x-text="c.nome"></p>
-              <span class="text-xs font-semibold px-2 py-0.5 rounded-full"
-                    :style="'background:' + getTipoColor(c.tipo) + '20; color:' + getTipoColor(c.tipo)"
-                    x-text="getTipoLabel(c.tipo)"></span>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <p class="font-black text-gray-800 truncate"
+                   x-text="c._tipo === 'captacao' ? (c.endereco || 'Captação') : c.nome"></p>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+                      :style="c._tipo === 'captacao' ? 'background:#a855f720;color:#a855f7' : 'background:' + getTipoColor(c.tipo) + '20;color:' + getTipoColor(c.tipo)"
+                      x-text="c._tipo === 'captacao' ? '🔍 Captação' : getTipoLabel(c.tipo)"></span>
+              </div>
+              <p x-show="c._tipo === 'captacao' && (c.bairro || c.cidade)"
+                 class="text-xs text-gray-400 truncate"
+                 x-text="[c.bairro, c.cidade].filter(Boolean).join(', ')"></p>
             </div>
           </div>
-          <div class="text-right flex items-center gap-2">
-            <div x-show="c.visita?.dia">
-              <p class="text-sm font-black text-amber-700" x-text="c.visita?.dia ? new Date(c.visita.dia + 'T12:00:00').toLocaleDateString('pt-BR', {weekday:'short', day:'2-digit', month:'short'}) : '—'"></p>
-              <p class="text-xs font-bold text-amber-500" x-text="c.visita?.horario || ''"></p>
+          <div class="flex items-center gap-2 flex-shrink-0 ml-2">
+            <div class="text-right" x-show="c.visita?.dia">
+              <p class="text-sm font-black"
+                 :style="c._tipo === 'captacao' ? 'color:#a855f7' : 'color:#d97706'"
+                 x-text="new Date(c.visita.dia + 'T12:00:00').toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'})"></p>
+              <p class="text-xs font-bold"
+                 :style="c._tipo === 'captacao' ? 'color:#c084fc' : 'color:#f59e0b'"
+                 x-text="c.visita?.horario || ''"></p>
             </div>
             <div x-show="!c.visita?.dia" class="text-xs text-gray-400 italic">Sem data</div>
-            <button @click="abrirAgendarVisita(c.id)"
-              class="w-8 h-8 rounded-lg flex items-center justify-center text-amber-600 hover:bg-amber-100 transition-colors print:hidden"
+            <button @click="abrirAgendarVisita(c.id, c._tipo)"
+              class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors print:hidden text-gray-400"
               title="Editar visita">
               <i class="fa-solid fa-pen text-xs"></i>
             </button>
           </div>
         </div>
 
-        <!-- Corpo com todas as informações -->
-        <div class="px-4 py-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5 text-sm">
+        <!-- Corpo -->
+        <div class="px-4 py-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
 
-          <!-- Endereço -->
-          <div class="sm:col-span-2" x-show="c.visita?.endereco">
+          <!-- Endereço (visita de captação mostra do próprio registro se não tiver no campo visita) -->
+          <div class="sm:col-span-2" x-show="c.visita?.endereco || (c._tipo === 'captacao' && c.endereco)">
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">📍 Endereço</p>
-            <p class="font-semibold text-gray-800" x-text="c.visita?.endereco || '—'"></p>
+            <p class="font-semibold text-gray-800"
+               x-text="c.visita?.endereco || ([c.endereco, c.bairro, c.cidade].filter(Boolean).join(', '))"></p>
           </div>
 
           <!-- Valor -->
-          <div x-show="c.visita?.valorImovel">
+          <div x-show="c.visita?.valorImovel || (c._tipo === 'captacao' && c.valorPretendido)">
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">💰 Valor</p>
-            <p class="font-bold text-gray-800" x-text="c.visita?.valorImovel || '—'"></p>
+            <p class="font-bold text-gray-800"
+               x-text="c.visita?.valorImovel || (c.valorPretendido ? 'R$ ' + Number(c.valorPretendido).toLocaleString('pt-BR') : '—')"></p>
           </div>
 
-          <!-- Telefone do cliente -->
-          <div x-show="c.telefone">
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">📱 Cliente</p>
+          <!-- Cliente (só para leads, não captação) -->
+          <div x-show="c._tipo === 'cliente' && c.telefone">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">👤 Cliente</p>
             <a :href="'tel:' + c.telefone" class="font-semibold text-blue-600 hover:underline" x-text="c.telefone"></a>
           </div>
 
           <!-- Proprietário -->
-          <div x-show="c.visita?.nomeProprietario || c.visita?.telefoneProprietario">
+          <div x-show="c.visita?.nomeProprietario || c.visita?.telefoneProprietario || (c._tipo === 'captacao' && (c.proprietario || c.telefone))">
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">🏠 Proprietário</p>
-            <p class="font-semibold text-gray-800" x-text="c.visita?.nomeProprietario || ''"></p>
-            <a x-show="c.visita?.telefoneProprietario" :href="'tel:' + c.visita?.telefoneProprietario"
-               class="text-xs text-blue-600 hover:underline" x-text="c.visita?.telefoneProprietario || ''"></a>
+            <p class="font-semibold text-gray-800"
+               x-text="c.visita?.nomeProprietario || (c._tipo === 'captacao' ? c.proprietario : '') || ''"></p>
+            <a class="text-xs text-blue-600 hover:underline"
+               :href="'tel:' + (c.visita?.telefoneProprietario || (c._tipo === 'captacao' ? c.telefone : ''))"
+               x-show="c.visita?.telefoneProprietario || (c._tipo === 'captacao' && c.telefone)"
+               x-text="c.visita?.telefoneProprietario || (c._tipo === 'captacao' ? c.telefone : '')"></a>
           </div>
 
           <!-- Inquilino -->
           <div x-show="c.visita?.nomeInquilino || c.visita?.telefoneInquilino">
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">🔑 Inquilino</p>
             <p class="font-semibold text-gray-800" x-text="c.visita?.nomeInquilino || ''"></p>
-            <a x-show="c.visita?.telefoneInquilino" :href="'tel:' + c.visita?.telefoneInquilino"
-               class="text-xs text-blue-600 hover:underline" x-text="c.visita?.telefoneInquilino || ''"></a>
+            <a x-show="c.visita?.telefoneInquilino"
+               :href="'tel:' + c.visita?.telefoneInquilino"
+               class="text-xs text-blue-600 hover:underline"
+               x-text="c.visita?.telefoneInquilino || ''"></a>
           </div>
 
           <!-- Observações -->
           <div class="sm:col-span-2" x-show="c.visita?.obs">
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">📝 Observações</p>
-            <p class="text-gray-700 text-sm leading-relaxed bg-yellow-50 rounded-lg px-3 py-2 border border-yellow-100" x-text="c.visita?.obs"></p>
+            <p class="text-gray-700 text-sm leading-relaxed bg-yellow-50 rounded-lg px-3 py-2 border border-yellow-100"
+               x-text="c.visita?.obs"></p>
           </div>
 
-          <!-- Sem dados ainda -->
-          <div class="sm:col-span-2" x-show="!c.visita?.endereco && !c.visita?.nomeProprietario && !c.visita?.obs">
-            <button @click="abrirAgendarVisita(c.id)"
+          <!-- Sem dados -->
+          <div class="sm:col-span-2"
+               x-show="!c.visita?.endereco && !c.visita?.nomeProprietario && !c.visita?.obs && !(c._tipo==='captacao' && c.endereco)">
+            <button @click="abrirAgendarVisita(c.id, c._tipo)"
               class="w-full py-2 rounded-xl border border-dashed border-amber-300 text-amber-600 text-xs font-semibold hover:bg-amber-50 transition-colors print:hidden">
               + Preencher dados da visita
             </button>
@@ -2049,6 +2091,13 @@ tailwind.config = {
                 <button @click="whatsappCaptacao(cap)"
                         class="w-8 h-8 rounded-xl flex items-center justify-center text-green-600 bg-green-50 hover:bg-green-100 transition-colors" title="WhatsApp">
                   <i class="fa-brands fa-whatsapp text-xs"></i>
+                </button>
+                <button @click="abrirAgendarVisita(cap.id, 'captacao')"
+                        class="w-8 h-8 rounded-xl flex items-center justify-center transition-colors relative"
+                        :class="cap.visita?.dia ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' : 'text-gray-400 bg-gray-50 hover:bg-gray-100'"
+                        title="Agendar visita de captação">
+                  <i class="fa-solid fa-calendar-plus text-xs"></i>
+                  <span x-show="cap.visita?.dia" class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-400"></span>
                 </button>
                 <button @click="editarCaptacao(cap)"
                         class="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 bg-gray-50 hover:bg-gray-100 transition-colors" title="Editar">
@@ -3466,8 +3515,11 @@ tailwind.config = {
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background:#f59e0b">🏠</div>
           <div>
-            <p class="text-xs text-amber-600 font-semibold">Agendar Visita</p>
-            <p class="text-sm font-bold text-gray-800" x-text="clientes.find(c=>c.id===visitaClienteId)?.nome || ''"></p>
+            <p class="text-xs text-amber-600 font-semibold" x-text="visitaTipo === 'captacao' ? 'Visita de Captação' : 'Agendar Visita'"></p>
+            <p class="text-sm font-bold text-gray-800"
+               x-text="visitaTipo === 'captacao'
+                 ? (captacoes.find(c=>c.id===visitaClienteId)?.endereco || 'Imóvel')
+                 : (clientes.find(c=>c.id===visitaClienteId)?.nome || '')"></p>
           </div>
         </div>
         <button @click="showVisitaModal=false" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -3812,6 +3864,8 @@ function app() {
     pipelineQuickCliente: null,
     showVisitaModal: false,
     visitaClienteId: null,
+    visitaTipo: 'cliente',
+    agendaFiltro: 'todos',
     editVisita: { dia: '', horario: '', valorImovel: '', endereco: '', nomeProprietario: '', telefoneProprietario: '', nomeInquilino: '', telefoneInquilino: '', obs: '' },
     substatusOpcoes: [
       { id: 'primeiro_contato',   label: 'Primeiro contato',   emoji: '🔑' },
@@ -4211,42 +4265,140 @@ function app() {
       this.kanbanDragOver = null;
     },
 
-    abrirAgendarVisita(clienteId) {
-      const c = this.clientes.find(x => x.id === clienteId);
-      if (!c) return;
-      this.visitaClienteId = clienteId;
-      const v = c.visita || {};
-      this.editVisita = {
-        dia: v.dia || this.todayStr(),
-        horario: v.horario || '09:00',
-        valorImovel: v.valorImovel || c.valorInteresse || '',
-        endereco: v.endereco || c.imovel || '',
-        nomeProprietario: v.nomeProprietario || '',
-        telefoneProprietario: v.telefoneProprietario || '',
-        nomeInquilino: v.nomeInquilino || '',
-        telefoneInquilino: v.telefoneInquilino || '',
-        obs: v.obs || '',
-      };
+    // tipo: 'cliente' | 'captacao'
+    abrirAgendarVisita(id, tipo = 'cliente') {
+      this.visitaClienteId = id;
+      this.visitaTipo = tipo;
+      let v = {};
+      if (tipo === 'captacao') {
+        const cap = this.captacoes.find(x => x.id === id);
+        if (!cap) return;
+        v = cap.visita || {};
+        this.editVisita = {
+          dia: v.dia || cap.proximoContato || this.todayStr(),
+          horario: v.horario || '09:00',
+          valorImovel: v.valorImovel || (cap.valorPretendido ? 'R$ ' + Number(cap.valorPretendido).toLocaleString('pt-BR') : ''),
+          endereco: v.endereco || [cap.endereco, cap.bairro, cap.cidade].filter(Boolean).join(', '),
+          nomeProprietario: v.nomeProprietario || cap.proprietario || '',
+          telefoneProprietario: v.telefoneProprietario || cap.telefone || '',
+          nomeInquilino: v.nomeInquilino || '',
+          telefoneInquilino: v.telefoneInquilino || '',
+          obs: v.obs || '',
+        };
+      } else {
+        const c = this.clientes.find(x => x.id === id);
+        if (!c) return;
+        v = c.visita || {};
+        this.editVisita = {
+          dia: v.dia || this.todayStr(),
+          horario: v.horario || '09:00',
+          valorImovel: v.valorImovel || c.valorInteresse || '',
+          endereco: v.endereco || c.imovel || '',
+          nomeProprietario: v.nomeProprietario || '',
+          telefoneProprietario: v.telefoneProprietario || '',
+          nomeInquilino: v.nomeInquilino || '',
+          telefoneInquilino: v.telefoneInquilino || '',
+          obs: v.obs || '',
+        };
+      }
       this.showVisitaModal = true;
     },
 
     salvarVisita() {
-      const idx = this.clientes.findIndex(c => c.id === this.visitaClienteId);
-      if (idx === -1) return;
-      this.clientes[idx] = { ...this.clientes[idx], visita: { ...this.editVisita } };
-      this.save();
+      if (this.visitaTipo === 'captacao') {
+        const idx = this.captacoes.findIndex(c => c.id === this.visitaClienteId);
+        if (idx === -1) return;
+        this.captacoes[idx] = { ...this.captacoes[idx], visita: { ...this.editVisita } };
+      } else {
+        const idx = this.clientes.findIndex(c => c.id === this.visitaClienteId);
+        if (idx === -1) return;
+        this.clientes[idx] = { ...this.clientes[idx], visita: { ...this.editVisita } };
+        this.save();
+      }
       this.showVisitaModal = false;
       this.showToast('Visita agendada ✅');
     },
 
-    getVisitasAgendadas() {
-      return this.clientes
+    getVisitasAgendadas(filtro) {
+      // filtro: 'todos' | 'clientes' | 'captacoes'
+      const fromClientes = (filtro === 'captacoes') ? [] : this.clientes
         .filter(c => c.ativo !== false && (c.pipeline || 'atendimento') === 'visita')
+        .map(c => ({ ...c, _tipo: 'cliente' }));
+      const fromCaptacoes = (filtro === 'clientes') ? [] : this.captacoes
+        .filter(cap => cap.visita?.dia)
+        .map(cap => ({ ...cap, _tipo: 'captacao' }));
+      return [...fromClientes, ...fromCaptacoes]
         .sort((a, b) => {
           const da = (a.visita?.dia || '9999') + (a.visita?.horario || '');
           const db = (b.visita?.dia || '9999') + (b.visita?.horario || '');
           return da.localeCompare(db);
         });
+    },
+
+    compartilharAgendaWhatsApp() {
+      const visitas = this.getVisitasAgendadas(this.agendaFiltro);
+      if (visitas.length === 0) { this.showToast('Nenhuma visita para compartilhar'); return; }
+
+      const fmtData = (dia) => {
+        if (!dia) return '';
+        return new Date(dia + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+      };
+
+      // Agrupa por dia
+      const grupos = {};
+      visitas.forEach(v => {
+        const dia = v.visita?.dia || 'sem-data';
+        if (!grupos[dia]) grupos[dia] = [];
+        grupos[dia].push(v);
+      });
+
+      let msg = '📋 *ROTEIRO DE VISITAS*\n';
+      msg += '_Essense Negócios Imobiliários_\n\n';
+
+      Object.entries(grupos).forEach(([dia, items]) => {
+        msg += dia !== 'sem-data'
+          ? `📅 *${fmtData(dia).toUpperCase()}*\n`
+          : `📅 *SEM DATA DEFINIDA*\n`;
+        msg += '━━━━━━━━━━━━━━━━━━━━\n';
+
+        items.forEach((v, i) => {
+          const hora = v.visita?.horario ? `⏰ ${v.visita.horario}` : '';
+          const isCap = v._tipo === 'captacao';
+          const titulo = isCap ? `🔍 *CAPTAÇÃO ${i+1}*` : `🏠 *VISITA ${i+1}*`;
+          msg += `\n${titulo}${hora ? '  ' + hora : ''}\n`;
+
+          if (isCap) {
+            const nome = v.endereco || '';
+            if (nome) msg += `📍 ${nome}\n`;
+            if (v.visita?.endereco && v.visita.endereco !== nome) msg += `📍 ${v.visita.endereco}\n`;
+          } else {
+            if (v.nome) msg += `👤 *Cliente:* ${v.nome}`;
+            if (v.telefone) msg += ` · ${v.telefone}`;
+            msg += '\n';
+            if (v.visita?.endereco) msg += `📍 ${v.visita.endereco}\n`;
+          }
+
+          if (v.visita?.valorImovel) msg += `💰 ${v.visita.valorImovel}\n`;
+          if (v.visita?.nomeProprietario || v.visita?.telefoneProprietario) {
+            msg += `🏠 *Prop.:* ${v.visita.nomeProprietario || ''}`;
+            if (v.visita?.telefoneProprietario) msg += ` · ${v.visita.telefoneProprietario}`;
+            msg += '\n';
+          }
+          if (v.visita?.nomeInquilino || v.visita?.telefoneInquilino) {
+            msg += `🔑 *Inq.:* ${v.visita.nomeInquilino || ''}`;
+            if (v.visita?.telefoneInquilino) msg += ` · ${v.visita.telefoneInquilino}`;
+            msg += '\n';
+          }
+          if (v.visita?.obs) msg += `📝 ${v.visita.obs}\n`;
+        });
+        msg += '\n';
+      });
+
+      msg += '━━━━━━━━━━━━━━━━━━━━\n';
+      msg += `_AMiGO Corretor · André Camargo · CRECI 328576-F_`;
+
+      const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+      window.open(url, '_blank');
     },
 
     setSubstatus(clienteId, substatusId) {
