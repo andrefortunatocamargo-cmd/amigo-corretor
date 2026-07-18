@@ -3122,9 +3122,10 @@ tailwind.config = {
           <i class="fa-solid fa-arrow-right-arrow-left text-gray-400 text-xs"></i>
           <p class="text-xs font-bold text-gray-600">Mover no Kanban ao enviar:</p>
           <!-- Indicador: mudará de status -->
-          <span x-show="waPipelinePendente !== (waCliente?.pipeline || 'atendimento')"
-                x-transition class="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
-                style="background:#f59e0b">⚡ Será atualizado</span>
+          <button x-show="waPipelinePendente !== (waCliente?.pipeline || 'atendimento')"
+                  x-transition @click="mudarPipelineCal(waCliente.id, waPipelinePendente); waCliente = clientes.find(c => c.id === waCliente.id); waPipelineConfirm = null; showToast('✅ Kanban atualizado!')"
+                  class="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full text-white hover:opacity-80 transition-opacity"
+                  style="background:#f59e0b">⚡ Salvar agora</button>
           <span x-show="waPipelinePendente === (waCliente?.pipeline || 'atendimento')"
                 class="ml-auto text-[10px] text-gray-400 font-medium">Status atual</span>
         </div>
@@ -3182,8 +3183,9 @@ tailwind.config = {
         <div class="bg-gray-50 px-3 py-2 flex items-center gap-2 border-b border-gray-100">
           <i class="fa-solid fa-tag text-gray-400 text-xs"></i>
           <p class="text-xs font-bold text-gray-600">Situação do lead ao enviar:</p>
-          <span x-show="waSubstatus && waSubstatus !== (waCliente?.substatus || null)"
-                class="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full text-white" style="background:#6366f1">⚡ Será atualizado</span>
+          <button x-show="waSubstatus && waSubstatus !== (waCliente?.substatus || null)"
+                  @click="setSubstatus(waCliente.id, waSubstatus); waCliente = clientes.find(c => c.id === waCliente.id); showToast('✅ Situação atualizada!')"
+                  class="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full text-white hover:opacity-80 transition-opacity" style="background:#6366f1">⚡ Salvar agora</button>
           <span x-show="!waSubstatus || waSubstatus === (waCliente?.substatus || null)"
                 class="ml-auto text-[10px] text-gray-400 font-medium">Situação atual</span>
         </div>
