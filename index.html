@@ -5930,8 +5930,9 @@ function app() {
         c.ativo = true;
         c.pipeline = valor;
       }
-      this.clientes[idx] = c;
+      this.clientes = [...this.clientes.slice(0, idx), c, ...this.clientes.slice(idx + 1)];
       this.save();
+      if (valor === 'visita') this.abrirAgendarVisita(clienteId);
       const labels = { atendimento:'Em Atendimento', visita:'Visita Agendada', proposta:'Proposta', concluido:'Fechado', perdido:'Perdido' };
       this.addFeedItem('📋', (c.nome || 'Lead') + ' → ' + labels[valor]);
       if (valor === 'concluido') {
