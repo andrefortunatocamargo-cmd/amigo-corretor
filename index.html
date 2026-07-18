@@ -889,10 +889,11 @@ tailwind.config = {
 
 
     <!-- ========== PAINÉIS INFERIORES DO DASHBOARD ========== -->
-    <div class="grid grid-cols-1 lg:grid-cols-[320px_1fr_1fr] gap-5 mt-6 w-full">
+    <!-- Painéis redimensionáveis -->
+    <div id="paineis-container" class="hidden lg:flex mt-6 w-full" style="height:520px; gap:0; user-select:none">
 
       <!-- PAINEL 1: CONTATOS -->
-      <div class="flex flex-col rounded-xl overflow-hidden" style="min-height:460px; max-height:560px; background:#fff; border:1px solid #dce8e2; box-shadow:0 2px 10px rgba(52,84,72,0.07)">
+      <div id="painel-1" class="flex flex-col rounded-xl overflow-hidden flex-shrink-0" style="width:30%; min-width:200px; height:100%; background:#fff; border:1px solid #dce8e2; box-shadow:0 2px 10px rgba(52,84,72,0.07)">
         <div class="px-4 py-3 flex items-center justify-between flex-shrink-0" style="border-bottom:1px solid #e5ede9">
           <div class="flex items-center gap-2">
             <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background:#345448">
@@ -953,8 +954,16 @@ tailwind.config = {
         </div>
       </div>
 
+      <!-- Handle 1 -->
+      <div class="painel-handle flex-shrink-0 flex items-center justify-center cursor-col-resize select-none z-10"
+           style="width:10px; background:transparent; position:relative"
+           onmousedown="initResize(event, 'painel-1', 'painel-2')">
+        <div style="width:4px; height:60px; background:#e2e8e4; border-radius:4px; transition:background 0.2s"
+             onmouseover="this.style.background='#345448'" onmouseout="this.style.background='#e2e8e4'"></div>
+      </div>
+
       <!-- PAINEL 2: RESULTADOS -->
-      <div class="flex flex-col rounded-xl overflow-hidden" style="min-height:460px; max-height:560px; background:#fff; border:1px solid #e8e0d5; box-shadow:0 2px 10px rgba(180,136,96,0.08)">
+      <div id="painel-2" class="flex flex-col rounded-xl overflow-hidden flex-shrink-0" style="width:35%; min-width:200px; height:100%; background:#fff; border:1px solid #e8e0d5; box-shadow:0 2px 10px rgba(180,136,96,0.08)">
         <div class="px-4 py-3 flex items-center justify-between flex-shrink-0" style="border-bottom:1px solid #e8e0d5">
           <div class="flex items-center gap-2">
             <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background:#b48860">
@@ -1169,8 +1178,16 @@ tailwind.config = {
         </div>
       </div>
 
+      <!-- Handle 2 -->
+      <div class="painel-handle flex-shrink-0 flex items-center justify-center cursor-col-resize select-none z-10"
+           style="width:10px; background:transparent; position:relative"
+           onmousedown="initResize(event, 'painel-2', 'painel-3')">
+        <div style="width:4px; height:60px; background:#e2e8e4; border-radius:4px; transition:background 0.2s"
+             onmouseover="this.style.background='#b48860'" onmouseout="this.style.background='#e2e8e4'"></div>
+      </div>
+
       <!-- PAINEL 3: ATIVIDADE RECENTE -->
-      <div class="flex flex-col rounded-xl overflow-hidden" style="min-height:460px; max-height:560px; background:#fff; border:1px solid #e0daf5; box-shadow:0 2px 10px rgba(99,102,241,0.07)">
+      <div id="painel-3" class="flex flex-col rounded-xl overflow-hidden" style="flex:1; min-width:200px; height:100%; background:#fff; border:1px solid #e0daf5; box-shadow:0 2px 10px rgba(99,102,241,0.07)">
         <div class="px-4 py-3 flex items-center justify-between flex-shrink-0" style="border-bottom:1px solid #e8e4f5">
           <div class="flex items-center gap-2">
             <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background:#6366f1">
@@ -4660,7 +4677,64 @@ function app() {
 
       html += `<div class="footer">AMiGO Corretor · Essense Negócios Imobiliários · ${visitas.length} visita${visitas.length !== 1 ? 's' : ''} no roteiro</div>
       <script>window.onload = () => { window.print(); }<\/script>
-      </body></html>`;
+      
+<script>
+// ========== PAINÉIS REDIMENSIONÁVEIS ==========
+(function() {
+  let dragging = false;
+  let startX = 0;
+  let leftId = '';
+  let rightId = '';
+  let leftStartW = 0;
+  let rightStartW = 0;
+  let containerW = 0;
+
+  window.initResize = function(e, left, right) {
+    e.preventDefault();
+    dragging = true;
+    startX = e.clientX;
+    leftId = left;
+    rightId = right;
+    const container = document.getElementById('paineis-container');
+    containerW = container ? container.offsetWidth : window.innerWidth;
+    const leftEl = document.getElementById(left);
+    const rightEl = document.getElementById(right);
+    leftStartW = leftEl ? leftEl.offsetWidth : 0;
+    rightStartW = rightEl ? rightEl.offsetWidth : 0;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  };
+
+  document.addEventListener('mousemove', function(e) {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    const leftEl = document.getElementById(leftId);
+    const rightEl = document.getElementById(rightId);
+    if (!leftEl || !rightEl) return;
+    const minW = 180;
+    let newLeft = leftStartW + dx;
+    let newRight = rightStartW - dx;
+    if (newLeft < minW) { newLeft = minW; newRight = leftStartW + rightStartW - minW; }
+    if (newRight < minW) { newRight = minW; newLeft = leftStartW + rightStartW - minW; }
+    leftEl.style.width = newLeft + 'px';
+    leftEl.style.flex = 'none';
+    // if painel-3 is flex:1, leave it; else set width
+    if (rightId !== 'painel-3') {
+      rightEl.style.width = newRight + 'px';
+      rightEl.style.flex = 'none';
+    }
+  });
+
+  document.addEventListener('mouseup', function() {
+    if (!dragging) return;
+    dragging = false;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  });
+})();
+</script>
+
+</body></html>`;
 
       const win = window.open('', '_blank');
       win.document.write(html);
