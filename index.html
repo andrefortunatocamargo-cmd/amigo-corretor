@@ -3130,7 +3130,7 @@ tailwind.config = {
         </div>
         <div class="grid grid-cols-3 gap-0 divide-x divide-gray-100">
           <!-- Atendimento -->
-          <button @click="waPipelinePendente = 'atendimento'"
+          <button @click="waPipelineConfirm = 'atendimento' === (waCliente?.pipeline || 'atendimento') ? null : 'atendimento'; if (!waPipelineConfirm) waPipelinePendente = 'atendimento'"
             class="py-3 flex flex-col items-center gap-1 text-xs font-bold transition-all"
             :class="waPipelinePendente === 'atendimento' ? 'text-white' : 'text-blue-400 hover:bg-blue-50'"
             :style="waPipelinePendente === 'atendimento' ? 'background:#3b82f6' : ''">
@@ -3140,7 +3140,7 @@ tailwind.config = {
                   class="text-[9px] font-normal text-gray-400">(atual)</span>
           </button>
           <!-- Visita -->
-          <button @click="waPipelinePendente = 'visita'"
+          <button @click="waPipelineConfirm = 'visita' === (waCliente?.pipeline || 'atendimento') ? null : 'visita'; if (!waPipelineConfirm) waPipelinePendente = 'visita'"
             class="py-3 flex flex-col items-center gap-1 text-xs font-bold transition-all"
             :class="waPipelinePendente === 'visita' ? 'text-white' : 'text-amber-500 hover:bg-amber-50'"
             :style="waPipelinePendente === 'visita' ? 'background:#f59e0b' : ''">
@@ -3150,7 +3150,7 @@ tailwind.config = {
                   class="text-[9px] font-normal text-gray-400">(atual)</span>
           </button>
           <!-- Proposta -->
-          <button @click="waPipelinePendente = 'proposta'"
+          <button @click="waPipelineConfirm = 'proposta' === (waCliente?.pipeline || 'atendimento') ? null : 'proposta'; if (!waPipelineConfirm) waPipelinePendente = 'proposta'"
             class="py-3 flex flex-col items-center gap-1 text-xs font-bold transition-all"
             :class="waPipelinePendente === 'proposta' ? 'text-white' : 'text-purple-500 hover:bg-purple-50'"
             :style="waPipelinePendente === 'proposta' ? 'background:#8b5cf6' : ''">
@@ -3159,6 +3159,21 @@ tailwind.config = {
             <span x-show="(waCliente?.pipeline || 'atendimento') === 'proposta' && waPipelinePendente !== 'proposta'"
                   class="text-[9px] font-normal text-gray-400">(atual)</span>
           </button>
+        </div>
+        <!-- Banner de confirmação de mudança de status -->
+        <div x-show="waPipelineConfirm" x-transition
+             class="border-t border-amber-200 bg-amber-50 px-3 py-2.5 flex items-center gap-2">
+          <i class="fa-solid fa-triangle-exclamation text-amber-500 text-xs flex-shrink-0"></i>
+          <p class="text-xs text-amber-800 flex-1">
+            Mover lead para
+            <strong x-text="waPipelineConfirm === 'visita' ? 'Visita Agendada' : waPipelineConfirm === 'proposta' ? 'Proposta' : 'Em Atendimento'"></strong>
+            ao enviar?
+          </p>
+          <button @click="waPipelinePendente = waPipelineConfirm; waPipelineConfirm = null"
+                  class="text-[11px] font-bold px-2.5 py-1 rounded-lg text-white flex-shrink-0"
+                  style="background:#345448">Confirmar</button>
+          <button @click="waPipelineConfirm = null"
+                  class="text-[11px] font-medium px-2 py-1 rounded-lg border border-gray-300 text-gray-600 flex-shrink-0 hover:bg-gray-100">Cancelar</button>
         </div>
       </div>
 
@@ -3826,6 +3841,7 @@ function app() {
     waMensagem: '',
     waObservacao: '',
     waPipelinePendente: null,
+    waPipelineConfirm: null,
     showDrivePanel: false,
     driveConectado: false,
     driveEmail: localStorage.getItem('drive_email') || '',
@@ -5176,6 +5192,7 @@ function app() {
       this.waStep = step;
       this.waContexto = contexto;
       this.waPipelinePendente = cliente.pipeline || 'atendimento';
+      this.waPipelineConfirm = null;
       this.waSubstatus = cliente.substatus || null;
       this.waObservacao = cliente.observacao || '';
       const nome = (cliente.nome || '').split(' ')[0];
