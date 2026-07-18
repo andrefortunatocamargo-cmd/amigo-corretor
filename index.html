@@ -3950,6 +3950,7 @@ function app() {
     calDraggingId: null,
     calDraggingItem: null,
     calOffset: 0,
+    calVersion: 0,
     buscaContatos: '',
     resultadosMes: new Date().toISOString().slice(0,7),
     agendaView: 'agenda',
@@ -4717,6 +4718,7 @@ function app() {
     },
 
     getNext7Days() {
+      void this.calVersion; // força Alpine a rastrear calVersion como dependência
       const result = [];
       const all = this.getAllPendingFollowups();
       const today = new Date();
@@ -5931,6 +5933,7 @@ function app() {
         c.pipeline = valor;
       }
       this.clientes = [...this.clientes.slice(0, idx), c, ...this.clientes.slice(idx + 1)];
+      this.calVersion++;
       this.save();
       if (valor === 'visita') this.abrirAgendarVisita(clienteId);
       const labels = { atendimento:'Em Atendimento', visita:'Visita Agendada', proposta:'Proposta', concluido:'Fechado', perdido:'Perdido' };
@@ -5985,7 +5988,8 @@ function app() {
       c.pipeline = novoPipeline;
       if (!c.pipelineLog) c.pipelineLog = [];
       c.pipelineLog.push({ stage: novoPipeline, data: this.todayStr() });
-      this.clientes[idx] = c;
+      this.clientes = [...this.clientes.slice(0, idx), c, ...this.clientes.slice(idx + 1)];
+      this.calVersion++;
       this.save();
       const labels = { atendimento: 'Em Atendimento', visita: 'Visita Agendada', proposta: 'Proposta' };
       this.addFeedItem('📋', nome + ' → ' + (labels[novoPipeline] || novoPipeline));
