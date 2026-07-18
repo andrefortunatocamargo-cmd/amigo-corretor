@@ -1527,7 +1527,7 @@ tailwind.config = {
     <!-- Vendas & Locações -->
     <button @click="section='vendas'; page='dashboard'; menuOpen=false"
             class="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-150 text-left"
-            :class="section==='vendas' ? 'bg-white bg-opacity-15' : 'hover:bg-white hover:bg-opacity-8'">
+            :class="section==='vendas' ? 'bg-white bg-opacity-15' : 'hover:bg-white/10'">
       <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all"
            :class="section==='vendas' ? 'bg-white bg-opacity-20' : 'bg-white bg-opacity-5'">
         <i class="fa-solid fa-handshake text-base" :class="section==='vendas' ? 'text-white' : 'text-white text-opacity-50'"></i>
@@ -1542,7 +1542,7 @@ tailwind.config = {
     <!-- Captações -->
     <button @click="section='captacoes'; menuOpen=false"
             class="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-150 text-left relative"
-            :class="section==='captacoes' ? 'bg-white bg-opacity-15' : 'hover:bg-white hover:bg-opacity-8'">
+            :class="section==='captacoes' ? 'bg-white bg-opacity-15' : 'hover:bg-white/10'">
       <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 relative transition-all"
            :class="section==='captacoes' ? 'bg-white bg-opacity-20' : 'bg-white bg-opacity-5'">
         <i class="fa-solid fa-map-location-dot text-base" :class="section==='captacoes' ? 'text-white' : 'text-white text-opacity-50'"></i>
@@ -1559,7 +1559,7 @@ tailwind.config = {
 
     <button @click="section='imoveis'; menuOpen=false"
             class="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-150 text-left relative"
-            :class="section==='imoveis' ? 'bg-white bg-opacity-15' : 'hover:bg-white hover:bg-opacity-8'">
+            :class="section==='imoveis' ? 'bg-white bg-opacity-15' : 'hover:bg-white/10'">
       <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 relative transition-all"
            :class="section==='imoveis' ? 'bg-white bg-opacity-20' : 'bg-white bg-opacity-5'">
         <i class="fa-solid fa-building text-base" :class="section==='imoveis' ? 'text-white' : 'text-white text-opacity-50'"></i>
@@ -1577,7 +1577,7 @@ tailwind.config = {
     <!-- Métricas -->
     <button @click="section='metricas'; menuOpen=false"
             class="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-150 text-left"
-            :class="section==='metricas' ? 'bg-white bg-opacity-15' : 'hover:bg-white hover:bg-opacity-8'">
+            :class="section==='metricas' ? 'bg-white bg-opacity-15' : 'hover:bg-white/10'">
       <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all"
            :class="section==='metricas' ? 'bg-white bg-opacity-20' : 'bg-white bg-opacity-5'">
         <span class="text-base leading-none">📊</span>
@@ -1592,7 +1592,7 @@ tailwind.config = {
     <!-- Agenda de Visitas -->
     <button @click="section='visitas'; menuOpen=false"
             class="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-150 text-left relative"
-            :class="section==='visitas' ? 'bg-white bg-opacity-15' : 'hover:bg-white hover:bg-opacity-8'">
+            :class="section==='visitas' ? 'bg-white bg-opacity-15' : 'hover:bg-white/10'">
       <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 relative transition-all"
            :class="section==='visitas' ? 'bg-white bg-opacity-20' : 'bg-white bg-opacity-5'">
         <i class="fa-solid fa-calendar-day text-base" :class="section==='visitas' ? 'text-white' : 'text-white text-opacity-50'"></i>
@@ -1616,7 +1616,7 @@ tailwind.config = {
   <div class="px-3 py-3">
     <button @click="section='configuracoes'; menuOpen=false"
             class="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-150 text-left"
-            :class="section==='configuracoes' ? 'bg-white bg-opacity-15' : 'hover:bg-white hover:bg-opacity-8'">
+            :class="section==='configuracoes' ? 'bg-white bg-opacity-15' : 'hover:bg-white/10'">
       <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all"
            :class="section==='configuracoes' ? 'bg-white bg-opacity-20' : 'bg-white bg-opacity-5'">
         <i class="fa-solid fa-gear text-base" :class="section==='configuracoes' ? 'text-white' : 'text-white text-opacity-50'"></i>
