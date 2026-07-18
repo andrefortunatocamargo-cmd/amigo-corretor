@@ -702,134 +702,141 @@ tailwind.config = {
     </div>
     </div>
 
-    <!-- Próximos 7 dias -->
+    <!-- CALENDÁRIO SEMANAL -->
     <div class="mt-6 bg-white rounded-2xl shadow-sm border border-blue-100 overflow-hidden">
-      <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-3 flex items-center gap-2 flex-wrap">
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 flex items-center gap-3 flex-wrap">
         <i class="fa-solid fa-calendar-week text-white"></i>
-        <h2 class="text-white font-bold text-sm">CALENDÁRIO</h2>
-        <span class="bg-white text-blue-600 text-xs font-bold px-2 py-0.5 rounded-full" x-text="upcomingCount"></span>
-        <!-- Nav setas + período -->
-        <div class="flex items-center gap-1 ml-2">
-          <button @click="calOffset -= 1" class="w-7 h-7 bg-white bg-opacity-20 hover:bg-opacity-40 text-white rounded-lg flex items-center justify-center transition-all" title="Dia anterior">
+        <h2 class="text-white font-bold text-sm tracking-wide">CALENDÁRIO</h2>
+        <span class="bg-white bg-opacity-20 text-white text-xs font-bold px-2 py-0.5 rounded-full border border-white border-opacity-30" x-text="upcomingCount + ' leads'"></span>
+        <div class="flex items-center gap-1 ml-1">
+          <button @click="calOffset -= 1" class="w-7 h-7 bg-white bg-opacity-15 hover:bg-opacity-30 text-white rounded-lg flex items-center justify-center transition-all">
             <i class="fa-solid fa-chevron-left text-xs"></i>
           </button>
           <span class="text-white text-xs font-semibold px-2 whitespace-nowrap" x-text="calPeriodLabel()"></span>
-          <button @click="calOffset += 1" class="w-7 h-7 bg-white bg-opacity-20 hover:bg-opacity-40 text-white rounded-lg flex items-center justify-center transition-all" title="Próximo dia">
+          <button @click="calOffset += 1" class="w-7 h-7 bg-white bg-opacity-15 hover:bg-opacity-30 text-white rounded-lg flex items-center justify-center transition-all">
             <i class="fa-solid fa-chevron-right text-xs"></i>
           </button>
-          <button x-show="calOffset !== 0" @click="calOffset = 0" class="ml-1 text-white text-opacity-70 hover:text-opacity-100 text-xs underline transition-all" title="Voltar para hoje">hoje</button>
+          <button x-show="calOffset !== 0" @click="calOffset = 0" class="ml-1 text-white text-xs opacity-70 hover:opacity-100 underline transition-all">hoje</button>
         </div>
-        <!-- Botões direita -->
         <div class="ml-auto flex items-center gap-2">
-          <span class="text-white text-xs hidden sm:flex items-center gap-1 opacity-60">
-            <i class="fa-solid fa-left-right"></i> arraste
-          </span>
-          <button @click="openNovaAcao()" class="flex items-center gap-1.5 bg-white bg-opacity-20 hover:bg-opacity-40 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all border border-white border-opacity-30">
+          <span class="text-white text-xs opacity-50 hidden sm:flex items-center gap-1"><i class="fa-solid fa-left-right"></i> arraste</span>
+          <button @click="openNovaAcao()" class="flex items-center gap-1.5 bg-white bg-opacity-15 hover:bg-opacity-30 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all border border-white border-opacity-20">
             <i class="fa-solid fa-plus text-xs"></i> Nova Ação
           </button>
         </div>
       </div>
-      <div class="p-3 sm:p-4">
-        <div class="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-7 gap-3">
-          <template x-for="(day, idx) in getNext7Days()" :key="day.date">
-            <div class="text-center" :class="{ 'hidden sm:block': idx >= 3 && idx < 5, 'hidden lg:block sm:hidden': idx >= 5 }">
-              <div class="text-xs font-bold mb-1.5"
-                :class="day.feriado ? 'text-red-500' : (day.isToday ? 'text-blue-600' : 'text-gray-500')"
-                x-text="day.label"></div>
-              <!-- Nome do feriado -->
-              <div x-show="day.feriado" class="text-[9px] font-bold text-red-400 leading-tight mb-1 truncate" x-text="day.feriado"></div>
-              <!-- Drop zone -->
-              <div
-                class="rounded-xl p-2 min-h-24 transition-all duration-150"
-                :class="[
-                  calDragOver === day.date
-                    ? 'bg-blue-200 border-2 border-blue-400 scale-105'
-                    : day.feriado
-                      ? (day.items.length > 0 ? 'bg-red-50 border border-red-200' : 'bg-red-50 border border-red-100')
-                      : (day.items.length > 0 ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50 border border-transparent'),
-                ]"
-                @dragover.prevent="if(day.date >= todayStr()) calDragOver = day.date"
-                @dragleave="calDragOver = null"
-                @drop.prevent="dropOnDay(day.date)"
-              >
-                <div x-show="day.feriado && day.items.length === 0 && calDragOver !== day.date" class="text-red-200 text-xs text-center py-1">🎉</div>
-                <div x-show="!day.feriado && day.items.length === 0 && calDragOver !== day.date" class="text-gray-300 text-xs text-center py-1">—</div>
-                <div x-show="calDragOver === day.date && day.items.length === 0 && day.date >= todayStr()" class="text-blue-400 text-xs text-center py-1 font-semibold">soltar</div>
-                <div x-show="calDragOver === day.date && day.items.length === 0 && day.date < todayStr()" class="text-red-400 text-xs text-center py-1 font-semibold">🔒 passado</div>
-                <template x-for="item in day.items" :key="item.id">
-                  <div
-                    class="mb-1.5 rounded-xl p-2 select-none relative transition-all duration-200"
-                    :class="item.isExtra
-                      ? 'bg-violet-50 border border-violet-200'
-                      : (calDraggingId === item.id ? 'opacity-40 cursor-grabbing' : 'cursor-grab border')"
-                    :style="!item.isExtra ? ('border-color:' + getPipelineCor(item.cliente) + '60; background:' + getPipelineCor(item.cliente) + '10') : ''"
-                    draggable="true"
-                    @dragstart="item.isExtra ? $event.preventDefault() : (item.data < todayStr() ? $event.dataTransfer.setData('text','') || true : startCalDrag($event, item))"
-                    @dragend="calDragOver = null; calDraggingId = null"
-                    @click.stop="if(!item.isExtra) openWhatsApp(item.cliente, item)"
-                    @dblclick.stop="if(!item.isExtra) { calStatusAberto = calStatusAberto === item.id ? null : item.id }"
-                  >
-                    <!-- Barra de cor do pipeline -->
-                    <div class="w-full h-2 rounded-full mb-1 transition-colors duration-200"
-                      :style="'background:' + (item.isExtra ? '#8b5cf6' : getPipelineCor(item.cliente))">
-                    </div>
-                    <!-- Nome -->
-                    <span class="text-xs font-bold truncate block text-left leading-tight"
-                      :style="!item.isExtra ? 'color:' + getPipelineCor(item.cliente) : ''"
-                      :class="item.isExtra ? 'text-violet-700' : ''"
-                      x-text="item.cliente.nome.split(' ').slice(0,2).join(' ')">
-                    </span>
-                    <!-- Tipo de negócio -->
-                    <span x-show="!item.isExtra && item.cliente.tipo" class="text-[9px] font-bold truncate block text-left leading-tight mt-0.5"
-                      :style="'color:' + getTipoColor(item.cliente.tipo)"
-                      x-text="getTipoLabel(item.cliente.tipo)">
-                    </span>
-                    <!-- Código do imóvel -->
-                    <span x-show="!item.isExtra && item.cliente.imovel" class="text-[9px] truncate block text-left leading-tight text-gray-400 font-mono"
-                      x-text="'#' + item.cliente.imovel">
-                    </span>
-                    <!-- Badge de pipeline -->
-                    <span x-show="!item.isExtra" class="text-[9px] font-bold truncate block text-left leading-tight mt-0.5 opacity-70"
-                      :style="'color:' + getPipelineCor(item.cliente)"
-                      x-text="getPipelineLabel(item.cliente)">
-                    </span>
-                    <!-- Situação do lead -->
-                    <span x-show="!item.isExtra && getSubstatus(item.cliente)"
-                      class="text-[9px] truncate block text-left leading-tight mt-0.5 font-medium text-indigo-500"
-                      x-text="getSubstatus(item.cliente) ? getSubstatus(item.cliente).emoji + ' ' + getSubstatus(item.cliente).label : ''">
-                    </span>
-                    <!-- Ações extras -->
-                    <span x-show="item.isExtra" class="text-violet-400 truncate block text-left leading-tight text-[10px]" x-text="item.descricao"></span>
-                    <button x-show="item.isExtra"
-                      @click.stop="marcarAcaoExtraFeita(item.cliente.id, item.acaoId)"
-                      class="mt-0.5 w-full text-center text-violet-400 hover:text-green-600 transition-colors">
-                      <i class="fa-solid fa-check text-[10px]"></i>
-                    </button>
-                    <!-- Menu de status (duplo clique) -->
-                    <div x-show="!item.isExtra && calStatusAberto === item.id"
-                      x-transition
-                      @click.stop
-                      class="absolute left-0 top-full mt-1 z-50 bg-white rounded-xl shadow-xl border border-gray-100 p-2 w-36 space-y-1">
-                      <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wide px-1 pb-0.5">Status</p>
-                      <template x-for="op in pipelineOpcoes" :key="op.value">
-                        <button
-                          @click.stop="mudarPipelineCal(item.cliente.id, op.value); calStatusAberto = null"
-                          class="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] font-bold transition-all"
-                          :style="(item.cliente.pipeline || 'atendimento') === op.value
-                            ? 'background:' + op.cor + '; color:white'
-                            : 'color:' + op.cor + '; background:' + op.cor + '15'">
-                          <span x-text="op.icone"></span>
-                          <span x-text="op.label"></span>
-                        </button>
-                      </template>
-                    </div>
-                  </div>
-                </template>
+
+      <!-- Grade semanal: cabeçalho de dias -->
+      <div class="grid grid-cols-7 border-b border-gray-100" style="background:#f8fafc">
+        <template x-for="(day, idx) in getNext7Days()" :key="'h'+day.date">
+          <div class="px-2 py-2.5 text-center border-r border-gray-100 last:border-r-0"
+               :class="day.isToday ? 'bg-blue-50' : (day.feriado ? 'bg-red-50' : '')">
+            <div class="text-[10px] font-bold uppercase tracking-wider mb-0.5"
+                 :class="day.isToday ? 'text-blue-600' : (day.feriado ? 'text-red-500' : 'text-gray-400')"
+                 x-text="day.label.split(' ')[0]"></div>
+            <div class="text-sm font-black"
+                 :class="day.isToday ? 'text-blue-600' : (day.feriado ? 'text-red-500' : 'text-gray-700')"
+                 x-text="day.label.split(' ').slice(1).join(' ')"></div>
+            <div x-show="day.feriado" class="text-[9px] text-red-400 font-semibold truncate mt-0.5" x-text="day.feriado"></div>
+            <div x-show="day.items.length > 0"
+                 class="mt-1 mx-auto text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center text-white"
+                 :style="'background:' + (day.isToday ? '#3b82f6' : '#64748b')"
+                 x-text="day.items.length"></div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Grade semanal: colunas de leads com scroll -->
+      <div class="grid grid-cols-7" style="min-height:280px; max-height:480px">
+        <template x-for="(day, idx) in getNext7Days()" :key="'b'+day.date">
+          <div class="border-r border-gray-100 last:border-r-0 flex flex-col"
+               :class="day.isToday ? 'bg-blue-50/30' : (day.feriado ? 'bg-red-50/20' : 'bg-white')"
+               @dragover.prevent="if(day.date >= todayStr()) calDragOver = day.date"
+               @dragleave="calDragOver = null"
+               @drop.prevent="dropOnDay(day.date)"
+               :class="calDragOver === day.date ? 'ring-2 ring-inset ring-blue-400 bg-blue-50' : ''">
+
+            <!-- Área de drop / leads com scroll -->
+            <div class="flex-1 overflow-y-auto p-2 space-y-2" style="max-height:480px; scrollbar-width:thin">
+
+              <!-- Vazio -->
+              <div x-show="day.items.length === 0 && calDragOver !== day.date"
+                   class="h-full flex items-center justify-center py-6">
+                <span class="text-gray-200 text-xs">—</span>
               </div>
-              <div x-show="day.items.length > 0" class="text-xs font-bold text-blue-600 mt-1" x-text="day.items.length"></div>
+              <div x-show="calDragOver === day.date && day.items.length === 0"
+                   class="h-full flex items-center justify-center py-6">
+                <span class="text-blue-400 text-xs font-semibold">soltar aqui</span>
+              </div>
+
+              <template x-for="item in day.items" :key="item.id">
+                <div
+                  class="rounded-xl p-2.5 select-none relative transition-all duration-200 border-l-4"
+                  :class="item.isExtra
+                    ? 'bg-violet-50 border-violet-400 border border-l-4'
+                    : (calDraggingId === item.id ? 'opacity-40 cursor-grabbing shadow-md' : 'cursor-grab hover:shadow-md border border-gray-100')"
+                  :style="!item.isExtra ? ('border-left-color:' + getPipelineCor(item.cliente) + '; background:' + getPipelineCor(item.cliente) + '08') : ''"
+                  draggable="true"
+                  @dragstart="item.isExtra ? $event.preventDefault() : (item.data < todayStr() ? $event.dataTransfer.setData('text','') || true : startCalDrag($event, item))"
+                  @dragend="calDragOver = null; calDraggingId = null"
+                  @click.stop="if(!item.isExtra) openWhatsApp(item.cliente, item)"
+                  @dblclick.stop="if(!item.isExtra) { calStatusAberto = calStatusAberto === item.id ? null : item.id }"
+                >
+                  <!-- Nome -->
+                  <p class="text-xs font-black leading-tight truncate"
+                     :style="!item.isExtra ? 'color:' + getPipelineCor(item.cliente) : 'color:#7c3aed'"
+                     x-text="item.cliente.nome.split(' ').slice(0,2).join(' ')"></p>
+
+                  <!-- Tipo badge -->
+                  <div x-show="!item.isExtra && item.cliente.tipo" class="mt-1">
+                    <span class="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-md"
+                          :style="'background:' + getTipoColor(item.cliente.tipo) + '20; color:' + getTipoColor(item.cliente.tipo)"
+                          x-text="getTipoLabel(item.cliente.tipo)"></span>
+                  </div>
+
+                  <!-- Imóvel -->
+                  <p x-show="!item.isExtra && item.cliente.imovel"
+                     class="text-[9px] text-gray-400 font-mono mt-0.5 truncate"
+                     x-text="'#' + item.cliente.imovel"></p>
+
+                  <!-- Pipeline -->
+                  <p x-show="!item.isExtra"
+                     class="text-[9px] font-bold mt-1 truncate"
+                     :style="'color:' + getPipelineCor(item.cliente) + 'cc'"
+                     x-text="getPipelineLabel(item.cliente)"></p>
+
+                  <!-- Situação -->
+                  <p x-show="!item.isExtra && getSubstatus(item.cliente)"
+                     class="text-[9px] font-medium mt-0.5 truncate text-indigo-500"
+                     x-text="getSubstatus(item.cliente) ? getSubstatus(item.cliente).emoji + ' ' + getSubstatus(item.cliente).label : ''"></p>
+
+                  <!-- Ação extra -->
+                  <p x-show="item.isExtra" class="text-[10px] text-violet-500 mt-0.5 truncate" x-text="item.descricao"></p>
+                  <button x-show="item.isExtra"
+                          @click.stop="marcarAcaoExtraFeita(item.cliente.id, item.acaoId)"
+                          class="mt-1 w-full text-center text-violet-400 hover:text-green-500 transition-colors">
+                    <i class="fa-solid fa-check text-[10px]"></i>
+                  </button>
+
+                  <!-- Menu pipeline (duplo clique) -->
+                  <div x-show="!item.isExtra && calStatusAberto === item.id"
+                       x-transition @click.stop
+                       class="absolute left-0 top-full mt-1 z-50 bg-white rounded-xl shadow-2xl border border-gray-100 p-2 w-40 space-y-1">
+                    <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wide px-1 pb-0.5">Mover para</p>
+                    <template x-for="op in pipelineOpcoes" :key="op.value">
+                      <button @click.stop="mudarPipelineCal(item.cliente.id, op.value); calStatusAberto = null"
+                              class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-bold transition-all"
+                              :style="(item.cliente.pipeline||'atendimento') === op.value ? 'background:'+op.cor+';color:white' : 'color:'+op.cor+';background:'+op.cor+'15'">
+                        <span x-text="op.icone"></span><span x-text="op.label"></span>
+                      </button>
+                    </template>
+                  </div>
+                </div>
+              </template>
             </div>
-          </template>
-        </div>
+          </div>
+        </template>
       </div>
     </div>
 
