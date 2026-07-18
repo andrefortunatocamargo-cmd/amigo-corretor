@@ -53,7 +53,14 @@
   .scrollbar-thin::-webkit-scrollbar-track { background: #f4f7f6; }
   .scrollbar-thin::-webkit-scrollbar-thumb { background: #96bfb1; border-radius: 2px; }
   .modal-overlay { backdrop-filter: blur(4px); }
-  @media print { .no-print { display: none; } }
+  @media print {
+    .no-print { display: none; }
+    .print\:hidden { display: none !important; }
+    header, nav, footer, .bottom-nav { display: none !important; }
+    body { background: white !important; }
+    section[x-show] { display: block !important; }
+    .print-card { break-inside: avoid; page-break-inside: avoid; box-shadow: none !important; border: 1px solid #ddd !important; margin-bottom: 16px; }
+  }
 
   /* Popup versículo */
   .versiculo-header {
@@ -1548,6 +1555,24 @@ tailwind.config = {
       <i x-show="section==='metricas'" class="fa-solid fa-chevron-right text-white text-opacity-40 text-xs flex-shrink-0"></i>
     </button>
 
+    <!-- Agenda de Visitas -->
+    <button @click="section='visitas'; menuOpen=false"
+            class="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-150 text-left relative"
+            :class="section==='visitas' ? 'bg-white bg-opacity-15' : 'hover:bg-white hover:bg-opacity-8'">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 relative transition-all"
+           :class="section==='visitas' ? 'bg-white bg-opacity-20' : 'bg-white bg-opacity-5'">
+        <i class="fa-solid fa-calendar-day text-base" :class="section==='visitas' ? 'text-white' : 'text-white text-opacity-50'"></i>
+        <span x-show="getVisitasAgendadas().length > 0"
+              class="absolute -top-1 -right-1 w-4 h-4 bg-amber-400 text-white text-[8px] font-black rounded-full flex items-center justify-center"
+              x-text="getVisitasAgendadas().length"></span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="font-bold text-sm transition-all" :class="section==='visitas' ? 'text-white' : 'text-white text-opacity-55'">Agenda de Visitas</p>
+        <p class="text-[11px] transition-all" :class="section==='visitas' ? 'text-amber-300' : 'text-white text-opacity-30'">Roteiro do dia de visitas</p>
+      </div>
+      <i x-show="section==='visitas'" class="fa-solid fa-chevron-right text-white text-opacity-40 text-xs flex-shrink-0"></i>
+    </button>
+
   </nav>
 
   <!-- Divisor -->
@@ -1782,6 +1807,126 @@ tailwind.config = {
 
 </section>
 <!-- ========== /SEÇÃO MÉTRICAS ========== -->
+
+<!-- ========== SEÇÃO AGENDA DE VISITAS ========== -->
+<section x-show="section==='visitas'" class="max-w-7xl mx-auto px-4 py-4 sm:py-6 pb-24 sm:pb-6">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-5">
+    <div>
+      <h1 class="text-xl font-black text-gray-800 flex items-center gap-2">
+        <span class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:#f59e0b">
+          <i class="fa-solid fa-calendar-day text-white text-sm"></i>
+        </span>
+        Agenda de Visitas
+      </h1>
+      <p class="text-gray-400 text-sm mt-0.5">Leads em estágio de visita · clique em qualquer card para editar</p>
+    </div>
+    <button @click="window.print()"
+      class="flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-semibold transition-colors print:hidden">
+      <i class="fa-solid fa-print text-xs"></i> Imprimir
+    </button>
+  </div>
+
+  <!-- Vazio -->
+  <template x-if="getVisitasAgendadas().length === 0">
+    <div class="bg-white rounded-2xl border border-dashed border-gray-200 py-16 text-center">
+      <i class="fa-solid fa-calendar-xmark text-4xl text-gray-200 mb-3 block"></i>
+      <p class="text-gray-500 font-semibold">Nenhuma visita agendada</p>
+      <p class="text-gray-400 text-sm mt-1">Mova um lead para "Visita Agendada" no kanban para aparecer aqui</p>
+    </div>
+  </template>
+
+  <!-- Cards de visita -->
+  <div class="space-y-4">
+    <template x-for="c in getVisitasAgendadas()" :key="c.id">
+      <div class="bg-white rounded-2xl shadow-sm border overflow-hidden print-card"
+           style="border-color:#f59e0b40">
+        <!-- Topo colorido com nome e data/hora -->
+        <div class="px-4 py-3 flex items-center justify-between" style="background:linear-gradient(135deg,#f59e0b15,#f59e0b08)">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-black flex-shrink-0"
+                 :style="'background:' + getAvatarColor(c.nome)">
+              <span x-text="getInitials(c.nome)"></span>
+            </div>
+            <div>
+              <p class="font-black text-gray-800" x-text="c.nome"></p>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full"
+                    :style="'background:' + getTipoColor(c.tipo) + '20; color:' + getTipoColor(c.tipo)"
+                    x-text="getTipoLabel(c.tipo)"></span>
+            </div>
+          </div>
+          <div class="text-right flex items-center gap-2">
+            <div x-show="c.visita?.dia">
+              <p class="text-sm font-black text-amber-700" x-text="c.visita?.dia ? new Date(c.visita.dia + 'T12:00:00').toLocaleDateString('pt-BR', {weekday:'short', day:'2-digit', month:'short'}) : '—'"></p>
+              <p class="text-xs font-bold text-amber-500" x-text="c.visita?.horario || ''"></p>
+            </div>
+            <div x-show="!c.visita?.dia" class="text-xs text-gray-400 italic">Sem data</div>
+            <button @click="abrirAgendarVisita(c.id)"
+              class="w-8 h-8 rounded-lg flex items-center justify-center text-amber-600 hover:bg-amber-100 transition-colors print:hidden"
+              title="Editar visita">
+              <i class="fa-solid fa-pen text-xs"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Corpo com todas as informações -->
+        <div class="px-4 py-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5 text-sm">
+
+          <!-- Endereço -->
+          <div class="sm:col-span-2" x-show="c.visita?.endereco">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">📍 Endereço</p>
+            <p class="font-semibold text-gray-800" x-text="c.visita?.endereco || '—'"></p>
+          </div>
+
+          <!-- Valor -->
+          <div x-show="c.visita?.valorImovel">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">💰 Valor</p>
+            <p class="font-bold text-gray-800" x-text="c.visita?.valorImovel || '—'"></p>
+          </div>
+
+          <!-- Telefone do cliente -->
+          <div x-show="c.telefone">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">📱 Cliente</p>
+            <a :href="'tel:' + c.telefone" class="font-semibold text-blue-600 hover:underline" x-text="c.telefone"></a>
+          </div>
+
+          <!-- Proprietário -->
+          <div x-show="c.visita?.nomeProprietario || c.visita?.telefoneProprietario">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">🏠 Proprietário</p>
+            <p class="font-semibold text-gray-800" x-text="c.visita?.nomeProprietario || ''"></p>
+            <a x-show="c.visita?.telefoneProprietario" :href="'tel:' + c.visita?.telefoneProprietario"
+               class="text-xs text-blue-600 hover:underline" x-text="c.visita?.telefoneProprietario || ''"></a>
+          </div>
+
+          <!-- Inquilino -->
+          <div x-show="c.visita?.nomeInquilino || c.visita?.telefoneInquilino">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">🔑 Inquilino</p>
+            <p class="font-semibold text-gray-800" x-text="c.visita?.nomeInquilino || ''"></p>
+            <a x-show="c.visita?.telefoneInquilino" :href="'tel:' + c.visita?.telefoneInquilino"
+               class="text-xs text-blue-600 hover:underline" x-text="c.visita?.telefoneInquilino || ''"></a>
+          </div>
+
+          <!-- Observações -->
+          <div class="sm:col-span-2" x-show="c.visita?.obs">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">📝 Observações</p>
+            <p class="text-gray-700 text-sm leading-relaxed bg-yellow-50 rounded-lg px-3 py-2 border border-yellow-100" x-text="c.visita?.obs"></p>
+          </div>
+
+          <!-- Sem dados ainda -->
+          <div class="sm:col-span-2" x-show="!c.visita?.endereco && !c.visita?.nomeProprietario && !c.visita?.obs">
+            <button @click="abrirAgendarVisita(c.id)"
+              class="w-full py-2 rounded-xl border border-dashed border-amber-300 text-amber-600 text-xs font-semibold hover:bg-amber-50 transition-colors print:hidden">
+              + Preencher dados da visita
+            </button>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+
+</section>
+<!-- ========== /SEÇÃO AGENDA DE VISITAS ========== -->
 
 <!-- ========== SEÇÃO CAPTAÇÕES ========== -->
 <section x-show="section==='captacoes'" class="max-w-7xl mx-auto px-4 py-4 sm:py-6 pb-24 sm:pb-6">
@@ -3312,6 +3457,100 @@ tailwind.config = {
 </div>
 
 <!-- ========== POPUP VERSÍCULO ========== -->
+<!-- Modal Agendar Visita -->
+<div x-show="showVisitaModal" x-transition class="fixed inset-0 flex items-end sm:items-center justify-center sm:p-4 z-50" style="background:rgba(0,0,0,0.5)" @click.self="showVisitaModal=false">
+  <div class="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]" @click.stop>
+    <!-- Header -->
+    <div class="px-5 pt-5 pb-4 border-b border-gray-100 flex-shrink-0" style="background:linear-gradient(135deg,#f59e0b08,#f59e0b14)">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background:#f59e0b">🏠</div>
+          <div>
+            <p class="text-xs text-amber-600 font-semibold">Agendar Visita</p>
+            <p class="text-sm font-bold text-gray-800" x-text="clientes.find(c=>c.id===visitaClienteId)?.nome || ''"></p>
+          </div>
+        </div>
+        <button @click="showVisitaModal=false" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+    </div>
+    <!-- Formulário -->
+    <div class="overflow-y-auto flex-1 p-5 space-y-4">
+      <!-- Data e Hora -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs font-bold text-gray-600 mb-1 block">📅 Dia da visita</label>
+          <input type="date" x-model="editVisita.dia"
+            class="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-gray-600 mb-1 block">⏰ Horário</label>
+          <input type="time" x-model="editVisita.horario"
+            class="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm">
+        </div>
+      </div>
+      <!-- Valor e Endereço -->
+      <div>
+        <label class="text-xs font-bold text-gray-600 mb-1 block">💰 Valor do imóvel</label>
+        <input type="text" x-model="editVisita.valorImovel" placeholder="R$ 0,00 ou descrição"
+          class="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm">
+      </div>
+      <div>
+        <label class="text-xs font-bold text-gray-600 mb-1 block">📍 Endereço completo</label>
+        <input type="text" x-model="editVisita.endereco" placeholder="Rua, número, bairro, cidade"
+          class="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm">
+      </div>
+      <!-- Proprietário -->
+      <div class="p-3 rounded-xl border border-gray-100 bg-gray-50 space-y-3">
+        <p class="text-xs font-bold text-gray-500 uppercase tracking-wide">Proprietário</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-gray-500 mb-1 block">Nome</label>
+            <input type="text" x-model="editVisita.nomeProprietario" placeholder="Nome do proprietário"
+              class="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm bg-white">
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 mb-1 block">Telefone</label>
+            <input type="tel" x-model="editVisita.telefoneProprietario" placeholder="(00) 00000-0000"
+              class="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm bg-white">
+          </div>
+        </div>
+      </div>
+      <!-- Inquilino -->
+      <div class="p-3 rounded-xl border border-gray-100 bg-gray-50 space-y-3">
+        <p class="text-xs font-bold text-gray-500 uppercase tracking-wide">Inquilino / Ocupante atual <span class="font-normal text-gray-400">(se houver)</span></p>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-gray-500 mb-1 block">Nome</label>
+            <input type="text" x-model="editVisita.nomeInquilino" placeholder="Nome do inquilino"
+              class="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm bg-white">
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 mb-1 block">Telefone</label>
+            <input type="tel" x-model="editVisita.telefoneInquilino" placeholder="(00) 00000-0000"
+              class="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm bg-white">
+          </div>
+        </div>
+      </div>
+      <!-- Observações -->
+      <div>
+        <label class="text-xs font-bold text-gray-600 mb-1 block">📝 Observações</label>
+        <textarea x-model="editVisita.obs" rows="3"
+          placeholder="Ex: Entrada 30%, financiamento aprovado, documentação enviada, portão azul, ligar antes..."
+          class="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm resize-none"></textarea>
+      </div>
+    </div>
+    <!-- Rodapé -->
+    <div class="px-5 py-4 border-t border-gray-100 flex gap-3 flex-shrink-0">
+      <button @click="showVisitaModal=false" class="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50">Cancelar</button>
+      <button @click="salvarVisita()"
+        class="flex-1 text-white py-2.5 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2"
+        style="background:#f59e0b">
+        <i class="fa-solid fa-calendar-check"></i> Salvar Visita
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Pipeline Rápido (duplo clique no card) -->
 <div x-show="showPipelineQuick" x-transition class="fixed inset-0 flex items-end sm:items-center justify-center sm:p-4 z-50" style="background:rgba(0,0,0,0.45)" @click.self="showPipelineQuick=false">
   <div class="bg-white w-full sm:max-w-xs rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden" @click.stop>
@@ -3571,6 +3810,9 @@ function app() {
     substatusModalCliente: null,
     showPipelineQuick: false,
     pipelineQuickCliente: null,
+    showVisitaModal: false,
+    visitaClienteId: null,
+    editVisita: { dia: '', horario: '', valorImovel: '', endereco: '', nomeProprietario: '', telefoneProprietario: '', nomeInquilino: '', telefoneInquilino: '', obs: '' },
     substatusOpcoes: [
       { id: 'primeiro_contato',   label: 'Primeiro contato',   emoji: '🔑' },
       { id: 'enviando_opcoes',    label: 'Enviando opções',    emoji: '📋' },
@@ -3967,6 +4209,44 @@ function app() {
       this.mudarPipeline(this.kanbanDragging, targetStage);
       this.kanbanDragging = null;
       this.kanbanDragOver = null;
+    },
+
+    abrirAgendarVisita(clienteId) {
+      const c = this.clientes.find(x => x.id === clienteId);
+      if (!c) return;
+      this.visitaClienteId = clienteId;
+      const v = c.visita || {};
+      this.editVisita = {
+        dia: v.dia || this.todayStr(),
+        horario: v.horario || '09:00',
+        valorImovel: v.valorImovel || c.valorInteresse || '',
+        endereco: v.endereco || c.imovel || '',
+        nomeProprietario: v.nomeProprietario || '',
+        telefoneProprietario: v.telefoneProprietario || '',
+        nomeInquilino: v.nomeInquilino || '',
+        telefoneInquilino: v.telefoneInquilino || '',
+        obs: v.obs || '',
+      };
+      this.showVisitaModal = true;
+    },
+
+    salvarVisita() {
+      const idx = this.clientes.findIndex(c => c.id === this.visitaClienteId);
+      if (idx === -1) return;
+      this.clientes[idx] = { ...this.clientes[idx], visita: { ...this.editVisita } };
+      this.save();
+      this.showVisitaModal = false;
+      this.showToast('Visita agendada ✅');
+    },
+
+    getVisitasAgendadas() {
+      return this.clientes
+        .filter(c => c.ativo !== false && (c.pipeline || 'atendimento') === 'visita')
+        .sort((a, b) => {
+          const da = (a.visita?.dia || '9999') + (a.visita?.horario || '');
+          const db = (b.visita?.dia || '9999') + (b.visita?.horario || '');
+          return da.localeCompare(db);
+        });
     },
 
     setSubstatus(clienteId, substatusId) {
@@ -5538,6 +5818,7 @@ function app() {
       const labels = { atendimento: 'Em Atendimento', visita: 'Visita Agendada', proposta: 'Proposta' };
       this.addFeedItem('📋', nome + ' → ' + (labels[novoPipeline] || novoPipeline));
       this.showToast('✅ Lead movido para ' + labels[novoPipeline]);
+      if (novoPipeline === 'visita') this.abrirAgendarVisita(clienteId);
     },
 
     getLeadsFiltrados(filtro) {
