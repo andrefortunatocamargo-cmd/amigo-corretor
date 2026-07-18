@@ -3191,7 +3191,7 @@ tailwind.config = {
         </div>
         <div class="p-2 flex flex-wrap gap-1.5">
           <template x-for="op in substatusOpcoes" :key="op.id">
-            <button @click="waSubstatus = waSubstatus === op.id ? null : op.id"
+            <button @click="waSubstatus = waSubstatus === op.id ? null : op.id; const mapa = {em_financiamento:'proposta', buscando_imovel:'atendimento', primeiro_contato:'atendimento', enviando_opcoes:'atendimento', follow_up:'atendimento', parceria:'atendimento', tentativa_contato:'atendimento'}; if (waSubstatus && mapa[waSubstatus]) waPipelinePendente = mapa[waSubstatus]"
               class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all"
               :class="waSubstatus === op.id
                 ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
