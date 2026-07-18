@@ -595,7 +595,7 @@ tailwind.config = {
     <!-- ===== /LEMBRETE CAPTAÇÕES ===== -->
 
     <!-- Priority Follow-ups -->
-    <div class="grid lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
       <!-- Atrasados -->
       <div class="bg-white rounded-2xl shadow-sm border border-red-100 overflow-hidden">
         <div class="bg-red-500 px-4 py-3 flex items-center gap-2">
@@ -669,16 +669,14 @@ tailwind.config = {
           </template>
         </div>
       </div>
-    </div>
-
-    <!-- REATIVAÇÃO DE LEADS FRIOS -->
-    <div x-show="getLeadsParaReativar().length > 0" class="mt-4 bg-white rounded-2xl shadow-sm border border-blue-200 overflow-hidden">
+      <!-- Reativação — terceira coluna dentro do mesmo grid -->
+      <div class="bg-white rounded-2xl shadow-sm border border-blue-200 overflow-hidden">
       <div class="px-4 py-3 flex items-center gap-2" style="background:linear-gradient(135deg,#1e40af,#1d4ed8)">
         <i class="fa-solid fa-rotate-right text-white text-sm"></i>
-        <h2 class="text-white font-bold text-sm">REATIVAÇÃO — Leads sem contato</h2>
+        <h2 class="text-white font-bold text-sm">REATIVAÇÃO — Leads frios</h2>
         <span class="ml-auto bg-white text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full" x-text="getLeadsParaReativar().length"></span>
       </div>
-      <div class="p-3 space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
+      <div class="p-3 space-y-2 max-h-80 overflow-y-auto scrollbar-thin">
         <template x-for="c in getLeadsParaReativar()" :key="c.id">
           <div class="flex items-center gap-3 p-3 rounded-xl bg-blue-50 border border-blue-100">
             <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0" :style="'background:' + getTipoColor(c.tipo)">
@@ -693,8 +691,15 @@ tailwind.config = {
               <i class="fa-brands fa-whatsapp"></i> Reativar
             </button>
           </div>
+        <template x-if="getLeadsParaReativar().length === 0">
+          <div class="text-center py-8 text-gray-400">
+            <i class="fa-solid fa-fire text-3xl text-blue-200 mb-2"></i>
+            <p class="text-sm font-medium text-gray-500">Todos os leads ativos!</p>
+          </div>
+        </template>
         </template>
       </div>
+    </div>
     </div>
 
     <!-- Próximos 7 dias -->
@@ -725,17 +730,17 @@ tailwind.config = {
         </div>
       </div>
       <div class="p-3 sm:p-4">
-        <div class="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-7 gap-2">
+        <div class="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-7 gap-3">
           <template x-for="(day, idx) in getNext7Days()" :key="day.date">
             <div class="text-center" :class="{ 'hidden sm:block': idx >= 3 && idx < 5, 'hidden lg:block sm:hidden': idx >= 5 }">
-              <div class="text-xs font-semibold mb-1"
-                :class="day.feriado ? 'text-red-500' : 'text-gray-500'"
+              <div class="text-xs font-bold mb-1.5"
+                :class="day.feriado ? 'text-red-500' : (day.isToday ? 'text-blue-600' : 'text-gray-500')"
                 x-text="day.label"></div>
               <!-- Nome do feriado -->
               <div x-show="day.feriado" class="text-[9px] font-bold text-red-400 leading-tight mb-1 truncate" x-text="day.feriado"></div>
               <!-- Drop zone -->
               <div
-                class="rounded-xl p-2 min-h-12 transition-all duration-150"
+                class="rounded-xl p-2 min-h-24 transition-all duration-150"
                 :class="[
                   calDragOver === day.date
                     ? 'bg-blue-200 border-2 border-blue-400 scale-105'
@@ -753,11 +758,11 @@ tailwind.config = {
                 <div x-show="calDragOver === day.date && day.items.length === 0 && day.date < todayStr()" class="text-red-400 text-xs text-center py-1 font-semibold">🔒 passado</div>
                 <template x-for="item in day.items" :key="item.id">
                   <div
-                    class="text-xs mb-1 rounded-lg p-1 select-none relative transition-all duration-200"
+                    class="mb-1.5 rounded-xl p-2 select-none relative transition-all duration-200"
                     :class="item.isExtra
                       ? 'bg-violet-50 border border-violet-200'
                       : (calDraggingId === item.id ? 'opacity-40 cursor-grabbing' : 'cursor-grab border')"
-                    :style="!item.isExtra ? ('border-color:' + getPipelineCor(item.cliente) + '60; background:' + getPipelineCor(item.cliente) + '12') : ''"
+                    :style="!item.isExtra ? ('border-color:' + getPipelineCor(item.cliente) + '60; background:' + getPipelineCor(item.cliente) + '10') : ''"
                     draggable="true"
                     @dragstart="item.isExtra ? $event.preventDefault() : (item.data < todayStr() ? $event.dataTransfer.setData('text','') || true : startCalDrag($event, item))"
                     @dragend="calDragOver = null; calDraggingId = null"
@@ -765,32 +770,32 @@ tailwind.config = {
                     @dblclick.stop="if(!item.isExtra) { calStatusAberto = calStatusAberto === item.id ? null : item.id }"
                   >
                     <!-- Barra de cor do pipeline -->
-                    <div class="w-full h-1.5 rounded-full mb-0.5 transition-colors duration-200"
+                    <div class="w-full h-2 rounded-full mb-1 transition-colors duration-200"
                       :style="'background:' + (item.isExtra ? '#8b5cf6' : getPipelineCor(item.cliente))">
                     </div>
                     <!-- Nome -->
-                    <span class="font-semibold truncate block text-left"
+                    <span class="text-xs font-bold truncate block text-left leading-tight"
                       :style="!item.isExtra ? 'color:' + getPipelineCor(item.cliente) : ''"
                       :class="item.isExtra ? 'text-violet-700' : ''"
-                      x-text="item.cliente.nome.split(' ')[0]">
+                      x-text="item.cliente.nome.split(' ').slice(0,2).join(' ')">
                     </span>
                     <!-- Tipo de negócio -->
-                    <span x-show="!item.isExtra && item.cliente.tipo" class="text-[8px] font-bold truncate block text-left leading-tight"
+                    <span x-show="!item.isExtra && item.cliente.tipo" class="text-[9px] font-bold truncate block text-left leading-tight mt-0.5"
                       :style="'color:' + getTipoColor(item.cliente.tipo)"
                       x-text="getTipoLabel(item.cliente.tipo)">
                     </span>
                     <!-- Código do imóvel -->
-                    <span x-show="!item.isExtra && item.cliente.imovel" class="text-[8px] truncate block text-left leading-tight text-gray-400 font-mono"
+                    <span x-show="!item.isExtra && item.cliente.imovel" class="text-[9px] truncate block text-left leading-tight text-gray-400 font-mono"
                       x-text="'#' + item.cliente.imovel">
                     </span>
                     <!-- Badge de pipeline -->
-                    <span x-show="!item.isExtra" class="text-[8px] font-bold truncate block text-left leading-tight opacity-60"
+                    <span x-show="!item.isExtra" class="text-[9px] font-bold truncate block text-left leading-tight mt-0.5 opacity-70"
                       :style="'color:' + getPipelineCor(item.cliente)"
                       x-text="getPipelineLabel(item.cliente)">
                     </span>
                     <!-- Situação do lead -->
                     <span x-show="!item.isExtra && getSubstatus(item.cliente)"
-                      class="text-[8px] truncate block text-left leading-tight mt-0.5 font-medium text-indigo-500"
+                      class="text-[9px] truncate block text-left leading-tight mt-0.5 font-medium text-indigo-500"
                       x-text="getSubstatus(item.cliente) ? getSubstatus(item.cliente).emoji + ' ' + getSubstatus(item.cliente).label : ''">
                     </span>
                     <!-- Ações extras -->
