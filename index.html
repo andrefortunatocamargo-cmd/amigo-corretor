@@ -955,11 +955,13 @@ tailwind.config = {
       </div>
 
       <!-- Handle 1 -->
-      <div class="painel-handle flex-shrink-0 flex items-center justify-center cursor-col-resize select-none z-10"
-           style="width:10px; background:transparent; position:relative"
-           onmousedown="initResize(event, 'painel-1', 'painel-2')">
-        <div style="width:4px; height:60px; background:#e2e8e4; border-radius:4px; transition:background 0.2s"
-             onmouseover="this.style.background='#345448'" onmouseout="this.style.background='#e2e8e4'"></div>
+      <div class="flex-shrink-0 flex items-center justify-center cursor-col-resize select-none"
+           id="handle-1"
+           style="width:16px; position:relative; z-index:10"
+           onmousedown="initResize(event, 'painel-1', 'painel-2')"
+           onmouseover="document.getElementById('handle-bar-1').style.background='#345448';document.getElementById('handle-bar-1').style.width='6px'"
+           onmouseout="document.getElementById('handle-bar-1').style.background='#cbd5e1';document.getElementById('handle-bar-1').style.width='4px'">
+        <div id="handle-bar-1" style="width:4px; height:80px; background:#cbd5e1; border-radius:6px; transition:all 0.2s; pointer-events:none"></div>
       </div>
 
       <!-- PAINEL 2: RESULTADOS -->
@@ -1179,11 +1181,13 @@ tailwind.config = {
       </div>
 
       <!-- Handle 2 -->
-      <div class="painel-handle flex-shrink-0 flex items-center justify-center cursor-col-resize select-none z-10"
-           style="width:10px; background:transparent; position:relative"
-           onmousedown="initResize(event, 'painel-2', 'painel-3')">
-        <div style="width:4px; height:60px; background:#e2e8e4; border-radius:4px; transition:background 0.2s"
-             onmouseover="this.style.background='#b48860'" onmouseout="this.style.background='#e2e8e4'"></div>
+      <div class="flex-shrink-0 flex items-center justify-center cursor-col-resize select-none"
+           id="handle-2"
+           style="width:16px; position:relative; z-index:10"
+           onmousedown="initResize(event, 'painel-2', 'painel-3')"
+           onmouseover="document.getElementById('handle-bar-2').style.background='#b48860';document.getElementById('handle-bar-2').style.width='6px'"
+           onmouseout="document.getElementById('handle-bar-2').style.background='#cbd5e1';document.getElementById('handle-bar-2').style.width='4px'">
+        <div id="handle-bar-2" style="width:4px; height:80px; background:#cbd5e1; border-radius:6px; transition:all 0.2s; pointer-events:none"></div>
       </div>
 
       <!-- PAINEL 3: ATIVIDADE RECENTE -->
@@ -7200,19 +7204,23 @@ function app() {
 
 <script>
 (function() {
-  let dragging = false, startX = 0, leftId = '', rightId = '', leftStartW = 0, rightStartW = 0;
+  var dragging = false, startX = 0, leftId = '', rightId = '', leftStartW = 0, rightStartW = 0;
 
   window.initResize = function(e, left, right) {
     e.preventDefault();
+    e.stopPropagation();
     dragging = true;
     startX = e.clientX;
-    leftId = left; rightId = right;
+    leftId = left;
+    rightId = right;
     var lEl = document.getElementById(left);
     var rEl = document.getElementById(right);
-    leftStartW = lEl ? lEl.offsetWidth : 0;
-    rightStartW = rEl ? rEl.offsetWidth : 0;
+    leftStartW = lEl ? lEl.getBoundingClientRect().width : 0;
+    rightStartW = rEl ? rEl.getBoundingClientRect().width : 0;
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
+    document.body.style.pointerEvents = 'none';
+    document.getElementById(left === 'painel-1' ? 'handle-1' : 'handle-2').style.pointerEvents = 'auto';
   };
 
   document.addEventListener('mousemove', function(e) {
@@ -7221,14 +7229,14 @@ function app() {
     var lEl = document.getElementById(leftId);
     var rEl = document.getElementById(rightId);
     if (!lEl || !rEl) return;
-    var minW = 180;
-    var newL = leftStartW + dx;
-    var newR = rightStartW - dx;
-    if (newL < minW) { newL = minW; newR = leftStartW + rightStartW - minW; }
-    if (newR < minW) { newR = minW; newL = leftStartW + rightStartW - minW; }
+    var minW = 160;
+    var total = leftStartW + rightStartW;
+    var newL = Math.max(minW, Math.min(total - minW, leftStartW + dx));
+    var newR = total - newL;
     lEl.style.width = newL + 'px';
-    lEl.style.flex = 'none';
-    if (rightId !== 'painel-3') { rEl.style.width = newR + 'px'; rEl.style.flex = 'none'; }
+    lEl.style.flex = '0 0 ' + newL + 'px';
+    rEl.style.width = newR + 'px';
+    rEl.style.flex = '0 0 ' + newR + 'px';
   });
 
   document.addEventListener('mouseup', function() {
@@ -7236,6 +7244,11 @@ function app() {
     dragging = false;
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
+    document.body.style.pointerEvents = '';
+    var h1 = document.getElementById('handle-1');
+    var h2 = document.getElementById('handle-2');
+    if (h1) h1.style.pointerEvents = '';
+    if (h2) h2.style.pointerEvents = '';
   });
 })();
 </script>
