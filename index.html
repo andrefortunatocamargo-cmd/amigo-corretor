@@ -1835,7 +1835,7 @@ tailwind.config = {
         <i class="fa-brands fa-whatsapp text-base"></i>
         <span class="hidden sm:inline">Enviar</span>
       </button>
-      <button @click="window.print()"
+      <button @click="imprimirAgenda(agendaFiltro)"
         class="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-semibold transition-colors">
         <i class="fa-solid fa-print text-xs"></i>
         <span class="hidden sm:inline">Imprimir</span>
@@ -4357,6 +4357,108 @@ function app() {
           const db = (b.visita?.dia || '9999') + (b.visita?.horario || '');
           return da.localeCompare(db);
         });
+    },
+
+    imprimirAgenda(filtro) {
+      const visitas = this.getVisitasAgendadas(filtro || 'todos');
+      if (visitas.length === 0) { this.showToast('Nenhuma visita para imprimir'); return; }
+
+      const fmtData = (dia) => {
+        if (!dia) return 'Sem data';
+        return new Date(dia + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+      };
+
+      // Agrupa por dia
+      const grupos = {};
+      visitas.forEach(v => {
+        const dia = v.visita?.dia || 'sem-data';
+        if (!grupos[dia]) grupos[dia] = [];
+        grupos[dia].push(v);
+      });
+
+      const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+
+      let html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+      <title>Roteiro de Visitas · AMiGO Corretor</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; font-size: 12px; color: #111; background: white; padding: 20px; }
+        .header { text-align: center; border-bottom: 3px solid #345448; padding-bottom: 14px; margin-bottom: 20px; }
+        .header h1 { font-size: 20px; color: #345448; font-weight: 900; letter-spacing: 1px; }
+        .header p { color: #888; font-size: 11px; margin-top: 4px; }
+        .header .corretor { font-size: 13px; font-weight: bold; color: #345448; margin-top: 6px; }
+        .dia-section { margin-bottom: 24px; page-break-inside: avoid; }
+        .dia-header { background: #345448; color: white; padding: 8px 14px; border-radius: 8px 8px 0 0; font-size: 13px; font-weight: 900; text-transform: capitalize; }
+        .visita-card { border: 1px solid #ddd; border-top: none; padding: 12px 14px; background: white; }
+        .visita-card + .visita-card { border-top: 1px dashed #eee; }
+        .visita-num { display: inline-block; background: #b48860; color: white; font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 20px; margin-bottom: 8px; }
+        .visita-tipo { display: inline-block; font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 20px; margin-left: 6px; }
+        .tipo-cliente { background: #fef3c7; color: #d97706; }
+        .tipo-captacao { background: #f3e8ff; color: #9333ea; }
+        .visita-nome { font-size: 15px; font-weight: 900; color: #111; }
+        .visita-horario { font-size: 13px; font-weight: bold; color: #d97706; float: right; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .field label { font-size: 9px; font-weight: bold; color: #999; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 2px; }
+        .field span { font-size: 12px; font-weight: 600; color: #222; }
+        .field-full { grid-column: 1 / -1; }
+        .obs-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 8px 10px; margin-top: 8px; font-size: 11px; color: #555; }
+        .obs-label { font-size: 9px; font-weight: bold; color: #999; text-transform: uppercase; display: block; margin-bottom: 3px; }
+        .footer { text-align: center; margin-top: 30px; padding-top: 14px; border-top: 1px solid #eee; font-size: 10px; color: #aaa; }
+        @media print { body { padding: 10px; } .dia-section { page-break-inside: avoid; } }
+      </style></head><body>
+      <div class="header">
+        <h1>🏠 ROTEIRO DE VISITAS</h1>
+        <div class="corretor">André Fortunato Camargo · CRECI 328576-F · Essense Negócios Imobiliários</div>
+        <p>Emitido em ${hoje}</p>
+      </div>`;
+
+      let visitaNum = 0;
+      Object.entries(grupos).sort(([a],[b]) => a.localeCompare(b)).forEach(([dia, items]) => {
+        html += `<div class="dia-section">
+          <div class="dia-header">📅 ${fmtData(dia === 'sem-data' ? null : dia)} · ${items.length} visita${items.length > 1 ? 's' : ''}</div>`;
+
+        items.forEach(v => {
+          visitaNum++;
+          const isCap = v._tipo === 'captacao';
+          const nome = isCap ? (v.endereco || 'Captação') : (v.nome || '—');
+          const horario = v.visita?.horario || '';
+          const endereco = v.visita?.endereco || (isCap ? [v.endereco, v.bairro, v.cidade].filter(Boolean).join(', ') : '');
+          const valor = v.visita?.valorImovel || (isCap && v.valorPretendido ? 'R$ ' + Number(v.valorPretendido).toLocaleString('pt-BR') : '');
+          const nomePropr = v.visita?.nomeProprietario || (isCap ? v.proprietario : '') || '';
+          const telPropr = v.visita?.telefoneProprietario || (isCap ? v.telefone : '') || '';
+          const nomeInq = v.visita?.nomeInquilino || '';
+          const telInq = v.visita?.telefoneInquilino || '';
+          const telCliente = (!isCap && v.telefone) ? v.telefone : '';
+          const obs = v.visita?.obs || '';
+
+          html += `<div class="visita-card">
+            <div>
+              <span class="visita-num">Visita ${visitaNum}</span>
+              <span class="visita-tipo ${isCap ? 'tipo-captacao' : 'tipo-cliente'}">${isCap ? '🔍 Captação' : (v.tipo === 'locacao' ? '🔑 Locação' : '🏠 Venda')}</span>
+              ${horario ? `<span class="visita-horario">⏰ ${horario}</span>` : ''}
+            </div>
+            <div class="visita-nome">${nome}</div>
+            <div class="grid">
+              ${endereco ? `<div class="field field-full"><label>📍 Endereço</label><span>${endereco}</span></div>` : ''}
+              ${valor ? `<div class="field"><label>💰 Valor</label><span>${valor}</span></div>` : ''}
+              ${telCliente ? `<div class="field"><label>👤 Cliente (tel)</label><span>${telCliente}</span></div>` : ''}
+              ${nomePropr || telPropr ? `<div class="field"><label>🏠 Proprietário</label><span>${nomePropr}${nomePropr && telPropr ? ' · ' : ''}${telPropr}</span></div>` : ''}
+              ${nomeInq || telInq ? `<div class="field"><label>🔑 Inquilino</label><span>${nomeInq}${nomeInq && telInq ? ' · ' : ''}${telInq}</span></div>` : ''}
+            </div>
+            ${obs ? `<div class="obs-box"><span class="obs-label">📝 Observações</span>${obs}</div>` : ''}
+          </div>`;
+        });
+
+        html += `</div>`;
+      });
+
+      html += `<div class="footer">AMiGO Corretor · Essense Negócios Imobiliários · Total: ${visitaNum} visita${visitaNum !== 1 ? 's' : ''}</div>
+      <script>window.onload = () => { window.print(); }<\/script>
+      </body></html>`;
+
+      const win = window.open('', '_blank');
+      win.document.write(html);
+      win.document.close();
     },
 
     compartilharAgendaWhatsApp() {
