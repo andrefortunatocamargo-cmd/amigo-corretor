@@ -3822,9 +3822,82 @@ tailwind.config = {
         <i class="fa-solid fa-hands-praying text-lg"></i>
         <span class="text-lg tracking-widest font-black">Amém</span>
       </button>
+      <!-- Botão secundário -->
+      <button @click="palavraAtual = palavrasOracao[Math.floor(Math.random()*palavrasOracao.length)]; showPalavraModal = true"
+              class="w-full mt-3 py-3 rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-2 border-2"
+              style="border-color:#345448; color:#345448; background:transparent"
+              onmouseover="this.style.background='#f0f5f2'" onmouseout="this.style.background='transparent'">
+        <i class="fa-solid fa-bible"></i>
+        Preciso ouvir a Palavra de Deus
+      </button>
+
       <p class="text-center text-xs mt-3" style="color:var(--essense-green);opacity:0.6">
         <i class="fa-solid fa-seedling text-[10px]"></i> AMiGO Corretor · Essense Negócios Imobiliários
       </p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== MODAL: PRECISO OUVIR A PALAVRA DE DEUS ===== -->
+<div x-show="showPalavraModal" x-transition class="fixed inset-0 z-[60] flex items-center justify-center p-4" style="background:rgba(5,20,12,0.82)" @click="showPalavraModal=false">
+  <div class="w-full max-w-md rounded-3xl overflow-hidden" @click.stop
+       style="background:#fff; box-shadow:0 30px 80px rgba(0,0,0,0.4), 0 0 0 1px rgba(180,136,96,0.25)">
+
+    <!-- Header -->
+    <div class="px-6 pt-7 pb-6 text-center relative" style="background:linear-gradient(160deg,#1e3a2e 0%,#345448 60%,#4a7062 100%)">
+      <!-- Círculos decorativos -->
+      <div class="absolute top-0 right-0 w-32 h-32 rounded-full opacity-10" style="background:radial-gradient(circle,#b48860,transparent);transform:translate(30%,-30%)"></div>
+      <div class="absolute bottom-0 left-0 w-24 h-24 rounded-full opacity-10" style="background:radial-gradient(circle,#b48860,transparent);transform:translate(-30%,30%)"></div>
+
+      <div class="w-14 h-14 mx-auto mb-3 rounded-full flex items-center justify-center relative z-10" style="background:rgba(180,136,96,0.25); border:1.5px solid rgba(180,136,96,0.4)">
+        <i class="fa-solid fa-bible text-white text-2xl" style="filter:drop-shadow(0 2px 6px rgba(0,0,0,0.3))"></i>
+      </div>
+      <p class="text-[10px] font-black tracking-[0.2em] uppercase mb-2 relative z-10" style="color:#c9a46e">✦ &nbsp; Palavra para Você &nbsp; ✦</p>
+      <div class="inline-block rounded-xl px-5 py-2.5 relative z-10" style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.18)">
+        <p class="text-white font-black text-xl tracking-wide" x-text="palavraAtual?.ref" style="text-shadow:0 2px 8px rgba(0,0,0,0.3)"></p>
+        <p class="text-[10px] font-semibold mt-0.5 tracking-widest" style="color:#c9a46e">BÍBLIA SAGRADA · NVT</p>
+      </div>
+    </div>
+
+    <!-- Versículo -->
+    <div class="px-7 pt-6 pb-2 text-center" style="background:#fdfaf5">
+      <span class="block text-5xl leading-none mb-3" style="color:#b48860; opacity:0.3; font-family:Georgia,serif">"</span>
+      <p class="text-gray-800 text-[20px] leading-9 font-semibold italic" x-text="palavraAtual?.texto"></p>
+      <span class="block text-5xl leading-none mt-2" style="color:#b48860; opacity:0.3; font-family:Georgia,serif">"</span>
+    </div>
+
+    <!-- Divisor -->
+    <div class="flex items-center gap-3 px-7 py-3" style="background:#fdfaf5">
+      <div class="flex-1 h-px" style="background:linear-gradient(90deg,transparent,#b48860)"></div>
+      <i class="fa-solid fa-cross text-[10px]" style="color:#b48860; opacity:0.6"></i>
+      <div class="flex-1 h-px" style="background:linear-gradient(90deg,#b48860,transparent)"></div>
+    </div>
+
+    <!-- Oração -->
+    <div class="px-7 pb-5" style="background:#fdfaf5">
+      <div class="rounded-2xl px-5 py-4 text-left" style="background:#fff; border:1px solid #e8dfd0">
+        <p class="text-[10px] font-black uppercase tracking-widest mb-2" style="color:#b48860">
+          <i class="fa-solid fa-hands-praying mr-1"></i> Oração
+        </p>
+        <p class="text-gray-700 text-[13px] leading-6" x-text="palavraAtual?.oracao"></p>
+      </div>
+    </div>
+
+    <!-- Botão Amém -->
+    <div class="px-6 pb-6" style="background:#fdfaf5">
+      <button @click="showPalavraModal = false"
+              class="w-full py-3.5 rounded-2xl text-white font-black text-lg tracking-widest transition-all active:scale-95"
+              style="background:linear-gradient(135deg,#345448,#243c33); box-shadow:0 6px 20px rgba(52,84,72,0.4)"
+              onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+        <i class="fa-solid fa-hands-praying mr-2"></i> Amém
+      </button>
+      <button @click="palavraAtual = palavrasOracao[Math.floor(Math.random()*palavrasOracao.length)]"
+              class="w-full mt-2.5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+              style="color:#345448; background:transparent"
+              onmouseover="this.style.background='#f0f5f2'" onmouseout="this.style.background='transparent'">
+        <i class="fa-solid fa-rotate mr-1 text-xs"></i> Receber outro versículo
+      </button>
     </div>
 
   </div>
@@ -4006,6 +4079,22 @@ function app() {
     loginError: '',
     loginRemember: false,
     showVersiculo: true,
+    showPalavraModal: false,
+    palavraAtual: null,
+    palavrasOracao: [
+      { ref: 'Salmos 23:1', texto: 'O Senhor é o meu pastor; nada me faltará.', oracao: 'Senhor, hoje reconheço que o meu sustento vem de Ti. Não preciso me angustiar com o amanhã, porque Tu és fiel e cuidas de cada detalhe da minha vida. Que eu trabalhe com excelência, mas que toda a minha confiança repouse em Tuas mãos. Amém.' },
+      { ref: 'Jeremias 29:11', texto: '"Porque eu sei os planos que tenho para você", diz o Senhor, "planos de prosperar e não de causar dano, planos de dar esperança e um futuro."', oracao: 'Pai, às vezes o caminho parece incerto, mas a Tua Palavra me diz que há um plano perfeito traçado para mim. Renuncio à ansiedade e escolho confiar na Tua direção. Que eu seja fiel em cada passo. Amém.' },
+      { ref: 'Filipenses 4:6-7', texto: 'Não se preocupem com nada; em vez disso, orem por tudo. Digam a Deus o que precisam e agradeçam por tudo o que ele já fez.', oracao: 'Senhor, entrego nas Tuas mãos cada preocupação, cada meta, cada cliente, cada negócio pendente. Substituo a ansiedade pelo agradecimento. Que a Tua paz que excede todo entendimento guarde meu coração hoje. Amém.' },
+      { ref: 'Provérbios 3:5-6', texto: 'Confie no Senhor de todo o seu coração e não se apoie em seu próprio entendimento; em todos os seus caminhos, submeta-se a ele, e ele tornará retas as suas veredas.', oracao: 'Deus, muitas vezes quero controlar tudo com minhas próprias forças. Hoje escolho submeter meu trabalho, meus planos e meu dia à Tua vontade. Guia-me pelos caminhos que Tu preparastes. Amém.' },
+      { ref: 'Isaías 41:10', texto: 'Não tenha medo, pois estou com você; não se desanime, pois sou o seu Deus. Vou fortalecê-lo e ajudá-lo; vou sustentá-lo com minha mão direita vitoriosa.', oracao: 'Senhor, quando o desânimo bater à porta, que eu me lembre desta promessa. Não estou sozinho. Tua mão direita me sustenta. Recebo hoje Tua força para enfrentar cada desafio com coragem e fé. Amém.' },
+      { ref: 'Mateus 6:33', texto: 'Busquem, pois, em primeiro lugar o Reino de Deus e a sua justiça, e todas essas coisas serão acrescentadas a vocês.', oracao: 'Pai, que o meu trabalho seja sempre um ato de adoração a Ti. Que antes de buscar resultados, eu busque o Teu reino e a Tua presença. E que a bênção seja consequência da minha fidelidade. Amém.' },
+      { ref: 'Romanos 8:28', texto: 'Sabemos que Deus age em todas as coisas para o bem daqueles que o amam, dos que foram chamados de acordo com o seu propósito.', oracao: 'Deus, mesmo nas situações difíceis, as portas fechadas e os negócios que não deram certo, eu confio que Tu estás trabalhando algo maior. Todas as coisas cooperam para o meu bem. Descanco nessa verdade. Amém.' },
+      { ref: 'Josué 1:9', texto: 'Seja forte e corajoso! Não se apavore nem desanime, pois o Senhor, o seu Deus, está com você por onde você andar.', oracao: 'Senhor, que hoje eu ande com ousadia. Que eu não recue diante dos desafios, mas avance com a certeza de que Tu estás ao meu lado em cada reunião, cada visita e cada decisão. Dá-me coragem. Amém.' },
+      { ref: 'Salmos 37:4', texto: 'Deleite-se no Senhor, e ele atenderá aos desejos do seu coração.', oracao: 'Pai, que o meu maior desejo seja estar perto de Ti. Que as conquistas profissionais sejam fruto de um coração alinhado com o Teu. Cuida dos meus sonhos e desejos, pois sei que Tu os conheces melhor do que eu mesmo. Amém.' },
+      { ref: 'Colossenses 3:23', texto: 'Tudo o que você fizer, faça de todo o coração, como se estivesse trabalhando para o Senhor e não para os homens.', oracao: 'Senhor, que eu faça tudo com excelência, não para agradar às pessoas, mas para honrar o Teu nome. Que meu trabalho seja uma oferta viva diante de Ti. Que cada cliente, cada imóvel, cada atendimento seja feito com amor e integridade. Amém.' },
+      { ref: 'Salmos 121:1-2', texto: 'Elevo os olhos para os montes — de onde virá o meu socorro? O meu socorro vem do Senhor, que fez o céu e a terra.', oracao: 'Pai, não busco socorro nas minhas habilidades, nos meus contatos ou no mercado. Elevo meus olhos para Ti, que és a fonte de toda sabedoria e provisão. Que cada dia eu comece olhando para cima antes de olhar para os problemas. Amém.' },
+      { ref: 'Lucas 12:31-32', texto: 'Busquem, pois, o reino de Deus, e estas coisas lhes serão acrescentadas. Não tenha medo, ó pequeno rebanho, pois o Pai se agradou em lhes dar o reino.', oracao: 'Deus, sou pequeno diante de tantos desafios, mas Tu és grande. Recebi de Ti a herança do Teu reino. Que eu não ande com medo, mas com a segurança de filho amado que sabe que o Pai cuida. Amém.' },
+    ],
     // WhatsApp Business integration
     waSheetUrl: localStorage.getItem('wa_sheet_url') || '',
     waLeadPopup: false,
