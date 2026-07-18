@@ -4678,62 +4678,6 @@ function app() {
       html += `<div class="footer">AMiGO Corretor · Essense Negócios Imobiliários · ${visitas.length} visita${visitas.length !== 1 ? 's' : ''} no roteiro</div>
       <script>window.onload = () => { window.print(); }<\/script>
       
-<script>
-// ========== PAINÉIS REDIMENSIONÁVEIS ==========
-(function() {
-  let dragging = false;
-  let startX = 0;
-  let leftId = '';
-  let rightId = '';
-  let leftStartW = 0;
-  let rightStartW = 0;
-  let containerW = 0;
-
-  window.initResize = function(e, left, right) {
-    e.preventDefault();
-    dragging = true;
-    startX = e.clientX;
-    leftId = left;
-    rightId = right;
-    const container = document.getElementById('paineis-container');
-    containerW = container ? container.offsetWidth : window.innerWidth;
-    const leftEl = document.getElementById(left);
-    const rightEl = document.getElementById(right);
-    leftStartW = leftEl ? leftEl.offsetWidth : 0;
-    rightStartW = rightEl ? rightEl.offsetWidth : 0;
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-  };
-
-  document.addEventListener('mousemove', function(e) {
-    if (!dragging) return;
-    const dx = e.clientX - startX;
-    const leftEl = document.getElementById(leftId);
-    const rightEl = document.getElementById(rightId);
-    if (!leftEl || !rightEl) return;
-    const minW = 180;
-    let newLeft = leftStartW + dx;
-    let newRight = rightStartW - dx;
-    if (newLeft < minW) { newLeft = minW; newRight = leftStartW + rightStartW - minW; }
-    if (newRight < minW) { newRight = minW; newLeft = leftStartW + rightStartW - minW; }
-    leftEl.style.width = newLeft + 'px';
-    leftEl.style.flex = 'none';
-    // if painel-3 is flex:1, leave it; else set width
-    if (rightId !== 'painel-3') {
-      rightEl.style.width = newRight + 'px';
-      rightEl.style.flex = 'none';
-    }
-  });
-
-  document.addEventListener('mouseup', function() {
-    if (!dragging) return;
-    dragging = false;
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
-  });
-})();
-</script>
-
 </body></html>`;
 
       const win = window.open('', '_blank');
@@ -7253,5 +7197,48 @@ function app() {
 </div>
 
 </div><!-- /loggedIn -->
+
+<script>
+(function() {
+  let dragging = false, startX = 0, leftId = '', rightId = '', leftStartW = 0, rightStartW = 0;
+
+  window.initResize = function(e, left, right) {
+    e.preventDefault();
+    dragging = true;
+    startX = e.clientX;
+    leftId = left; rightId = right;
+    var lEl = document.getElementById(left);
+    var rEl = document.getElementById(right);
+    leftStartW = lEl ? lEl.offsetWidth : 0;
+    rightStartW = rEl ? rEl.offsetWidth : 0;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  };
+
+  document.addEventListener('mousemove', function(e) {
+    if (!dragging) return;
+    var dx = e.clientX - startX;
+    var lEl = document.getElementById(leftId);
+    var rEl = document.getElementById(rightId);
+    if (!lEl || !rEl) return;
+    var minW = 180;
+    var newL = leftStartW + dx;
+    var newR = rightStartW - dx;
+    if (newL < minW) { newL = minW; newR = leftStartW + rightStartW - minW; }
+    if (newR < minW) { newR = minW; newL = leftStartW + rightStartW - minW; }
+    lEl.style.width = newL + 'px';
+    lEl.style.flex = 'none';
+    if (rightId !== 'painel-3') { rEl.style.width = newR + 'px'; rEl.style.flex = 'none'; }
+  });
+
+  document.addEventListener('mouseup', function() {
+    if (!dragging) return;
+    dragging = false;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  });
+})();
+</script>
+
 </body>
 </html>
