@@ -788,6 +788,11 @@ tailwind.config = {
                       :style="'color:' + getPipelineCor(item.cliente)"
                       x-text="getPipelineLabel(item.cliente)">
                     </span>
+                    <!-- Situação do lead -->
+                    <span x-show="!item.isExtra && getSubstatus(item.cliente)"
+                      class="text-[8px] truncate block text-left leading-tight mt-0.5 font-medium text-indigo-500"
+                      x-text="getSubstatus(item.cliente) ? getSubstatus(item.cliente).emoji + ' ' + getSubstatus(item.cliente).label : ''">
+                    </span>
                     <!-- Ações extras -->
                     <span x-show="item.isExtra" class="text-violet-400 truncate block text-left leading-tight text-[10px]" x-text="item.descricao"></span>
                     <button x-show="item.isExtra"
@@ -4425,7 +4430,8 @@ function app() {
       if (idx === -1) return;
       const c = { ...this.clientes[idx] };
       c.substatus = c.substatus === substatusId ? null : substatusId;
-      this.clientes[idx] = c;
+      this.clientes = [...this.clientes.slice(0, idx), c, ...this.clientes.slice(idx + 1)];
+      this.calVersion++;
       this.substatusPopover = null;
       this.save();
     },
