@@ -880,32 +880,34 @@ tailwind.config = {
 
 
     <!-- ========== PAINÉIS INFERIORES DO DASHBOARD ========== -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-8">
 
-      <!-- PAINEL: ÚLTIMOS CONTATOS + BUSCA -->
-      <div class="bg-white rounded-2xl shadow-sm border border-green-100 overflow-hidden flex flex-col" style="max-height:480px">
-        <!-- Header -->
-        <div class="px-5 py-4 border-b border-gray-50 flex items-center justify-between flex-shrink-0">
-          <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--essense-green)">
-              <i class="fa-solid fa-address-book text-white text-xs"></i>
+      <!-- ══════════ PAINEL 1: CONTATOS ══════════ -->
+      <div class="rounded-2xl overflow-hidden flex flex-col" style="max-height:520px; background:#fff; box-shadow:0 4px 24px rgba(52,84,72,0.08); border:1px solid rgba(52,84,72,0.1)">
+        <!-- Header com gradiente -->
+        <div class="px-5 py-4 flex items-center justify-between flex-shrink-0" style="background:linear-gradient(135deg,#345448 0%,#4a7062 100%)">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,0.15); backdrop-filter:blur(4px)">
+              <i class="fa-solid fa-users text-white text-sm"></i>
             </div>
             <div>
-              <p class="font-black text-gray-800 text-sm">Contatos</p>
-              <p class="text-gray-400 text-[10px]" x-text="clientes.length + ' cadastrados'"></p>
+              <p class="font-black text-white text-sm tracking-wide">Contatos</p>
+              <p class="text-green-200 text-[11px]" x-text="clientes.length + ' leads cadastrados'"></p>
             </div>
           </div>
-          <button @click="openClientModal()" class="text-xs font-bold px-3 py-1.5 rounded-lg text-white flex items-center gap-1" style="background:var(--essense-green)">
-            <i class="fa-solid fa-plus text-[10px]"></i> Novo
+          <button @click="openClientModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all hover:scale-105 active:scale-95" style="background:rgba(255,255,255,0.2); color:#fff; border:1px solid rgba(255,255,255,0.3)">
+            <i class="fa-solid fa-plus text-[10px]"></i> Novo Lead
           </button>
         </div>
 
         <!-- Busca -->
-        <div class="px-4 py-3 border-b border-gray-50 flex-shrink-0">
+        <div class="px-4 py-3 flex-shrink-0" style="background:#f8faf9; border-bottom:1px solid #eef2f0">
           <div class="relative">
-            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 text-xs"></i>
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[11px]" style="color:#8faa9d"></i>
             <input x-model="buscaContatos" type="text" placeholder="Buscar por nome, telefone ou imóvel..."
-                   class="w-full pl-8 pr-3 py-2 text-sm border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-200 bg-gray-50">
+                   class="w-full pl-8 pr-8 py-2 text-xs rounded-xl focus:outline-none transition-all"
+                   style="background:#fff; border:1.5px solid #dde8e3; color:#374151; font-weight:500"
+                   onfocus="this.style.borderColor='#345448'" onblur="this.style.borderColor='#dde8e3'">
             <button x-show="buscaContatos" @click="buscaContatos=''" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500">
               <i class="fa-solid fa-xmark text-xs"></i>
             </button>
@@ -913,160 +915,180 @@ tailwind.config = {
         </div>
 
         <!-- Lista com scroll -->
-        <div class="overflow-y-auto flex-1 scrollbar-thin divide-y divide-gray-50 px-2 py-1">
+        <div class="overflow-y-auto flex-1 px-3 py-2 space-y-1" style="scrollbar-width:thin">
           <template x-if="contatosFiltrados().length === 0">
-            <div class="py-8 text-center text-gray-300">
-              <i class="fa-solid fa-user-slash text-2xl mb-2 block"></i>
-              <p class="text-xs">Nenhum contato encontrado</p>
+            <div class="py-10 text-center">
+              <div class="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center" style="background:#f0f5f3">
+                <i class="fa-solid fa-user-slash text-xl" style="color:#9fbdb5"></i>
+              </div>
+              <p class="text-xs font-semibold text-gray-400">Nenhum contato encontrado</p>
             </div>
           </template>
           <template x-for="c in contatosFiltrados()" :key="c.id">
-            <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer group" @click="openClientModal(c)">
-              <!-- Avatar com cor do tipo -->
-              <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-black"
+            <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all hover:shadow-sm group"
+                 style="border:1px solid transparent"
+                 onmouseover="this.style.background='#f8faf9'; this.style.borderColor='#dde8e3'"
+                 onmouseout="this.style.background='transparent'; this.style.borderColor='transparent'"
+                 @click="openClientModal(c)">
+              <!-- Avatar -->
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-sm font-black shadow-sm"
                    :style="'background:' + getTipoColor(c.tipo)">
                 <span x-text="(c.nome||'?')[0].toUpperCase()"></span>
               </div>
               <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-1.5">
+                <div class="flex items-center gap-1.5 mb-0.5">
                   <p class="text-sm font-bold text-gray-800 truncate" x-text="c.nome"></p>
-                  <span x-show="c.status==='concluido'" class="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600 font-bold flex-shrink-0">✓ Fechado</span>
-                  <span x-show="c.status==='perdido'" class="text-[9px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-500 font-bold flex-shrink-0">Perdido</span>
+                  <span x-show="c.status==='concluido'" class="text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0" style="background:#dbeafe; color:#1d4ed8">✓ Fechado</span>
+                  <span x-show="c.status==='perdido'" class="text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0" style="background:#fee2e2; color:#dc2626">Perdido</span>
                 </div>
-                <div class="flex items-center gap-2 mt-0.5">
+                <div class="flex items-center gap-1.5">
+                  <i class="fa-solid fa-phone text-[8px] text-gray-300"></i>
                   <span class="text-[10px] text-gray-400 truncate" x-text="c.telefone || '—'"></span>
-                  <span x-show="c.imovel" class="text-[10px] text-gray-300 truncate" x-text="'· ' + (c.imovel||'')"></span>
+                  <span x-show="c.imovel" class="text-[10px] text-gray-300">·</span>
+                  <span x-show="c.imovel" class="text-[10px] text-gray-400 truncate" x-text="c.imovel||''"></span>
                 </div>
               </div>
               <div class="text-right flex-shrink-0">
-                <p x-show="c.valorInteresse && Number(c.valorInteresse) > 0" class="text-xs font-bold" style="color:var(--essense-gold-d)"
-                   x-text="'R$ ' + Number(c.valorInteresse).toLocaleString('pt-BR')"></p>
-                <p class="text-[10px] text-gray-400 font-semibold" x-text="formatDateBR(c.dataInicio)"></p>
-                <p class="text-[9px] text-gray-300" x-text="c.tipo || ''"></p>
+                <p x-show="c.valorInteresse && Number(c.valorInteresse) > 0" class="text-xs font-black" style="color:#b48860"
+                   x-text="'R$ ' + Number(c.valorInteresse).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0})"></p>
+                <p class="text-[10px] text-gray-400 mt-0.5" x-text="formatDateBR(c.dataInicio)"></p>
               </div>
             </div>
           </template>
         </div>
 
         <!-- Footer -->
-        <div class="px-4 py-2.5 border-t border-gray-50 flex-shrink-0 bg-gray-50">
-          <p class="text-[10px] text-gray-400 text-center" x-text="buscaContatos ? contatosFiltrados().length + ' resultado(s) encontrado(s)' : 'Mostrando últimos 20 contatos · role para ver mais'"></p>
+        <div class="px-4 py-2.5 flex-shrink-0 flex items-center justify-between" style="background:#f8faf9; border-top:1px solid #eef2f0">
+          <p class="text-[10px] text-gray-400" x-text="buscaContatos ? contatosFiltrados().length + ' encontrado(s)' : clientes.length + ' contatos · últimos 20 exibidos'"></p>
+          <div class="flex items-center gap-1">
+            <div class="w-1.5 h-1.5 rounded-full" style="background:#345448"></div>
+            <span class="text-[10px] font-semibold" style="color:#345448" x-text="clientes.filter(c=>c.ativo).length + ' ativos'"></span>
+          </div>
         </div>
       </div>
 
-      <!-- PAINEL: RESULTADOS / NEGÓCIOS FECHADOS -->
-      <div class="bg-white rounded-2xl shadow-sm border border-green-100 overflow-hidden flex flex-col" style="max-height:480px">
-        <!-- Header com filtro de mês -->
-        <div class="px-5 py-4 border-b border-gray-50 flex-shrink-0">
+      <!-- ══════════ PAINEL 2: RESULTADOS ══════════ -->
+      <div class="rounded-2xl overflow-hidden flex flex-col" style="max-height:520px; background:#fff; box-shadow:0 4px 24px rgba(180,136,96,0.1); border:1px solid rgba(180,136,96,0.15)">
+        <!-- Header com gradiente gold -->
+        <div class="px-5 py-4 flex-shrink-0" style="background:linear-gradient(135deg,#b48860 0%,#c9a070 100%)">
           <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--essense-gold)">
-                <i class="fa-solid fa-trophy text-white text-xs"></i>
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,0.2)">
+                <i class="fa-solid fa-trophy text-white text-sm"></i>
               </div>
               <div>
-                <p class="font-black text-gray-800 text-sm">Resultados</p>
-                <p class="text-gray-400 text-[10px]">Negócios fechados</p>
+                <p class="font-black text-white text-sm tracking-wide">Resultados</p>
+                <p class="text-[11px]" style="color:rgba(255,255,255,0.8)">Negócios fechados</p>
               </div>
             </div>
             <!-- Filtro de mês -->
-            <div class="flex items-center gap-1.5">
-              <button @click="mudarMesResultados(-1)" class="w-6 h-6 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
-                <i class="fa-solid fa-chevron-left text-gray-500 text-[10px]"></i>
+            <div class="flex items-center gap-1" style="background:rgba(255,255,255,0.15); border-radius:10px; padding:3px">
+              <button @click="mudarMesResultados(-1)" class="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-white/20">
+                <i class="fa-solid fa-chevron-left text-white text-[10px]"></i>
               </button>
-              <span class="text-xs font-bold text-gray-700 min-w-[80px] text-center" x-text="labelMesResultados()"></span>
-              <button @click="mudarMesResultados(1)" class="w-6 h-6 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
-                <i class="fa-solid fa-chevron-right text-gray-500 text-[10px]"></i>
+              <span class="text-xs font-bold text-white min-w-[72px] text-center" x-text="labelMesResultados()"></span>
+              <button @click="mudarMesResultados(1)" class="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-white/20">
+                <i class="fa-solid fa-chevron-right text-white text-[10px]"></i>
               </button>
             </div>
           </div>
 
-          <!-- Cards de totais -->
-          <div class="grid grid-cols-2 gap-2">
-            <div class="rounded-xl p-3 text-center" style="background:linear-gradient(135deg,#345448,#243c33)">
-              <p class="text-white text-sm font-black leading-tight" x-text="statsResultados().totalValorFmt"></p>
-              <p class="text-green-200 text-[10px] font-semibold">Fechado</p>
+          <!-- KPI Cards — 4 métricas lado a lado -->
+          <div class="grid grid-cols-4 gap-2">
+            <div class="rounded-xl p-2.5 text-center" style="background:rgba(0,0,0,0.15)">
+              <p class="text-white text-xs font-black leading-tight truncate" x-text="statsResultados().totalValorFmt"></p>
+              <p class="text-[9px] mt-0.5 font-semibold" style="color:rgba(255,255,255,0.7)">Fechado</p>
             </div>
-            <div class="rounded-xl p-3 text-center" style="background:linear-gradient(135deg,#4a7062,#345448)">
-              <p class="text-white text-sm font-black leading-tight" x-text="statsResultados().totalOrcadoFmt"></p>
-              <p class="text-green-200 text-[10px] font-semibold">Orçado</p>
+            <div class="rounded-xl p-2.5 text-center" style="background:rgba(0,0,0,0.1)">
+              <p class="text-white text-xs font-black leading-tight truncate" x-text="statsResultados().totalOrcadoFmt"></p>
+              <p class="text-[9px] mt-0.5 font-semibold" style="color:rgba(255,255,255,0.7)">Orçado</p>
             </div>
-            <div class="rounded-xl p-3 text-center bg-blue-50 border border-blue-100">
-              <p class="text-blue-700 text-lg font-black" x-text="statsResultados().ticketFmt"></p>
-              <p class="text-blue-400 text-[10px] font-semibold">Ticket Médio</p>
+            <div class="rounded-xl p-2.5 text-center" style="background:rgba(255,255,255,0.2)">
+              <p class="text-white text-xs font-black leading-tight truncate" x-text="statsResultados().ticketFmt"></p>
+              <p class="text-[9px] mt-0.5 font-semibold" style="color:rgba(255,255,255,0.7)">Ticket</p>
             </div>
-            <div class="rounded-xl p-3 text-center border"
-                 :class="statsResultados().pct >= 50 ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'">
-              <p class="text-lg font-black" :class="statsResultados().pct >= 50 ? 'text-green-700' : 'text-orange-600'" x-text="statsResultados().pctFmt"></p>
-              <p class="text-[10px] font-semibold" :class="statsResultados().pct >= 50 ? 'text-green-400' : 'text-orange-400'">Conversão</p>
+            <div class="rounded-xl p-2.5 text-center" style="background:rgba(255,255,255,0.25)">
+              <p class="text-white text-xs font-black leading-tight" x-text="statsResultados().pctFmt"></p>
+              <p class="text-[9px] mt-0.5 font-semibold" style="color:rgba(255,255,255,0.7)">Conversão</p>
             </div>
           </div>
         </div>
 
-        <!-- Abas Fechados / Em Atendimento -->
-        <div class="px-4 pt-3 pb-0 flex gap-1 flex-shrink-0">
+        <!-- Abas -->
+        <div class="px-4 pt-3 pb-2 flex gap-1.5 flex-shrink-0" style="background:#fffaf5; border-bottom:1px solid #f5ebe0">
           <button @click="resultadosAba='fechados'"
-            :class="resultadosAba==='fechados' ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'"
-            class="flex-1 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1">
-            <i class="fa-solid fa-handshake"></i> Fechados
+            :class="resultadosAba==='fechados' ? 'text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'"
+            :style="resultadosAba==='fechados' ? 'background:#b48860' : 'background:#f5ebe0'"
+            class="flex-1 py-2 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-handshake text-[10px]"></i> Fechados
           </button>
           <button @click="resultadosAba='atendimento'"
-            :class="resultadosAba==='atendimento' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'"
-            class="flex-1 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1">
-            <i class="fa-solid fa-spinner"></i> Em Atendimento
+            :class="resultadosAba==='atendimento' ? 'text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'"
+            :style="resultadosAba==='atendimento' ? 'background:#345448' : 'background:#f5ebe0'"
+            class="flex-1 py-2 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-layer-group text-[10px]"></i> Pipeline
           </button>
         </div>
 
         <!-- Gráfico de leads por mês -->
-        <div x-show="resultadosAba==='fechados'" class="bg-white rounded-2xl shadow p-4 mb-4 mx-2 mt-2">
-          <h4 class="text-xs font-bold text-gray-600 uppercase tracking-wide mb-3">Leads por mês</h4>
-          <div class="flex items-end gap-2 h-24">
+        <div x-show="resultadosAba==='fechados'" class="mx-4 mt-3 mb-2 rounded-xl p-3 flex-shrink-0" style="background:#fffaf5; border:1px solid #f5ebe0">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="text-[10px] font-black uppercase tracking-widest" style="color:#b48860">Leads por mês</h4>
+            <div class="flex gap-2">
+              <div class="flex items-center gap-1"><div class="w-2 h-2 rounded-sm" style="background:#345448"></div><span class="text-[9px] text-gray-500">Entrados</span></div>
+              <div class="flex items-center gap-1"><div class="w-2 h-2 rounded-sm" style="background:#b48860"></div><span class="text-[9px] text-gray-500">Fechados</span></div>
+            </div>
+          </div>
+          <div class="flex items-end gap-1.5" style="height:56px">
             <template x-for="m in getChartData()" :key="m.key">
               <div class="flex-1 flex flex-col items-center gap-1">
-                <div class="w-full flex gap-0.5 items-end" style="height:64px">
-                  <div class="flex-1 rounded-t transition-all duration-500"
-                       :style="'background:#345448;height:' + (m.entrados ? Math.max(4, m.entrados/Math.max(...getChartData().map(x=>x.entrados||1))*64) : 4) + 'px'"></div>
-                  <div class="flex-1 rounded-t transition-all duration-500"
-                       :style="'background:#b48860;height:' + (m.fechados ? Math.max(4, m.fechados/Math.max(...getChartData().map(x=>x.entrados||1))*64) : 2) + 'px'"></div>
+                <div class="w-full flex gap-0.5 items-end" style="height:44px">
+                  <div class="flex-1 rounded-t-sm transition-all duration-500"
+                       :style="'background:#345448;opacity:0.85;height:' + (m.entrados ? Math.max(4, m.entrados/Math.max(...getChartData().map(x=>x.entrados||1))*44) : 4) + 'px'"></div>
+                  <div class="flex-1 rounded-t-sm transition-all duration-500"
+                       :style="'background:#b48860;height:' + (m.fechados ? Math.max(2, m.fechados/Math.max(...getChartData().map(x=>x.entrados||1))*44) : 2) + 'px'"></div>
                 </div>
-                <span class="text-[9px] text-gray-400" x-text="m.label"></span>
+                <span class="text-[8px] text-gray-400 font-semibold" x-text="m.label"></span>
               </div>
             </template>
-          </div>
-          <div class="flex gap-3 mt-2">
-            <div class="flex items-center gap-1"><div class="w-2 h-2 rounded-sm" style="background:#345448"></div><span class="text-[10px] text-gray-500">Entrados</span></div>
-            <div class="flex items-center gap-1"><div class="w-2 h-2 rounded-sm" style="background:#b48860"></div><span class="text-[10px] text-gray-500">Fechados</span></div>
           </div>
         </div>
 
         <!-- Lista de negócios FECHADOS -->
-        <div x-show="resultadosAba==='fechados'" class="overflow-y-auto flex-1 scrollbar-thin divide-y divide-gray-50 px-2 py-1">
+        <div x-show="resultadosAba==='fechados'" class="overflow-y-auto flex-1 px-3 py-1 space-y-1" style="scrollbar-width:thin">
           <template x-if="negociosFechados().length === 0">
-            <div class="py-8 text-center text-gray-300">
-              <i class="fa-solid fa-handshake-slash text-2xl mb-2 block"></i>
-              <p class="text-xs">Nenhum negócio fechado neste mês</p>
-              <p class="text-[10px] mt-1">Marque clientes como "Concluído" e informe o valor</p>
+            <div class="py-8 text-center">
+              <div class="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center" style="background:#fffaf5">
+                <i class="fa-solid fa-handshake-slash text-xl" style="color:#d4b080"></i>
+              </div>
+              <p class="text-xs font-semibold text-gray-400">Nenhum negócio fechado neste mês</p>
+              <p class="text-[10px] text-gray-300 mt-1">Marque clientes como "Concluído"</p>
             </div>
           </template>
           <template x-for="c in negociosFechados()" :key="c.id">
-            <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer" @click="openClientModal(c)">
-              <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-black"
+            <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all"
+                 style="border:1px solid transparent"
+                 onmouseover="this.style.background='#fffaf5'; this.style.borderColor='#f5ebe0'"
+                 onmouseout="this.style.background='transparent'; this.style.borderColor='transparent'"
+                 @click="openClientModal(c)">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-sm font-black shadow-sm"
                    :style="'background:' + getTipoColor(c.tipo)">
                 <span x-text="(c.nome||'?')[0].toUpperCase()"></span>
               </div>
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-bold text-gray-800 truncate" x-text="c.nome"></p>
                 <div class="flex items-center gap-1.5 mt-0.5">
-                  <span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold"
-                        :style="'background:' + getTipoColor(c.tipo) + '20; color:' + getTipoColor(c.tipo)"
+                  <span class="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
+                        :style="'background:' + getTipoColor(c.tipo) + '25; color:' + getTipoColor(c.tipo)"
                         x-text="c.tipo || '—'"></span>
                   <span class="text-[10px] text-gray-400 truncate" x-text="c.imovel || ''"></span>
                 </div>
               </div>
               <div class="text-right flex-shrink-0">
-                <p class="text-sm font-black" style="color:var(--essense-gold-d)"
-                   x-text="c.valorFechado ? 'R$ ' + Number(c.valorFechado).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) : '—'"></p>
-                <p x-show="c.valorInteresse && Number(c.valorInteresse) > 0" class="text-[10px] text-gray-400 line-through"
-                   x-text="'R$ ' + Number(c.valorInteresse||0).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0})"></p>
+                <p class="text-sm font-black" style="color:#b48860"
+                   x-text="c.valorFechado ? 'R$ ' + Number(c.valorFechado).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) : '—'"></p>
+                <p x-show="c.valorInteresse && Number(c.valorInteresse) > 0" class="text-[10px] text-gray-300 line-through"
+                   x-text="'R$ ' + Number(c.valorInteresse||0).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0})"></p>
                 <p class="text-[10px] text-gray-400" x-text="formatDateBR(c.dataFechamento || c.dataInicio)"></p>
               </div>
             </div>
@@ -1074,12 +1096,14 @@ tailwind.config = {
         </div>
 
         <!-- Lista EM ATENDIMENTO — 3 grupos de pipeline -->
-        <div x-show="resultadosAba==='atendimento'" class="overflow-y-auto flex-1 scrollbar-thin px-2 py-2 space-y-2">
+        <div x-show="resultadosAba==='atendimento'" class="overflow-y-auto flex-1 px-2 py-2 space-y-2" style="scrollbar-width:thin">
           <template x-if="leadsEmAtendimento().length === 0">
-            <div class="py-8 text-center text-gray-300">
-              <i class="fa-solid fa-layer-group text-2xl mb-2 block"></i>
-              <p class="text-xs">Nenhum lead ativo no pipeline</p>
-              <p class="text-[10px] mt-1">Leads ativos aparecem aqui automaticamente</p>
+            <div class="py-8 text-center">
+              <div class="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center" style="background:#f0f5f3">
+                <i class="fa-solid fa-layer-group text-xl" style="color:#9fbdb5"></i>
+              </div>
+              <p class="text-xs font-semibold text-gray-400">Nenhum lead ativo no pipeline</p>
+              <p class="text-[10px] text-gray-300 mt-1">Leads ativos aparecem aqui automaticamente</p>
             </div>
           </template>
 
@@ -1170,36 +1194,84 @@ tailwind.config = {
         </div>
 
         <!-- Footer -->
-        <div class="px-4 py-2.5 border-t border-gray-50 flex-shrink-0 bg-gray-50">
-          <p class="text-[10px] text-gray-400 text-center" x-text="negociosFechados().length + ' negócio(s) fechado(s) · ' + statsResultados().comValor + ' com valor informado'"></p>
+        <div class="px-4 py-2.5 flex-shrink-0 flex items-center justify-between" style="background:#fffaf5; border-top:1px solid #f5ebe0">
+          <p class="text-[10px] text-gray-400" x-text="negociosFechados().length + ' fechado(s) · ' + statsResultados().comValor + ' com valor'"></p>
+          <div class="flex items-center gap-1">
+            <div class="w-1.5 h-1.5 rounded-full" style="background:#b48860"></div>
+            <span class="text-[10px] font-semibold" style="color:#b48860" x-text="'R$ ' + (statsResultados().totalValorFmt || '0')"></span>
+          </div>
         </div>
       </div>
 
-      <!-- ========== ATIVIDADE RECENTE (3ª coluna) ========== -->
-      <div class="bg-white rounded-2xl shadow-sm border border-green-100 flex flex-col" style="max-height:480px">
-        <div class="px-4 py-3 border-b border-gray-50 flex items-center justify-between flex-shrink-0">
-          <div class="flex items-center gap-2">
-            <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background:#f59e0b">
-              <i class="fa-solid fa-bolt text-white text-xs"></i>
+      <!-- ══════════ PAINEL 3: ATIVIDADE RECENTE ══════════ -->
+      <div class="rounded-2xl overflow-hidden flex flex-col" style="max-height:520px; background:#fff; box-shadow:0 4px 24px rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.1)">
+        <!-- Header -->
+        <div class="px-5 py-4 flex items-center justify-between flex-shrink-0" style="background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%)">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,0.15)">
+              <i class="fa-solid fa-bolt text-white text-sm"></i>
             </div>
-            <p class="font-black text-gray-800 text-sm">Atividade Recente</p>
+            <div>
+              <p class="font-black text-white text-sm tracking-wide">Atividade Recente</p>
+              <p class="text-[11px]" style="color:rgba(255,255,255,0.75)" x-text="activityFeed.length + ' eventos registrados'"></p>
+            </div>
           </div>
-          <button @click="activityFeed = []; localStorage.removeItem('amigo_feed')" class="text-[10px] text-gray-300 hover:text-red-400 transition-colors">Limpar</button>
+          <button @click="activityFeed = []; localStorage.removeItem('amigo_feed')"
+                  class="text-[10px] font-bold px-2.5 py-1 rounded-lg transition-all"
+                  style="background:rgba(255,255,255,0.15); color:rgba(255,255,255,0.8); border:1px solid rgba(255,255,255,0.2)"
+                  onmouseover="this.style.background='rgba(239,68,68,0.6)'; this.style.color='#fff'"
+                  onmouseout="this.style.background='rgba(255,255,255,0.15)'; this.style.color='rgba(255,255,255,0.8)'">
+            <i class="fa-solid fa-trash-can text-[9px] mr-1"></i>Limpar
+          </button>
         </div>
-        <div class="overflow-y-auto flex-1 px-3 py-2">
-          <div x-show="activityFeed.length === 0" class="text-center text-gray-300 text-xs py-8">
-            <i class="fa-solid fa-clock-rotate-left text-2xl mb-2 block"></i>
-            Nenhuma atividade ainda
+
+        <!-- Linha de resumo rápido -->
+        <div class="px-4 py-2.5 flex items-center gap-3 flex-shrink-0" style="background:#f5f3ff; border-bottom:1px solid #ede9fe">
+          <div class="flex items-center gap-1.5 flex-1">
+            <div class="w-1.5 h-1.5 rounded-full animate-pulse" style="background:#4f46e5"></div>
+            <span class="text-[10px] font-semibold text-indigo-700" x-text="activityFeed.length > 0 ? 'Última: ' + feedTimeAgo(activityFeed[0]?.time) : 'Nenhuma ação ainda'"></span>
           </div>
-          <template x-for="item in activityFeed.slice(0,10)" :key="item.id">
-            <div class="flex items-start gap-2 py-2 border-b border-gray-50 last:border-0">
-              <span class="text-sm flex-shrink-0 mt-0.5" x-text="item.icon"></span>
+          <span class="text-[9px] px-2 py-0.5 rounded-full font-bold" style="background:#ede9fe; color:#4f46e5"
+                x-text="activityFeed.slice(0,5).length + ' recentes'"></span>
+        </div>
+
+        <!-- Feed de atividades -->
+        <div class="overflow-y-auto flex-1 px-4 py-3 space-y-1" style="scrollbar-width:thin">
+          <div x-show="activityFeed.length === 0" class="py-10 text-center">
+            <div class="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center" style="background:#f5f3ff">
+              <i class="fa-solid fa-clock-rotate-left text-xl" style="color:#a5b4fc"></i>
+            </div>
+            <p class="text-xs font-semibold text-gray-400">Nenhuma atividade ainda</p>
+            <p class="text-[10px] text-gray-300 mt-1">As ações aparecem aqui em tempo real</p>
+          </div>
+          <template x-for="(item, idx) in activityFeed.slice(0,15)" :key="item.id">
+            <div class="flex items-start gap-3 px-3 py-2.5 rounded-xl transition-all"
+                 :style="idx === 0 ? 'background:#f5f3ff; border:1px solid #ede9fe' : 'border:1px solid transparent'"
+                 onmouseover="this.style.background='#f5f3ff'; this.style.borderColor='#ede9fe'"
+                 onmouseout="if(arguments[0].target.closest('[x-bind]')?.getAttribute(':style')?.includes('f5f3ff') && arguments[0].target.closest('template')) return; this.style.background='transparent'; this.style.borderColor='transparent'">
+              <!-- Ícone com fundo colorido -->
+              <div class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-sm" style="background:#ede9fe">
+                <span x-text="item.icon"></span>
+              </div>
               <div class="flex-1 min-w-0">
-                <p class="text-xs text-gray-700 leading-snug" x-text="item.text"></p>
-                <p class="text-[10px] text-gray-400 mt-0.5" x-text="feedTimeAgo(item.time)"></p>
+                <p class="text-xs font-semibold text-gray-700 leading-snug" x-text="item.text"></p>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <i class="fa-regular fa-clock text-[8px] text-gray-300"></i>
+                  <p class="text-[9px] text-gray-400 font-medium" x-text="feedTimeAgo(item.time)"></p>
+                  <span x-show="idx === 0" class="text-[8px] px-1 py-0.5 rounded font-bold" style="background:#4f46e5; color:#fff">NOVO</span>
+                </div>
               </div>
             </div>
           </template>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-4 py-2.5 flex-shrink-0 flex items-center justify-between" style="background:#f5f3ff; border-top:1px solid #ede9fe">
+          <p class="text-[10px] text-gray-400">Exibindo últimos <span class="font-bold text-indigo-500" x-text="Math.min(activityFeed.length, 15)"></span> eventos</p>
+          <div class="flex items-center gap-1">
+            <div class="w-1.5 h-1.5 rounded-full" style="background:#4f46e5"></div>
+            <span class="text-[10px] font-semibold text-indigo-500">ao vivo</span>
+          </div>
         </div>
       </div>
 
