@@ -487,7 +487,16 @@ tailwind.config = {
     <span x-show="overdueCount === 0 && todayCount === 0" class="flex items-center gap-1.5 text-green-400 text-xs font-semibold">
       <i class="fa-solid fa-circle-check"></i> Tudo em dia
     </span>
-    <button @click="page='dashboard'" class="ml-auto text-xs text-green-400 hover:text-green-200 font-semibold transition-colors">Ver dashboard →</button>
+    <div class="ml-auto flex items-center gap-2">
+      <button @click="palavraAtual = palavrasOracao[Math.floor(Math.random()*palavrasOracao.length)]; showPalavraModal = true"
+              class="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all active:scale-95"
+              style="background:rgba(180,136,96,0.25); color:#d4a96a; border:1px solid rgba(180,136,96,0.35)"
+              onmouseover="this.style.background='rgba(180,136,96,0.4)'" onmouseout="this.style.background='rgba(180,136,96,0.25)'">
+        <i class="fa-solid fa-dove text-[10px]"></i>
+        <span>Voz do Altíssimo</span>
+      </button>
+      <button @click="page='dashboard'" class="text-xs text-green-400 hover:text-green-200 font-semibold transition-colors">Ver dashboard →</button>
+    </div>
   </div>
 </div>
 
