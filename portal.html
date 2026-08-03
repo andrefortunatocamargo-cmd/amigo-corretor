@@ -629,13 +629,74 @@ footer {
   border-radius: 4px; max-width: 960px; margin: 0 auto;
   overflow: hidden;
 }
-.modal-gallery { position: relative; height: clamp(240px, 40vw, 500px); background: var(--ob); }
-.modal-gallery img { width: 100%; height: 100%; object-fit: cover; }
+/* ── GALLERY CAROUSEL ── */
+.modal-gallery {
+  position: relative;
+  height: clamp(240px, 42vw, 520px);
+  background: var(--ob);
+  overflow: hidden;
+  user-select: none;
+}
+/* Slides track */
+.gal-track {
+  display: flex; height: 100%;
+  transition: transform .38s cubic-bezier(.4,0,.2,1);
+  will-change: transform;
+}
+.gal-slide {
+  flex: 0 0 100%; height: 100%; position: relative;
+}
+.gal-slide img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
 .modal-gallery-ph {
   width: 100%; height: 100%;
   display: flex; align-items: center; justify-content: center;
   color: var(--pebble); font-size: 3rem;
 }
+/* Arrow buttons */
+.gal-arrow {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
+  width: 40px; height: 40px; border-radius: 2px;
+  background: rgba(12,12,11,.72); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.12);
+  color: var(--chalk); font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .15s, opacity .15s;
+}
+.gal-arrow:hover { background: rgba(12,12,11,.92); }
+.gal-arrow.hidden { opacity: 0; pointer-events: none; }
+.gal-arrow-l { left: 14px; }
+.gal-arrow-r { right: 14px; }
+/* Counter */
+.gal-counter {
+  position: absolute; bottom: 72px; right: 14px; z-index: 10;
+  padding: 3px 9px; border-radius: 2px;
+  background: rgba(12,12,11,.68); backdrop-filter: blur(6px);
+  font-size: 10px; font-weight: 700; color: rgba(255,255,255,.6);
+  letter-spacing: .06em;
+}
+/* Thumbnail strip */
+.gal-thumbs {
+  position: absolute; bottom: 0; left: 0; right: 0; z-index: 10;
+  height: 56px;
+  background: linear-gradient(to top, rgba(12,12,11,.92) 0%, rgba(12,12,11,.6) 100%);
+  display: flex; align-items: center; gap: 5px;
+  padding: 6px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.gal-thumbs::-webkit-scrollbar { display: none; }
+.gal-thumb {
+  flex: 0 0 auto; width: 64px; height: 40px;
+  border-radius: 2px; overflow: hidden; cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color .18s, opacity .18s;
+  opacity: .55;
+}
+.gal-thumb:hover { opacity: .82; }
+.gal-thumb.active { border-color: var(--cu); opacity: 1; }
+.gal-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .modal-close {
   position: absolute; top: 16px; right: 16px; z-index: 5;
   width: 36px; height: 36px; border-radius: 2px;
@@ -1360,8 +1421,27 @@ html[data-lang="es"] .inline-ml[data-lang="es"] { display: inline; }
 <!-- MODAL -->
 <div id="modal-ov" onclick="if(event.target===this)closeModal()">
   <div id="modal-box">
-    <div class="modal-gallery">
-      <div id="m-gallery-inner"></div>
+    <div class="modal-gallery" id="m-gallery"
+         @touchstart.passive="galTouchStart($event)"
+         @touchend.passive="galTouchEnd($event)">
+      <!-- Slides -->
+      <div class="gal-track" id="gal-track"></div>
+      <!-- Placeholder (sem fotos) -->
+      <div id="gal-ph" class="modal-gallery-ph hidden">
+        <i class="fa-solid fa-image" style="font-size:3rem;color:var(--pebble)"></i>
+      </div>
+      <!-- Setas -->
+      <button class="gal-arrow gal-arrow-l" id="gal-prev" onclick="galMove(-1)">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+      <button class="gal-arrow gal-arrow-r" id="gal-next" onclick="galMove(1)">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+      <!-- Contador -->
+      <div class="gal-counter" id="gal-counter"></div>
+      <!-- Thumbnails -->
+      <div class="gal-thumbs" id="gal-thumbs"></div>
+      <!-- Badges topo esq -->
       <div class="modal-badges">
         <span id="m-excl-badge" class="excl-badge hidden">Exclusivo AF</span>
         <span id="m-offer-badge" style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:5px 10px;background:rgba(12,12,11,.75);backdrop-filter:blur(6px);color:var(--chalk);border:1px solid var(--border)"></span>
@@ -1628,14 +1708,8 @@ function openModal(e, id) {
   const price  = oferta === 'locacao' ? im.valorLocacao : im.valorVenda;
   const excl   = isExcl(im);
 
-  // Gallery
-  const gi = document.getElementById('m-gallery-inner');
-  gi.style.cssText = 'width:100%;height:100%;';
-  if (fs.length) {
-    gi.innerHTML = `<img src="${fs[0]}" style="width:100%;height:100%;object-fit:cover" alt="">`;
-  } else {
-    gi.innerHTML = `<div class="modal-gallery-ph"><i class="fa-solid fa-image" style="font-size:3rem;color:var(--pebble)"></i></div>`;
-  }
+  // Gallery carousel
+  galInit(fs);
 
   document.getElementById('m-excl-badge').classList.toggle('hidden', !excl);
   document.getElementById('m-offer-badge').textContent = ofertaL(oferta);
@@ -1691,7 +1765,11 @@ function closeModal() {
   document.getElementById('modal-ov').style.display = 'none';
   document.body.style.overflow = '';
 }
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape')     closeModal();
+  if (e.key === 'ArrowRight') galMove(1);
+  if (e.key === 'ArrowLeft')  galMove(-1);
+});
 
 // ══ FORM ════════════════════════════════
 function submitForm(e) {
@@ -1720,6 +1798,96 @@ function fmt(v) {
 function numVal(im) { return numVal2(im.tipoOferta==='locacao'?im.valorLocacao:im.valorVenda); }
 function numVal2(v) { return +(String(v||'').replace(/\D/g,''))||0; }
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ══ GALLERY CAROUSEL ════════════════════
+let galCur = 0, galFs = [], galTX = 0;
+
+function galInit(fs) {
+  galFs  = fs;
+  galCur = 0;
+  const track  = document.getElementById('gal-track');
+  const thumbs = document.getElementById('gal-thumbs');
+  const ph     = document.getElementById('gal-ph');
+
+  // Placeholder
+  ph.classList.toggle('hidden', fs.length > 0);
+  track.innerHTML  = '';
+  thumbs.innerHTML = '';
+
+  if (!fs.length) {
+    document.getElementById('gal-counter').textContent = '';
+    document.getElementById('gal-prev').classList.add('hidden');
+    document.getElementById('gal-next').classList.add('hidden');
+    document.getElementById('gal-thumbs').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('gal-thumbs').style.display = 'flex';
+
+  // Build slides
+  fs.forEach((src, i) => {
+    const slide = document.createElement('div');
+    slide.className = 'gal-slide';
+    const img = document.createElement('img');
+    img.src = src; img.alt = 'Foto ' + (i + 1);
+    img.loading = i === 0 ? 'eager' : 'lazy';
+    img.onerror = function() { this.parentElement.style.background = 'var(--surface2)'; this.remove(); };
+    slide.appendChild(img);
+    track.appendChild(slide);
+
+    // Thumbnail
+    const th = document.createElement('div');
+    th.className = 'gal-thumb' + (i === 0 ? ' active' : '');
+    th.setAttribute('data-idx', i);
+    const ti = document.createElement('img');
+    ti.src = src; ti.loading = 'lazy';
+    ti.onerror = function() { this.parentElement.style.background='var(--surface2)'; this.remove(); };
+    th.appendChild(ti);
+    th.addEventListener('click', () => galGo(i));
+    thumbs.appendChild(th);
+  });
+
+  galUpdate();
+}
+
+function galUpdate() {
+  // Move track
+  document.getElementById('gal-track').style.transform = `translateX(-${galCur * 100}%)`;
+  // Counter
+  const n = galFs.length;
+  document.getElementById('gal-counter').textContent = n > 1 ? `${galCur + 1} / ${n}` : '';
+  // Arrows
+  document.getElementById('gal-prev').classList.toggle('hidden', galCur === 0);
+  document.getElementById('gal-next').classList.toggle('hidden', galCur === galFs.length - 1);
+  // Thumbs active
+  document.querySelectorAll('.gal-thumb').forEach(t => {
+    const active = +t.getAttribute('data-idx') === galCur;
+    t.classList.toggle('active', active);
+  });
+  // Scroll active thumb into view
+  const activeTh = document.querySelector('.gal-thumb.active');
+  if (activeTh) activeTh.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+}
+
+function galMove(dir) {
+  const next = galCur + dir;
+  if (next < 0 || next >= galFs.length) return;
+  galCur = next;
+  galUpdate();
+}
+
+function galGo(idx) {
+  galCur = idx;
+  galUpdate();
+}
+
+// Touch swipe
+let _tx = 0;
+function galTouchStart(e) { _tx = e.touches[0].clientX; }
+function galTouchEnd(e) {
+  const dx = e.changedTouches[0].clientX - _tx;
+  if (Math.abs(dx) > 40) galMove(dx < 0 ? 1 : -1);
+}
 
 // ══ DEMO DATA ════════════════════════════
 function demoData() {
