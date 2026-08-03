@@ -7152,14 +7152,35 @@ function app() {
               });
             },
 
+            /* Processa vídeo como data URL (mantém original, sem canvas) */
+            processarVideo(file) {
+              const MAX = 30 * 1024 * 1024; // 30 MB
+              if (file.size > MAX) {
+                alert('Vídeo "' + file.name + '" é muito grande (' + (file.size/1024/1024).toFixed(0) + ' MB).\nUse vídeos de até 30 MB, ou cole o link do YouTube no campo abaixo.');
+                return Promise.resolve(null);
+              }
+              return new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onload = ev => resolve(ev.target.result);
+                reader.readAsDataURL(file);
+              });
+            },
+
             async processarArquivos(files) {
-              const lista = [...files].filter(f => f.type.startsWith('image/'));
-              if (!lista.length) return;
-              this.processando += lista.length;
-              const resultados = await Promise.all(lista.map(f => this.comprimirParaWide(f)));
+              const imgs = [...files].filter(f => f.type.startsWith('image/'));
+              const vids = [...files].filter(f => f.type.startsWith('video/'));
+              const total = imgs.length + vids.length;
+              if (!total) return;
+              this.processando += total;
+              const imgRes = await Promise.all(imgs.map(f => this.comprimirParaWide(f)));
+              const vidRes = await Promise.all(vids.map(f => this.processarVideo(f)));
               if (!editingCaptacao.fotos) editingCaptacao.fotos = [];
-              editingCaptacao.fotos = [...editingCaptacao.fotos, ...resultados];
-              this.processando -= lista.length;
+              editingCaptacao.fotos = [...editingCaptacao.fotos, ...imgRes, ...vidRes.filter(Boolean)];
+              this.processando -= total;
+            },
+
+            isVideo(src) {
+              return src && (src.startsWith('data:video/') || /\.(mp4|mov|webm|ogg)$/i.test(src));
             },
 
             remover(idx) {
@@ -7171,8 +7192,12 @@ function app() {
             <div class="flex items-center mb-2">
               <label class="text-[10px] font-black uppercase tracking-wider text-gray-400">Fotos do Imóvel</label>
               <span class="ml-2 text-[9px] text-gray-300">— formato 16:9, recorte automático</span>
-              <span class="ml-auto text-[9px] font-bold text-gray-400"
-                    x-text="(editingCaptacao.fotos||[]).length + ' foto(s)'"></span>
+              <span class="ml-auto text-[9px] font-bold text-gray-400" x-text="(() => {
+                const mids = (editingCaptacao.fotos||[]);
+                const v = mids.filter(s => s && (s.startsWith('data:video/') || /\.(mp4|mov|webm|ogg)$/i.test(s))).length;
+                const p = mids.length - v;
+                return (p ? p + ' foto(s)' : '') + (p && v ? ' · ' : '') + (v ? v + ' vídeo(s)' : '') || '0 mídia(s)';
+              })()"></span>
             </div>
 
             <!-- GRADE de fotos + slot de adicionar -->
@@ -7187,7 +7212,26 @@ function app() {
                 <div class="relative rounded-xl overflow-hidden border-2 group transition-all"
                      style="aspect-ratio:16/9"
                      :style="idx===0 ? 'border-color:#345448' : 'border-color:#e5e7eb'">
-                  <img :src="f" class="w-full h-full object-cover select-none" draggable="false">
+
+                  <!-- Foto -->
+                  <template x-if="!isVideo(f)">
+                    <img :src="f" class="w-full h-full object-cover select-none" draggable="false">
+                  </template>
+
+                  <!-- Vídeo -->
+                  <template x-if="isVideo(f)">
+                    <div class="relative w-full h-full bg-gray-900">
+                      <video :src="f" class="w-full h-full object-cover" muted playsinline preload="metadata"></video>
+                      <!-- Ícone play -->
+                      <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background:rgba(255,255,255,0.85)">
+                          <svg viewBox="0 0 24 24" fill="#345448" width="18" height="18"><path d="M8 5v14l11-7z"/></svg>
+                        </div>
+                      </div>
+                      <!-- Label -->
+                      <div class="absolute top-1.5 right-1.5 text-[8px] font-black px-1.5 py-0.5 rounded" style="background:#1e293b;color:#94a3b8;letter-spacing:.06em">VÍDEO</div>
+                    </div>
+                  </template>
 
                   <!-- Overlay hover -->
                   <div class="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -7218,14 +7262,14 @@ function app() {
                      @dragover.prevent.stop="$el.style.borderColor='#345448'; $el.style.background='rgba(52,84,72,0.06)'"
                      @dragleave="$el.style.borderColor='#d1d5db'; $el.style.background='#f9fafb'"
                      @drop.prevent.stop="$el.style.borderColor='#d1d5db'; $el.style.background='#f9fafb'; processarArquivos($event.dataTransfer.files)">
-                <input type="file" accept="image/*" multiple class="sr-only"
+                <input type="file" accept="image/*,video/*" multiple class="sr-only"
                        @change="processarArquivos($event.target.files); $event.target.value=''">
 
                 <template x-if="processando === 0">
                   <div class="text-center px-2">
                     <div class="text-xl mb-1 text-gray-300">＋</div>
                     <p class="text-[10px] font-semibold text-gray-400 leading-tight">Arraste ou<br>clique para adicionar</p>
-                    <p class="text-[9px] text-gray-300 mt-1">iCloud · iPhone · Câmera</p>
+                    <p class="text-[9px] text-gray-300 mt-1">Foto · Vídeo · iCloud · iPhone</p>
                   </div>
                 </template>
 
@@ -7239,7 +7283,7 @@ function app() {
             </div>
 
             <p class="text-[9px] text-gray-400 mt-1.5">
-              Arraste fotos diretamente para a grade. ⭐ define a capa. Fotos recortadas automaticamente para 16:9.
+              Arraste fotos ou vídeos para a grade. ⭐ define a capa. Fotos recortadas para 16:9. Vídeos até 30 MB.
             </p>
           </div>
 

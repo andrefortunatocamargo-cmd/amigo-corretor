@@ -1762,6 +1762,7 @@ function openModal(e, id) {
 }
 
 function closeModal() {
+  document.querySelectorAll('.gal-slide video').forEach(v => v.pause());
   document.getElementById('modal-ov').style.display = 'none';
   document.body.style.overflow = '';
 }
@@ -1824,25 +1825,53 @@ function galInit(fs) {
 
   document.getElementById('gal-thumbs').style.display = 'flex';
 
+  // Detecta se é vídeo
+  function isVid(src) {
+    return src && (src.startsWith('data:video/') || /\.(mp4|mov|webm|ogg)(\?|$)/i.test(src));
+  }
+
   // Build slides
   fs.forEach((src, i) => {
     const slide = document.createElement('div');
     slide.className = 'gal-slide';
-    const img = document.createElement('img');
-    img.src = src; img.alt = 'Foto ' + (i + 1);
-    img.loading = i === 0 ? 'eager' : 'lazy';
-    img.onerror = function() { this.parentElement.style.background = 'var(--surface2)'; this.remove(); };
-    slide.appendChild(img);
+
+    if (isVid(src)) {
+      // Slide de vídeo
+      const vid = document.createElement('video');
+      vid.src = src;
+      vid.controls = true;
+      vid.muted = true;
+      vid.playsInline = true;
+      vid.preload = i === 0 ? 'auto' : 'metadata';
+      vid.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+      // Pausar outros vídeos ao navegar
+      vid.addEventListener('play', () => {
+        document.querySelectorAll('.gal-slide video').forEach(v => { if (v !== vid) v.pause(); });
+      });
+      slide.appendChild(vid);
+    } else {
+      const img = document.createElement('img');
+      img.src = src; img.alt = 'Foto ' + (i + 1);
+      img.loading = i === 0 ? 'eager' : 'lazy';
+      img.onerror = function() { this.parentElement.style.background = 'var(--surface2)'; this.remove(); };
+      slide.appendChild(img);
+    }
     track.appendChild(slide);
 
     // Thumbnail
     const th = document.createElement('div');
     th.className = 'gal-thumb' + (i === 0 ? ' active' : '');
     th.setAttribute('data-idx', i);
-    const ti = document.createElement('img');
-    ti.src = src; ti.loading = 'lazy';
-    ti.onerror = function() { this.parentElement.style.background='var(--surface2)'; this.remove(); };
-    th.appendChild(ti);
+    if (isVid(src)) {
+      // Ícone de vídeo no thumbnail
+      th.style.cssText = 'background:#1e293b;display:flex;align-items:center;justify-content:center;';
+      th.innerHTML = '<svg viewBox="0 0 24 24" fill="#94a3b8" width="22" height="22"><path d="M8 5v14l11-7z"/></svg>';
+    } else {
+      const ti = document.createElement('img');
+      ti.src = src; ti.loading = 'lazy';
+      ti.onerror = function() { this.parentElement.style.background='var(--surface2)'; this.remove(); };
+      th.appendChild(ti);
+    }
     th.addEventListener('click', () => galGo(i));
     thumbs.appendChild(th);
   });
