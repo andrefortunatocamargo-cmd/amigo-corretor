@@ -7120,10 +7120,22 @@ function app() {
           </div>
 
           <!-- Fotos (URLs) -->
-          <div>
+          <div x-data="{
+            fotoWarn: [],
+            validarFotos(val) {
+              const linhas = val.split('\n').map(l=>l.trim()).filter(Boolean);
+              editingCaptacao.fotos = linhas;
+              this.fotoWarn = linhas.filter(u => {
+                if (!u.startsWith('http')) return true;
+                // detecta links de página (não diretos)
+                if (/photos\.google|drive\.google|dropbox\.com\/(?!s\/.*\?raw)|icloud\.com|wa\.me|instagram\.com|facebook\.com|youtube\.com/.test(u)) return true;
+                return false;
+              });
+            }
+          }">
             <div class="flex items-center justify-between mb-1">
               <label class="text-[10px] font-black uppercase tracking-wider text-gray-400">URLs das Fotos
-                <span class="normal-case font-normal text-gray-300 ml-1">(uma por linha)</span>
+                <span class="normal-case font-normal text-gray-300 ml-1">(uma por linha — URL direta da imagem)</span>
               </label>
               <button type="button"
                       x-show="editingCaptacao.foto && !(editingCaptacao.fotos||[]).includes(editingCaptacao.foto)"
@@ -7135,10 +7147,36 @@ function app() {
             </div>
             <textarea rows="3"
                       :value="(editingCaptacao.fotos||[]).join('\n')"
-                      @input="editingCaptacao.fotos = $event.target.value.split('\n').map(l=>l.trim()).filter(Boolean)"
-                      placeholder="https://link-da-foto-1.jpg&#10;https://link-da-foto-2.jpg"
+                      @input="validarFotos($event.target.value)"
+                      placeholder="https://i.imgur.com/exemplo.jpg&#10;https://meusite.com/foto2.jpg"
                       class="w-full mt-1 px-3 py-2 rounded-xl border text-xs focus:outline-none resize-none font-mono"
-                      style="border-color:#d0ddd8"></textarea>
+                      :style="fotoWarn.length ? 'border-color:#f59e0b;background:#fffbeb' : 'border-color:#d0ddd8'"></textarea>
+
+            <!-- Aviso de URL inválida -->
+            <div x-show="fotoWarn.length > 0" class="mt-2 p-3 rounded-xl text-xs" style="background:#fffbeb;border:1px solid #f59e0b">
+              <p class="font-black text-amber-700 mb-1">⚠️ URL de página detectada — a foto não vai aparecer no site.</p>
+              <p class="text-amber-600 mb-2">Use apenas links diretos para o arquivo de imagem (terminam em <strong>.jpg .png .webp</strong>).</p>
+              <div class="space-y-1">
+                <p class="font-bold text-amber-700">Como obter o link correto:</p>
+                <p class="text-amber-600">📷 <strong>Google Fotos:</strong> Abra a foto → ⋮ → "Compartilhar" → "Criar link" → clique com botão direito na imagem aberta → "Copiar endereço da imagem"</p>
+                <p class="text-amber-600">☁️ <strong>Google Drive:</strong> Clique com botão direito → "Obter link" → mude para "qualquer pessoa" → substitua <code>/view</code> por <code>/uc?export=view</code> na URL</p>
+                <p class="text-amber-600">📦 <strong>Dropbox:</strong> No link de compartilhamento, troque <code>?dl=0</code> por <code>?raw=1</code></p>
+                <p class="text-amber-600">🖼️ <strong>Mais fácil:</strong> Use <a href="https://imgur.com" target="_blank" class="underline font-bold">imgur.com</a> — arraste a foto, copie o link direto (.jpg)</p>
+              </div>
+            </div>
+
+            <!-- Preview das fotos válidas -->
+            <template x-if="(editingCaptacao.fotos||[]).filter(u => u.startsWith('http') && fotoWarn.indexOf(u)===-1).length > 0">
+              <div class="mt-2 flex gap-2 flex-wrap">
+                <template x-for="(url, i) in (editingCaptacao.fotos||[]).filter(u => u.startsWith('http') && fotoWarn.indexOf(u)===-1)" :key="i">
+                  <div class="relative w-16 h-16 rounded-lg overflow-hidden border-2 border-green-200">
+                    <img :src="url" class="w-full h-full object-cover"
+                         onerror="this.parentElement.style.borderColor='#fca5a5';this.src='';this.parentElement.innerHTML='<div style=&quot;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#fef2f2;font-size:18px&quot;>❌</div>'">
+                    <div class="absolute bottom-0 left-0 right-0 text-center text-[8px] font-bold text-white" style="background:rgba(0,0,0,0.5)">OK</div>
+                  </div>
+                </template>
+              </div>
+            </template>
           </div>
 
           <!-- Diferenciais -->
