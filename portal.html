@@ -1447,7 +1447,7 @@ function renderExcl(list) {
   em.classList.add('hidden');
   list.forEach(im => {
     const oferta = im.tipoOferta || 'venda';
-    const fs = (im.fotos||[]).filter(Boolean);
+    const fs = [...(Array.isArray(im.fotos) ? im.fotos : []), im.foto].filter(Boolean);
     const price = oferta === 'locacao' ? im.valorLocacao : im.valorVenda;
     const div = document.createElement('div');
     div.className = 'excl-card';
@@ -1492,7 +1492,7 @@ function renderPartners(list) {
   em.classList.add('hidden');
   all.forEach(im => {
     const oferta = im.tipoOferta || 'venda';
-    const fs = (im.fotos||[]).filter(Boolean);
+    const fs = [...(Array.isArray(im.fotos) ? im.fotos : []), im.foto].filter(Boolean);
     const price = oferta === 'locacao' ? im.valorLocacao : im.valorVenda;
     const div = document.createElement('div');
     div.className = 'p-card';
@@ -1536,7 +1536,7 @@ function openModal(e, id) {
   e.stopPropagation();
   const im = todos.find(i => i.id === id || i.id == id);
   if (!im) return;
-  const fs = (im.fotos||[]).filter(Boolean);
+  const fs = [...(Array.isArray(im.fotos) ? im.fotos : []), im.foto].filter(Boolean);
   const oferta = im.tipoOferta || 'venda';
   const price  = oferta === 'locacao' ? im.valorLocacao : im.valorVenda;
   const excl   = isExcl(im);

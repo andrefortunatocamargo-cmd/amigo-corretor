@@ -4413,7 +4413,15 @@ function app() {
       this.showToast('Captação removida');
     },
     syncPortal() {
-      const publicados = this.captacoes.filter(c => c.publicarSite);
+      const publicados = this.captacoes
+        .filter(c => c.publicarSite)
+        .map(c => {
+          // Garante que fotos[] sempre tenha conteúdo:
+          // usa fotos[] se preenchido, senão cai no campo foto (URL única)
+          const fotosArr = Array.isArray(c.fotos) ? c.fotos.filter(Boolean) : [];
+          if (!fotosArr.length && c.foto) fotosArr.push(c.foto);
+          return { ...c, fotos: fotosArr };
+        });
       const payload = {
         imoveis: publicados,
         config: { whatsapp: '5511943560902', corretorNome: 'André Camargo' },
@@ -7113,9 +7121,18 @@ function app() {
 
           <!-- Fotos (URLs) -->
           <div>
-            <label class="text-[10px] font-black uppercase tracking-wider text-gray-400">URLs das Fotos
-              <span class="normal-case font-normal text-gray-300 ml-1">(uma por linha)</span>
-            </label>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-[10px] font-black uppercase tracking-wider text-gray-400">URLs das Fotos
+                <span class="normal-case font-normal text-gray-300 ml-1">(uma por linha)</span>
+              </label>
+              <button type="button"
+                      x-show="editingCaptacao.foto && !(editingCaptacao.fotos||[]).includes(editingCaptacao.foto)"
+                      @click="editingCaptacao.fotos = [editingCaptacao.foto, ...(editingCaptacao.fotos||[])].filter(Boolean)"
+                      class="text-[10px] font-bold px-2 py-0.5 rounded-lg transition-all"
+                      style="background:rgba(52,84,72,0.15);color:#345448;border:1px solid #345448">
+                ➕ Usar foto principal
+              </button>
+            </div>
             <textarea rows="3"
                       :value="(editingCaptacao.fotos||[]).join('\n')"
                       @input="editingCaptacao.fotos = $event.target.value.split('\n').map(l=>l.trim()).filter(Boolean)"
