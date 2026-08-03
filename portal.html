@@ -1,501 +1,1335 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-lang="pt">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>André Camargo · Corretor de Imóveis</title>
-<meta name="description" content="André Camargo – Corretor de Imóveis Autônomo. Imóveis de alto padrão para venda e locação.">
-<script src="https://cdn.tailwindcss.com"></script>
+<title>André Fortunato · Imóveis de Alto Padrão</title>
+<meta name="description" content="André Fortunato — curadoria de imóveis de alto padrão no Brasil. Portfólio exclusivo, assessoria jurídica e presença global.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --black:   #0a0a0a;
-    --black-2: #111111;
-    --black-3: #1a1a1a;
-    --black-4: #242424;
-    --black-5: #2e2e2e;
-    --gold:    #c9a84c;
-    --gold-l:  #dbbe7a;
-    --gold-d:  #a88730;
-    --gold-xl: #fdf8ed;
-    --text:    #e8e0cc;
-    --text-2:  #a89878;
-  }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body { font-family: 'Inter', sans-serif; background: var(--black-2); color: var(--text); -webkit-font-smoothing: antialiased; }
-  .serif { font-family: 'Cormorant Garamond', serif; }
+/* ── TOKENS ──────────────────────────────────────── */
+:root {
+  --ob: #0c0c0b;
+  --coal: #141412;
+  --surface: #1c1c19;
+  --surface2: #242420;
+  --border: rgba(184,132,60,0.14);
+  --border2: rgba(184,132,60,0.28);
+  --cu: #b8843c;      /* copper accent */
+  --cu-l: #d4a860;    /* light copper */
+  --cu-d: #7a5524;    /* dark copper */
+  --cu-glass: rgba(184,132,60,0.08);
+  --ivory: #f2ede6;
+  --chalk: #ddd6ca;
+  --stone: #8a8070;
+  --pebble: #5a5448;
+  --text-inv: #0c0c0b;
+  --r: 0.875rem;      /* body size */
+}
 
-  /* Gold gradient text */
-  .gold-text {
-    background: linear-gradient(135deg, #e8c97a 0%, #c9a84c 40%, #a88730 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-  }
-  /* Gold border shimmer */
-  .gold-border { border: 1px solid rgba(201,168,76,0.35); }
-  .gold-border-2 { border: 1.5px solid rgba(201,168,76,0.5); }
+/* ── BASE ────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--ob);
+  color: var(--chalk);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+img { max-width: 100%; display: block; }
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input, select, textarea { font-family: inherit; }
 
-  /* Header */
-  header { background: rgba(10,10,10,0.95); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(201,168,76,0.15); }
+/* ── TYPOGRAPHY ──────────────────────────────────── */
+.serif { font-family: 'Cormorant Garamond', serif; }
+.display {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 300;
+  letter-spacing: -.01em;
+  text-wrap: balance;
+}
+.label {
+  font-size: 10px; font-weight: 600;
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--stone);
+}
+.label-cu { color: var(--cu); }
+.tab-num { font-variant-numeric: tabular-nums; }
 
-  /* Hero */
-  .hero-bg {
-    background: var(--black);
-    position: relative;
-  }
-  .hero-bg::before {
-    content:'';
-    position:absolute; inset:0;
-    background: radial-gradient(ellipse 80% 60% at 60% 0%, rgba(201,168,76,0.08) 0%, transparent 70%),
-                radial-gradient(ellipse 40% 40% at 10% 100%, rgba(201,168,76,0.05) 0%, transparent 60%);
-    pointer-events: none;
-  }
-  /* Gold divider */
-  .divider {
-    width: 48px; height: 2px;
-    background: linear-gradient(90deg, var(--gold-d), var(--gold-l), var(--gold-d));
-    border-radius: 2px;
-  }
-  /* Search box */
-  .search-box {
-    background: var(--black-3);
-    border: 1px solid rgba(201,168,76,0.25);
-    border-radius: 16px;
-  }
-  .search-box:focus-within { border-color: rgba(201,168,76,0.55); box-shadow: 0 0 0 3px rgba(201,168,76,0.08); }
-  .search-input {
-    background: transparent; border: none; outline: none;
-    color: var(--text); font-size: 14px;
-  }
-  .search-input::placeholder { color: #5a5040; }
-  .search-select {
-    background: var(--black-4); border: none; outline: none;
-    color: var(--text); font-size: 13px; font-weight: 600;
-    border-left: 1px solid rgba(201,168,76,0.15);
-    appearance: none; -webkit-appearance: none;
-    padding: 0 12px; height: 100%; cursor: pointer;
-  }
+/* ── LAYOUT ──────────────────────────────────────── */
+.wrap { max-width: 1280px; margin: 0 auto; padding: 0 clamp(1.25rem, 4vw, 3rem); }
+.section { padding: clamp(4rem, 8vw, 7rem) 0; }
 
-  /* Chips / filters */
-  .chip {
-    padding: 6px 16px; border-radius: 999px; font-size: 12px; font-weight: 600;
-    cursor: pointer; transition: all .15s; white-space: nowrap; flex-shrink: 0;
-  }
-  .chip.active { background: var(--gold); color: var(--black); }
-  .chip:not(.active) {
-    background: var(--black-3); color: var(--text-2);
-    border: 1px solid rgba(201,168,76,0.2);
-  }
-  .chip:not(.active):hover { border-color: var(--gold-l); color: var(--gold-l); }
+/* ── COPPER LINE ─────────────────────────────────── */
+.cu-line {
+  display: inline-block; width: 36px; height: 1.5px;
+  background: linear-gradient(90deg, var(--cu-d), var(--cu));
+  vertical-align: middle; margin-right: 12px;
+}
 
-  /* Cards */
-  .card {
-    background: var(--black-3);
-    border: 1px solid rgba(201,168,76,0.12);
-    border-radius: 16px; overflow: hidden;
-    transition: transform .22s, border-color .22s, box-shadow .22s;
-    cursor: pointer;
-  }
-  .card:hover {
-    transform: translateY(-4px);
-    border-color: rgba(201,168,76,0.4);
-    box-shadow: 0 24px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(201,168,76,0.1);
-  }
-  .img-placeholder {
-    background: linear-gradient(135deg, var(--black-4), var(--black-5));
-    display: flex; align-items: center; justify-content: center;
-  }
+/* ── BUTTONS ─────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 13px 28px; border-radius: 3px;
+  font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+  transition: opacity .18s, transform .18s;
+}
+.btn:hover { opacity: .86; transform: translateY(-1px); }
+.btn:active { transform: scale(.97); }
+.btn-cu { background: var(--cu); color: var(--text-inv); }
+.btn-ghost {
+  background: transparent; color: var(--cu);
+  border: 1px solid var(--border2);
+}
+.btn-ghost:hover { background: var(--cu-glass); }
+.btn-wa {
+  background: #1a7a3c; color: #fff;
+  display: inline-flex; align-items: center; gap: 8px;
+}
 
-  /* Gold button */
-  .btn-gold {
-    background: linear-gradient(135deg, #c9a84c, #a88730);
-    color: var(--black); font-weight: 700;
-    border-radius: 12px; transition: all .15s;
-  }
-  .btn-gold:hover { opacity: .88; transform: translateY(-1px); }
-  .btn-gold:active { transform: scale(.97); }
+/* ── NAV ─────────────────────────────────────────── */
+#nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: 68px;
+  transition: background .3s, border-color .3s;
+}
+#nav.scrolled {
+  background: rgba(12,12,11,.96);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 68px;
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+}
+.nav-mono {
+  width: 38px; height: 38px; border-radius: 2px;
+  background: linear-gradient(135deg, var(--cu), var(--cu-d));
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px; font-weight: 600; color: var(--text-inv);
+  letter-spacing: .05em;
+}
+.nav-name { font-size: 15px; font-weight: 500; color: var(--ivory); letter-spacing: .03em; }
+.nav-sub { font-size: 9px; letter-spacing: .18em; text-transform: uppercase; color: var(--stone); margin-top: 1px; }
+.nav-links {
+  display: flex; align-items: center; gap: 32px;
+}
+.nav-links a {
+  font-size: 11px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--stone); transition: color .18s; position: relative;
+}
+.nav-links a::after {
+  content: ''; position: absolute; bottom: -4px; left: 0; width: 0; height: 1px;
+  background: var(--cu); transition: width .2s;
+}
+.nav-links a:hover { color: var(--chalk); }
+.nav-links a:hover::after { width: 100%; }
+.nav-right { display: flex; align-items: center; gap: 16px; }
+.lang-sw { display: flex; gap: 4px; }
+.lang-sw button {
+  font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+  padding: 4px 7px; border-radius: 2px; color: var(--pebble);
+  transition: color .15s, background .15s;
+}
+.lang-sw button.active { color: var(--cu); background: var(--cu-glass); }
+.lang-sw button:hover:not(.active) { color: var(--stone); }
+#mob-toggle { display: none; color: var(--stone); font-size: 18px; }
+#mob-menu {
+  display: none; position: fixed; top: 68px; left: 0; right: 0; z-index: 99;
+  background: rgba(20,20,18,.97); backdrop-filter: blur(20px);
+  padding: 24px; border-bottom: 1px solid var(--border);
+}
+#mob-menu a {
+  display: block; padding: 12px 0; font-size: 13px; font-weight: 500;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--stone);
+  border-bottom: 1px solid var(--border);
+}
+#mob-menu a:last-child { border-bottom: none; }
 
-  /* Ghost button */
-  .btn-ghost {
-    background: transparent; color: var(--gold);
-    border: 1.5px solid rgba(201,168,76,0.4);
-    border-radius: 12px; transition: all .15s;
-  }
-  .btn-ghost:hover { border-color: var(--gold); background: rgba(201,168,76,0.06); }
+/* ── HERO ────────────────────────────────────────── */
+#hero {
+  position: relative; min-height: 100svh;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding-bottom: clamp(3rem, 6vw, 5rem);
+  overflow: hidden;
+}
+#hero-bg {
+  position: absolute; inset: 0; z-index: 0;
+  background: var(--ob);
+}
+.hero-grid {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(184,132,60,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(184,132,60,.04) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(ellipse 80% 80% at 70% 40%, rgba(0,0,0,.5) 0%, transparent 70%);
+}
+.hero-radial {
+  position: absolute; z-index: 1; pointer-events: none;
+  width: 800px; height: 800px; border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(184,132,60,.07) 0%, transparent 65%);
+  right: -200px; top: -200px;
+}
+.hero-content { position: relative; z-index: 2; }
+.hero-hl {
+  font-size: clamp(3.2rem, 7.5vw, 7.5rem);
+  line-height: 1.0;
+  font-weight: 300;
+  color: var(--ivory);
+  margin-bottom: 28px;
+}
+.hero-hl em { font-style: italic; color: var(--cu-l); }
+.hero-sub {
+  font-size: clamp(.9rem, 1.3vw, 1.05rem);
+  line-height: 1.65; color: var(--stone);
+  max-width: 440px; margin-bottom: 40px;
+}
+.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 64px; }
 
-  /* Tag */
-  .tag { display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase; }
+/* ── SEARCH STRIP ────────────────────────────────── */
+.search-strip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  display: flex; flex-wrap: wrap; align-items: stretch;
+  overflow: hidden;
+}
+.ss-field {
+  flex: 1; min-width: 140px;
+  display: flex; flex-direction: column;
+  padding: 14px 18px;
+  border-right: 1px solid var(--border);
+}
+.ss-field:last-of-type { border-right: none; }
+.ss-label { font-size: 9px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--pebble); margin-bottom: 5px; }
+.ss-field input, .ss-field select {
+  background: none; border: none; outline: none;
+  font-size: 13px; color: var(--chalk); font-weight: 500;
+  appearance: none; -webkit-appearance: none;
+}
+.ss-field select option { background: var(--surface); }
+.ss-btn {
+  padding: 0 28px; background: var(--cu); color: var(--text-inv);
+  font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  transition: opacity .18s;
+}
+.ss-btn:hover { opacity: .88; }
 
-  /* Sort select */
-  .sort-sel {
-    background: var(--black-3); color: var(--text-2);
-    border: 1px solid rgba(201,168,76,0.2); border-radius: 10px;
-    font-size: 12px; font-weight: 600; padding: 7px 12px;
-    outline: none; cursor: pointer; appearance: none;
-  }
+/* ── SCROLL HINT ─────────────────────────────────── */
+.scroll-hint {
+  position: absolute; bottom: 28px; right: clamp(1.25rem, 4vw, 3rem); z-index: 2;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--pebble);
+}
+.scroll-dot {
+  width: 1px; height: 48px;
+  background: linear-gradient(to bottom, transparent, var(--cu));
+}
 
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: var(--black-2); }
-  ::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 99px; }
-  .scrollbar-hide::-webkit-scrollbar { display: none; }
-  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+/* ── STATS BAR ───────────────────────────────────── */
+.stats-bar {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 28px 0;
+}
+.stats-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+}
+.stat-item {
+  text-align: center; padding: 8px 16px;
+  border-right: 1px solid var(--border);
+}
+.stat-item:last-child { border-right: none; }
+.stat-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2rem, 3.5vw, 2.8rem);
+  font-weight: 300; color: var(--cu-l);
+  line-height: 1; margin-bottom: 4px;
+}
+.stat-lbl { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--pebble); }
 
-  /* Modal overlay */
-  .modal-overlay { background: rgba(0,0,0,.85); backdrop-filter: blur(8px); }
+/* ── SECTION HEADER ──────────────────────────────── */
+.sec-hd { margin-bottom: clamp(2rem, 4vw, 3.5rem); }
+.sec-hd .label { display: flex; align-items: center; margin-bottom: 14px; }
+.sec-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2rem, 3.8vw, 3.2rem);
+  font-weight: 300; color: var(--ivory); line-height: 1.1; text-wrap: balance;
+}
+.sec-desc { font-size: .9rem; color: var(--stone); line-height: 1.7; max-width: 480px; margin-top: 14px; }
 
-  /* Animations */
-  @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-  .fade-up { animation: fadeUp .3s ease both; }
-  @keyframes scaleIn { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
-  .scale-in { animation: scaleIn .28s ease both; }
+/* ── EXCLUSIVO EDITORIAL CARDS ───────────────────── */
+.excl-grid { display: flex; flex-direction: column; gap: 2px; }
+.excl-card {
+  display: grid; grid-template-columns: 52% 1fr;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 4px; overflow: hidden; cursor: pointer;
+  transition: border-color .22s;
+}
+.excl-card:hover { border-color: var(--border2); }
+.excl-card:nth-child(even) { grid-template-columns: 1fr 52%; }
+.excl-card:nth-child(even) .excl-img { order: 2; }
+.excl-card:nth-child(even) .excl-info { order: 1; }
+.excl-img {
+  position: relative; overflow: hidden;
+  min-height: clamp(240px, 28vw, 400px);
+  background: var(--surface2);
+}
+.excl-img img {
+  width: 100%; height: 100%; object-fit: cover;
+  transition: transform .5s ease;
+}
+.excl-card:hover .excl-img img { transform: scale(1.03); }
+.excl-img-ph {
+  width: 100%; height: 100%; min-height: 280px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--surface2), #1e1e1b);
+  color: var(--pebble); font-size: 2.5rem;
+}
+.excl-badge {
+  position: absolute; top: 20px; left: 20px;
+  background: var(--cu); color: var(--text-inv);
+  font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  padding: 5px 10px;
+}
+.excl-offer {
+  position: absolute; top: 20px; right: 20px;
+  background: rgba(12,12,11,.7); backdrop-filter: blur(8px);
+  color: var(--chalk); font-size: 9px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+  padding: 5px 10px; border: 1px solid var(--border);
+}
+.excl-info {
+  padding: clamp(2rem, 3vw, 3rem);
+  display: flex; flex-direction: column; justify-content: center;
+}
+.excl-type { margin-bottom: 16px; }
+.excl-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1.5rem, 2.5vw, 2.1rem);
+  font-weight: 300; color: var(--ivory);
+  line-height: 1.2; margin-bottom: 8px;
+}
+.excl-loc {
+  font-size: 12px; color: var(--stone); margin-bottom: 28px;
+  display: flex; align-items: center; gap: 6px;
+}
+.excl-loc i { color: var(--cu-d); font-size: 10px; }
+.excl-chars {
+  display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 28px;
+  padding: 20px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+}
+.excl-char { font-size: 12px; color: var(--stone); display: flex; align-items: center; gap: 6px; }
+.excl-char i { color: var(--cu); font-size: 11px; }
+.excl-price-row { display: flex; align-items: flex-end; justify-content: space-between; margin-top: 24px; flex-wrap: wrap; gap: 12px; }
+.excl-price {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1.6rem, 2.5vw, 2.2rem);
+  font-weight: 300; color: var(--cu-l);
+  line-height: 1;
+}
+.excl-price-sub { font-size: 10px; color: var(--pebble); margin-top: 4px; letter-spacing: .06em; }
 
-  /* Separator ornament */
-  .ornament::before, .ornament::after {
-    content: ''; display: inline-block; vertical-align: middle;
-    width: 40px; height: 1px; background: rgba(201,168,76,0.35); margin: 0 12px;
-  }
+/* ── PARTNER GRID ────────────────────────────────── */
+.partner-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+.p-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 4px; overflow: hidden; cursor: pointer;
+  transition: border-color .2s, transform .2s;
+}
+.p-card:hover { border-color: var(--border2); transform: translateY(-3px); }
+.p-card-img { position: relative; overflow: hidden; height: 220px; background: var(--surface2); }
+.p-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .45s; }
+.p-card:hover .p-card-img img { transform: scale(1.04); }
+.p-card-img-ph {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--surface2), #1e1e1b);
+  color: var(--pebble); font-size: 2rem;
+}
+.p-badge {
+  position: absolute; top: 14px; left: 14px;
+  font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  padding: 4px 9px;
+}
+.p-badge-partner { background: rgba(90,84,72,.85); color: var(--chalk); border: 1px solid var(--border); }
+.p-badge-offer {
+  position: absolute; top: 14px; right: 14px;
+  font-size: 9px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+  padding: 4px 9px; background: rgba(12,12,11,.75); backdrop-filter: blur(6px);
+  color: var(--chalk); border: 1px solid var(--border);
+}
+.p-body { padding: 20px; }
+.p-title { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 400; color: var(--ivory); margin-bottom: 6px; line-height: 1.3; }
+.p-loc { font-size: 11px; color: var(--stone); margin-bottom: 16px; display: flex; align-items: center; gap: 5px; }
+.p-loc i { color: var(--cu-d); font-size: 10px; }
+.p-chars { display: flex; gap: 16px; font-size: 11px; color: var(--stone); margin-bottom: 16px; }
+.p-chars i { color: var(--cu); font-size: 10px; margin-right: 3px; }
+.p-price-row { display: flex; align-items: center; justify-content: space-between; padding-top: 14px; border-top: 1px solid var(--border); }
+.p-price { font-family: 'Cormorant Garamond', serif; font-size: 1.35rem; font-weight: 400; color: var(--cu-l); }
+.p-price-lbl { font-size: 10px; color: var(--pebble); }
+.p-cta-sm {
+  font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--cu); padding: 7px 14px; border: 1px solid var(--border2);
+  border-radius: 2px; transition: background .15s;
+}
+.p-cta-sm:hover { background: var(--cu-glass); }
 
-  /* Nav underline hover */
-  .nav-a { position: relative; }
-  .nav-a::after { content:''; position:absolute; bottom:-4px; left:0; width:0; height:1.5px; background:var(--gold); transition:width .2s; }
-  .nav-a:hover::after { width:100%; }
+/* ── FILTER BAR ──────────────────────────────────── */
+.filter-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border);
+}
+.chip {
+  padding: 7px 16px; border-radius: 2px; font-size: 11px; font-weight: 600;
+  letter-spacing: .08em; text-transform: uppercase; cursor: pointer;
+  transition: all .15s; border: 1px solid var(--border);
+  background: none; color: var(--pebble);
+}
+.chip.active { background: var(--cu); color: var(--text-inv); border-color: var(--cu); }
+.chip:not(.active):hover { color: var(--stone); border-color: var(--border2); }
+.f-select {
+  padding: 7px 14px; border-radius: 2px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--stone);
+  font-size: 11px; font-weight: 600; letter-spacing: .06em;
+  outline: none; appearance: none; cursor: pointer; min-width: 130px;
+}
+.f-select option { background: var(--surface); }
+.f-count { margin-left: auto; font-size: 11px; color: var(--pebble); letter-spacing: .06em; }
+
+/* ── INVEST SECTION ──────────────────────────────── */
+#investir { background: var(--surface); }
+.invest-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: clamp(2rem, 5vw, 5rem); align-items: start;
+}
+.invest-steps { display: flex; flex-direction: column; gap: 0; }
+.invest-step {
+  display: flex; gap: 20px; padding: 24px 0;
+  border-bottom: 1px solid var(--border);
+}
+.invest-step:first-child { padding-top: 0; }
+.invest-step:last-child { border-bottom: none; }
+.step-n {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.6rem; font-weight: 300; color: var(--cu); line-height: 1;
+  min-width: 32px; padding-top: 2px;
+}
+.step-title { font-size: .9rem; font-weight: 600; color: var(--ivory); margin-bottom: 6px; }
+.step-desc { font-size: .85rem; color: var(--stone); line-height: 1.65; }
+.roi-card {
+  background: var(--ob); border: 1px solid var(--border);
+  border-radius: 4px; padding: clamp(1.5rem, 3vw, 2.5rem);
+}
+.roi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 28px 0; }
+.roi-item {
+  padding: 18px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 3px;
+}
+.roi-val {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.2rem; font-weight: 300; color: var(--cu-l); line-height: 1;
+  margin-bottom: 4px;
+}
+.roi-lbl { font-size: 10px; color: var(--pebble); letter-spacing: .1em; text-transform: uppercase; }
+.currencies { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+.currency-pill {
+  padding: 5px 12px; border: 1px solid var(--border); border-radius: 2px;
+  font-size: 11px; font-weight: 600; color: var(--stone);
+}
+
+/* ── DIFERENCIAIS ────────────────────────────────── */
+.dif-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 1px; background: var(--border); border: 1px solid var(--border);
+}
+.dif-item {
+  background: var(--ob); padding: clamp(2rem, 3vw, 2.5rem);
+  transition: background .2s;
+}
+.dif-item:hover { background: var(--surface); }
+.dif-icon {
+  width: 42px; height: 42px; border: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--cu); font-size: 18px; margin-bottom: 24px; border-radius: 2px;
+}
+.dif-title { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 400; color: var(--ivory); margin-bottom: 10px; }
+.dif-desc { font-size: .8rem; color: var(--stone); line-height: 1.7; }
+
+/* ── TESTIMONIALS ────────────────────────────────── */
+#depoimentos { background: var(--surface); }
+.test-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.test-card {
+  background: var(--ob); border: 1px solid var(--border);
+  padding: 2rem; border-radius: 3px;
+}
+.test-quote {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.1rem; font-style: italic; font-weight: 300;
+  color: var(--chalk); line-height: 1.65; margin-bottom: 24px;
+}
+.test-author { font-size: 11px; font-weight: 600; color: var(--cu); letter-spacing: .08em; }
+.test-meta { font-size: 10px; color: var(--pebble); margin-top: 3px; }
+.test-stars { color: var(--cu); font-size: 11px; margin-bottom: 16px; }
+
+/* ── SOBRE ────────────────────────────────────────── */
+.sobre-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(3rem, 6vw, 6rem); align-items: center; }
+.sobre-img-wrap { position: relative; }
+.sobre-img {
+  width: 100%; aspect-ratio: 4/5; object-fit: cover;
+  border: 1px solid var(--border); filter: grayscale(20%);
+}
+.sobre-img-ph {
+  width: 100%; aspect-ratio: 4/5;
+  background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 4rem; color: var(--pebble);
+  border: 1px solid var(--border);
+}
+.sobre-accent {
+  position: absolute; bottom: -20px; right: -20px;
+  width: 120px; height: 120px;
+  border: 1px solid var(--border2);
+  background: var(--cu-glass);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.8rem; font-weight: 300; color: var(--cu);
+}
+.sobre-creds {
+  display: flex; flex-direction: column; gap: 12px; margin-top: 32px;
+  padding-top: 28px; border-top: 1px solid var(--border);
+}
+.cred-item { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--stone); }
+.cred-item i { color: var(--cu); font-size: 12px; width: 14px; }
+
+/* ── CONTACT ─────────────────────────────────────── */
+#contato { background: var(--surface); }
+.contato-grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: clamp(2.5rem, 6vw, 6rem); }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-full { grid-column: 1 / -1; }
+.form-field { display: flex; flex-direction: column; gap: 6px; }
+.form-label { font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--stone); }
+.form-input {
+  background: var(--ob); border: 1px solid var(--border);
+  border-radius: 2px; padding: 12px 14px;
+  font-size: 13px; color: var(--chalk); outline: none;
+  transition: border-color .18s;
+}
+.form-input:focus { border-color: var(--cu-d); }
+.form-input::placeholder { color: var(--pebble); }
+select.form-input { appearance: none; cursor: pointer; }
+select.form-input option { background: var(--surface2); }
+textarea.form-input { resize: vertical; min-height: 100px; }
+.form-submit {
+  width: 100%; padding: 15px;
+  background: var(--cu); color: var(--text-inv);
+  font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  border-radius: 2px; transition: opacity .18s;
+  margin-top: 8px;
+}
+.form-submit:hover { opacity: .88; }
+.contact-aside { display: flex; flex-direction: column; gap: 28px; padding-top: 8px; }
+.contact-item { display: flex; gap: 14px; align-items: flex-start; }
+.contact-icon {
+  width: 40px; height: 40px; border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--cu); font-size: 16px; flex-shrink: 0;
+}
+.contact-lbl { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--pebble); margin-bottom: 4px; }
+.contact-val { font-size: 14px; color: var(--chalk); font-weight: 500; }
+
+/* ── FOOTER ──────────────────────────────────────── */
+footer {
+  background: var(--ob); border-top: 1px solid var(--border);
+  padding: 48px 0 32px;
+}
+.footer-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 40px; margin-bottom: 40px; }
+.footer-title { font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--stone); margin-bottom: 16px; }
+.footer-links { display: flex; flex-direction: column; gap: 9px; }
+.footer-links a { font-size: 12px; color: var(--pebble); transition: color .15s; }
+.footer-links a:hover { color: var(--chalk); }
+.footer-copy { font-size: 11px; color: var(--pebble); padding-top: 24px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.footer-legal { display: flex; gap: 20px; }
+.footer-legal a { font-size: 10px; color: var(--pebble); text-transform: uppercase; letter-spacing: .08em; transition: color .15s; }
+.footer-legal a:hover { color: var(--stone); }
+
+/* ── MODAL ───────────────────────────────────────── */
+#modal-ov {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: rgba(8,8,7,.9); backdrop-filter: blur(10px);
+  overflow-y: auto; padding: 24px;
+}
+#modal-box {
+  background: var(--coal); border: 1px solid var(--border);
+  border-radius: 4px; max-width: 960px; margin: 0 auto;
+  overflow: hidden;
+}
+.modal-gallery { position: relative; height: clamp(240px, 40vw, 500px); background: var(--ob); }
+.modal-gallery img { width: 100%; height: 100%; object-fit: cover; }
+.modal-gallery-ph {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--pebble); font-size: 3rem;
+}
+.modal-close {
+  position: absolute; top: 16px; right: 16px; z-index: 5;
+  width: 36px; height: 36px; border-radius: 2px;
+  background: rgba(12,12,11,.8); color: var(--chalk);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; transition: background .15s;
+}
+.modal-close:hover { background: rgba(12,12,11,.95); }
+.modal-badges { position: absolute; top: 16px; left: 16px; display: flex; gap: 8px; }
+.modal-body { padding: clamp(1.5rem, 3vw, 2.5rem); }
+.modal-layout { display: grid; grid-template-columns: 1fr 280px; gap: 32px; }
+.modal-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.6rem, 3vw, 2.4rem); font-weight: 300; color: var(--ivory); margin-bottom: 10px; }
+.modal-loc { font-size: 13px; color: var(--stone); margin-bottom: 24px; display: flex; align-items: center; gap: 6px; }
+.modal-chars { display: flex; flex-wrap: wrap; gap: 14px; padding: 18px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+.modal-char { font-size: 12px; color: var(--stone); display: flex; align-items: center; gap: 6px; }
+.modal-char i { color: var(--cu); font-size: 11px; }
+.modal-desc { font-size: .88rem; color: var(--stone); line-height: 1.75; margin-bottom: 24px; }
+.modal-dif-label { font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--stone); margin-bottom: 10px; }
+.modal-difs { display: flex; flex-wrap: wrap; gap: 6px; }
+.modal-dif {
+  padding: 4px 10px; border: 1px solid var(--border);
+  font-size: 10px; color: var(--stone); border-radius: 2px;
+}
+.modal-side { display: flex; flex-direction: column; gap: 0; }
+.modal-price-box {
+  background: var(--ob); border: 1px solid var(--border);
+  padding: 20px; border-radius: 3px; margin-bottom: 16px;
+}
+.modal-price {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2rem; font-weight: 300; color: var(--cu-l); line-height: 1;
+}
+.modal-price-lbl { font-size: 10px; color: var(--pebble); margin-top: 4px; }
+.modal-agent {
+  background: var(--ob); border: 1px solid var(--border);
+  padding: 20px; border-radius: 3px;
+}
+.modal-agent-logo { width: 36px; height: 36px; background: linear-gradient(135deg, var(--cu), var(--cu-d)); display: flex; align-items: center; justify-content: center; border-radius: 2px; font-family: 'Cormorant Garamond', serif; font-size: 14px; font-weight: 600; color: var(--text-inv); margin-bottom: 12px; }
+.modal-agent-name { font-size: 14px; font-weight: 600; color: var(--ivory); margin-bottom: 2px; }
+.modal-agent-role { font-size: 10px; color: var(--pebble); margin-bottom: 16px; letter-spacing: .06em; }
+.modal-btns { display: flex; flex-direction: column; gap: 8px; }
+.modal-btn-wa { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: #1a7a3c; color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; border-radius: 2px; transition: opacity .18s; }
+.modal-btn-wa:hover { opacity: .9; }
+.modal-btn-call { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border: 1px solid var(--border2); color: var(--cu); font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; border-radius: 2px; transition: background .15s; }
+.modal-btn-call:hover { background: var(--cu-glass); }
+.roi-sim { margin-top: 28px; padding: 20px; border: 1px solid var(--border); border-radius: 3px; background: var(--surface); }
+.roi-sim-title { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--cu); margin-bottom: 14px; }
+.roi-inputs { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.roi-row { display: flex; justify-content: space-between; font-size: 11px; padding: 5px 0; border-bottom: 1px solid var(--border); }
+.roi-row:last-child { border: none; font-weight: 700; color: var(--cu-l); }
+.roi-row span:first-child { color: var(--stone); }
+
+/* ── LANG HIDDEN ─────────────────────────────────── */
+[data-lang-show] { display: none; }
+html[data-lang="pt"] [data-lang-show="pt"],
+html[data-lang="en"] [data-lang-show="en"],
+html[data-lang="es"] [data-lang-show="es"] { display: block; }
+.inline-ml { display: none; }
+html[data-lang="pt"] .inline-ml[data-lang="pt"],
+html[data-lang="en"] .inline-ml[data-lang="en"],
+html[data-lang="es"] .inline-ml[data-lang="es"] { display: inline; }
+
+/* ── RESPONSIVE ──────────────────────────────────── */
+@media (max-width: 900px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .stat-item:nth-child(2) { border-right: none; }
+  .excl-card, .excl-card:nth-child(even) { grid-template-columns: 1fr; }
+  .excl-card:nth-child(even) .excl-img, .excl-card:nth-child(even) .excl-info { order: unset; }
+  .excl-img { min-height: 220px; }
+  .invest-grid, .sobre-grid, .contato-grid { grid-template-columns: 1fr; }
+  .dif-grid { grid-template-columns: repeat(2, 1fr); }
+  .test-grid { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+  .modal-layout { grid-template-columns: 1fr; }
+  .nav-links { display: none; }
+  #mob-toggle { display: block; }
+}
+@media (max-width: 560px) {
+  .search-strip { flex-direction: column; }
+  .ss-field { border-right: none; border-bottom: 1px solid var(--border); }
+  .ss-btn { padding: 16px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .form-full { grid-column: auto; }
+  .dif-grid { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr; }
+  .roi-grid { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
 
-<!-- ══════════════════ HEADER ══════════════════ -->
-<header class="fixed top-0 left-0 right-0 z-50" style="background:rgba(10,10,10,0.96);backdrop-filter:blur(20px);border-bottom:1px solid rgba(201,168,76,0.14)">
-  <div class="max-w-7xl mx-auto px-5 sm:px-8 flex items-center justify-between h-16">
-
-    <!-- Logo / nome -->
-    <a href="#" class="flex items-center gap-3 group">
-      <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-           style="background:linear-gradient(135deg,#c9a84c,#a88730)">
-        <span class="text-black font-black text-base" style="font-family:'Cormorant Garamond',serif">AC</span>
-      </div>
-      <div class="leading-none">
-        <p class="text-sm font-black tracking-wide" style="color:#e8e0cc">André Camargo</p>
-        <p class="text-[9px] font-semibold tracking-[0.18em] uppercase" style="color:#8a7048">Corretor de Imóveis</p>
+<!-- NAV -->
+<nav id="nav">
+  <div class="wrap nav-inner">
+    <a href="#" class="nav-logo">
+      <div class="nav-mono">AF</div>
+      <div>
+        <div class="nav-name">André Fortunato</div>
+        <div class="nav-sub">Imóveis de Alto Padrão</div>
       </div>
     </a>
-
-    <!-- Nav desktop -->
-    <nav class="hidden md:flex items-center gap-7">
-      <a href="#imoveis" class="nav-a text-xs font-semibold uppercase tracking-widest" style="color:#9a8a6a">Imóveis</a>
-      <a href="#sobre" class="nav-a text-xs font-semibold uppercase tracking-widest" style="color:#9a8a6a">Sobre</a>
-      <a href="#contato" class="nav-a text-xs font-semibold uppercase tracking-widest" style="color:#9a8a6a">Contato</a>
-    </nav>
-
-    <!-- CTA -->
-    <div class="flex items-center gap-3">
-      <a id="btn-wa-header" href="#" target="_blank"
-         class="hidden sm:flex btn-gold items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl">
-        <i class="fa-brands fa-whatsapp text-sm"></i> Falar comigo
-      </a>
-      <button class="md:hidden text-gold-l p-2" style="color:#9a8a6a" onclick="document.getElementById('mob-menu').classList.toggle('hidden')">
-        <i class="fa-solid fa-bars"></i>
-      </button>
+    <div class="nav-links">
+      <a href="#exclusivos"><span class="inline-ml" data-lang="pt">Exclusivos</span><span class="inline-ml" data-lang="en">Exclusive</span><span class="inline-ml" data-lang="es">Exclusivos</span></a>
+      <a href="#parceiros"><span class="inline-ml" data-lang="pt">Parceiros</span><span class="inline-ml" data-lang="en">Partners</span><span class="inline-ml" data-lang="es">Socios</span></a>
+      <a href="#investir"><span class="inline-ml" data-lang="pt">Investir</span><span class="inline-ml" data-lang="en">Invest</span><span class="inline-ml" data-lang="es">Invertir</span></a>
+      <a href="#sobre"><span class="inline-ml" data-lang="pt">Sobre</span><span class="inline-ml" data-lang="en">About</span><span class="inline-ml" data-lang="es">Sobre</span></a>
+      <a href="#contato"><span class="inline-ml" data-lang="pt">Contato</span><span class="inline-ml" data-lang="en">Contact</span><span class="inline-ml" data-lang="es">Contacto</span></a>
     </div>
-  </div>
-  <!-- Mobile menu -->
-  <div id="mob-menu" class="hidden md:hidden px-5 py-4 space-y-3" style="border-top:1px solid rgba(201,168,76,0.1);background:var(--black-2)">
-    <a href="#imoveis" class="block text-sm font-semibold" style="color:#9a8a6a">Imóveis</a>
-    <a href="#sobre" class="block text-sm font-semibold" style="color:#9a8a6a">Sobre</a>
-    <a href="#contato" class="block text-sm font-semibold" style="color:#9a8a6a">Contato</a>
-  </div>
-</header>
-
-<!-- ══════════════════ HERO ══════════════════ -->
-<section class="hero-bg pt-28 pb-20 px-5 relative" id="hero">
-  <!-- Linha decorativa superior -->
-  <div class="absolute top-0 left-0 right-0 h-px" style="background:linear-gradient(90deg,transparent,rgba(201,168,76,0.4),transparent)"></div>
-
-  <div class="relative z-10 max-w-4xl mx-auto text-center">
-    <!-- Eyebrow -->
-    <p class="ornament text-[10px] font-bold tracking-[0.28em] uppercase mb-6" style="color:var(--gold)">
-      Corretor Autônomo · CRECI SP
-    </p>
-
-    <!-- Headline -->
-    <h1 class="serif leading-none mb-3" style="font-size:clamp(2.8rem,6vw,5rem);font-weight:700;color:#f0e8d4">
-      Encontre o imóvel<br>
-      <em class="gold-text not-italic">que merece seu nome</em>
-    </h1>
-
-    <p class="text-base mb-10 max-w-xl mx-auto" style="color:#7a6848;line-height:1.7">
-      Atendimento exclusivo e personalizado.<br>
-      Imóveis selecionados com critério e excelência.
-    </p>
-
-    <!-- Search bar -->
-    <div class="search-box max-w-2xl mx-auto flex flex-col sm:flex-row items-stretch overflow-hidden" style="height:auto sm:height:56px">
-      <div class="relative flex-1 flex items-center px-4 py-3 sm:py-0">
-        <i class="fa-solid fa-magnifying-glass mr-3 text-xs" style="color:#6a5840"></i>
-        <input id="s-text" type="text" placeholder="Bairro, cidade ou tipo de imóvel…"
-               class="search-input flex-1" oninput="filtrar()">
+    <div class="nav-right">
+      <div class="lang-sw">
+        <button class="active" onclick="setLang('pt')">PT</button>
+        <button onclick="setLang('en')">EN</button>
+        <button onclick="setLang('es')">ES</button>
       </div>
-      <select id="s-tipo" class="search-select px-4 py-3 sm:py-0 text-sm" style="min-width:140px;border-left:1px solid rgba(201,168,76,0.15)" onchange="filtrar()">
-        <option value="">Tipo de imóvel</option>
-        <option value="apartamento">Apartamento</option>
-        <option value="casa">Casa</option>
-        <option value="terreno">Terreno</option>
-        <option value="comercial">Comercial</option>
-        <option value="studio">Studio</option>
-        <option value="cobertura">Cobertura</option>
-        <option value="sobrado">Sobrado</option>
-      </select>
-      <select id="s-oferta" class="search-select px-4 py-3 sm:py-0 text-sm" style="min-width:130px;border-left:1px solid rgba(201,168,76,0.15)" onchange="filtrar()">
-        <option value="">Venda / Locação</option>
-        <option value="venda">Venda</option>
-        <option value="locacao">Locação</option>
-      </select>
-      <button onclick="filtrar()"
-              class="btn-gold px-6 py-3 sm:py-0 text-xs font-black tracking-wide uppercase m-2 sm:m-1.5 rounded-xl flex items-center justify-center gap-2">
-        <i class="fa-solid fa-search"></i> Buscar
-      </button>
-    </div>
-
-    <!-- Stats -->
-    <div class="flex items-center justify-center gap-6 mt-8 text-xs" style="color:#5a4e38">
-      <span><strong id="st-total" class="text-sm font-bold" style="color:#c9a84c">0</strong> imóveis</span>
-      <span class="w-px h-3" style="background:rgba(201,168,76,0.25)"></span>
-      <span><strong id="st-venda" class="text-sm font-bold" style="color:#c9a84c">0</strong> à venda</span>
-      <span class="w-px h-3" style="background:rgba(201,168,76,0.25)"></span>
-      <span><strong id="st-loc" class="text-sm font-bold" style="color:#c9a84c">0</strong> locação</span>
+      <a id="nav-wa" href="#" target="_blank" class="btn btn-cu" style="padding:10px 18px">
+        <i class="fa-brands fa-whatsapp"></i>
+        <span class="inline-ml" data-lang="pt">Contato</span><span class="inline-ml" data-lang="en">Contact</span><span class="inline-ml" data-lang="es">Contacto</span>
+      </a>
+      <button id="mob-toggle" onclick="toggleMob()"><i class="fa-solid fa-bars"></i></button>
     </div>
   </div>
+</nav>
+<div id="mob-menu">
+  <a href="#exclusivos" onclick="toggleMob()">Exclusivos AF</a>
+  <a href="#parceiros" onclick="toggleMob()">Parceiros</a>
+  <a href="#investir" onclick="toggleMob()">Investir</a>
+  <a href="#sobre" onclick="toggleMob()">Sobre</a>
+  <a href="#contato" onclick="toggleMob()">Contato</a>
+</div>
 
-  <!-- Bottom gradient -->
-  <div class="absolute bottom-0 left-0 right-0 h-16 pointer-events-none"
-       style="background:linear-gradient(to bottom, transparent, var(--black-2))"></div>
+<!-- HERO -->
+<section id="hero">
+  <div id="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-radial"></div>
+  <div class="wrap hero-content">
+    <p class="label label-cu" style="margin-bottom:24px">
+      <span class="cu-line"></span>
+      <span class="inline-ml" data-lang="pt">Curadoria de Alto Padrão · Brasil</span>
+      <span class="inline-ml" data-lang="en">Premium Curation · Brazil</span>
+      <span class="inline-ml" data-lang="es">Curaduría Premium · Brasil</span>
+    </p>
+    <h1 class="hero-hl display">
+      <span class="inline-ml" data-lang="pt">Imóveis que<br>carregam <em>história</em><br>e constroem <em>legado</em></span>
+      <span class="inline-ml" data-lang="en">Properties that<br>carry <em>history</em><br>and build <em>legacy</em></span>
+      <span class="inline-ml" data-lang="es">Propiedades que<br>llevan <em>historia</em><br>y construyen <em>legado</em></span>
+    </h1>
+    <p class="hero-sub">
+      <span class="inline-ml" data-lang="pt">Portfólio exclusivo de imóveis de alto padrão no Brasil. Assessoria jurídica completa, presença global e curadoria com critério para investidores exigentes.</span>
+      <span class="inline-ml" data-lang="en">Exclusive portfolio of premium properties in Brazil. Full legal advisory, global reach and rigorous curation for discerning investors.</span>
+      <span class="inline-ml" data-lang="es">Portafolio exclusivo de propiedades premium en Brasil. Asesoría jurídica completa, presencia global y curaduría rigurosa para inversores exigentes.</span>
+    </p>
+    <div class="hero-actions">
+      <a href="#exclusivos" class="btn btn-cu">
+        <i class="fa-solid fa-gem"></i>
+        <span class="inline-ml" data-lang="pt">Ver portfólio exclusivo</span>
+        <span class="inline-ml" data-lang="en">View exclusive portfolio</span>
+        <span class="inline-ml" data-lang="es">Ver portafolio exclusivo</span>
+      </a>
+      <a href="#investir" class="btn btn-ghost">
+        <span class="inline-ml" data-lang="pt">Investir com André Fortunato</span>
+        <span class="inline-ml" data-lang="en">Invest with André Fortunato</span>
+        <span class="inline-ml" data-lang="es">Invertir con André Fortunato</span>
+      </a>
+    </div>
+    <!-- Search strip -->
+    <div class="search-strip">
+      <div class="ss-field">
+        <span class="ss-label"><span class="inline-ml" data-lang="pt">Buscar</span><span class="inline-ml" data-lang="en">Search</span><span class="inline-ml" data-lang="es">Buscar</span></span>
+        <input id="s-txt" type="text" placeholder="Bairro, cidade..." oninput="filtrar()">
+      </div>
+      <div class="ss-field">
+        <span class="ss-label"><span class="inline-ml" data-lang="pt">Tipo</span><span class="inline-ml" data-lang="en">Type</span><span class="inline-ml" data-lang="es">Tipo</span></span>
+        <select id="s-tipo" onchange="filtrar()">
+          <option value="">Todos</option>
+          <option value="apartamento">Apartamento</option>
+          <option value="casa">Casa</option>
+          <option value="cobertura">Cobertura</option>
+          <option value="studio">Studio</option>
+          <option value="terreno">Terreno</option>
+          <option value="comercial">Comercial</option>
+        </select>
+      </div>
+      <div class="ss-field">
+        <span class="ss-label"><span class="inline-ml" data-lang="pt">Finalidade</span><span class="inline-ml" data-lang="en">Purpose</span><span class="inline-ml" data-lang="es">Finalidad</span></span>
+        <select id="s-fin" onchange="filtrar()">
+          <option value="">Compra / Aluguel</option>
+          <option value="venda">Compra / Purchase</option>
+          <option value="locacao">Aluguel / Rent</option>
+        </select>
+      </div>
+      <div class="ss-field">
+        <span class="ss-label"><span class="inline-ml" data-lang="pt">Orçamento</span><span class="inline-ml" data-lang="en">Budget</span><span class="inline-ml" data-lang="es">Presupuesto</span></span>
+        <select id="s-bud" onchange="filtrar()">
+          <option value="">Qualquer</option>
+          <option value="500k">Até R$ 500k</option>
+          <option value="1m">Até R$ 1M</option>
+          <option value="2m">Até R$ 2M</option>
+          <option value="5m">Até R$ 5M</option>
+          <option value="5m+">Acima de R$ 5M</option>
+        </select>
+      </div>
+      <button class="ss-btn" onclick="filtrar(); document.getElementById('exclusivos').scrollIntoView({behavior:'smooth'})">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <span class="inline-ml" data-lang="pt">Buscar</span><span class="inline-ml" data-lang="en">Search</span><span class="inline-ml" data-lang="es">Buscar</span>
+      </button>
+    </div>
+  </div>
+  <div class="scroll-hint">
+    <div class="scroll-dot"></div>
+    <span>Scroll</span>
+  </div>
 </section>
 
-<!-- ══════════════════ FILTROS ══════════════════ -->
-<div class="sticky top-16 z-40 px-5 py-3" style="background:rgba(17,17,17,0.96);backdrop-filter:blur(16px);border-bottom:1px solid rgba(201,168,76,0.1)" id="imoveis">
-  <div class="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto scrollbar-hide">
-    <span class="text-[9px] font-black uppercase tracking-[0.2em] flex-shrink-0 mr-1" style="color:#5a4e38">Filtrar</span>
-    <button class="chip active" data-f="todos" onclick="setFiltro(this,'todos')">Todos</button>
-    <button class="chip" data-f="apartamento" onclick="setFiltro(this,'apartamento')">Apartamento</button>
-    <button class="chip" data-f="casa" onclick="setFiltro(this,'casa')">Casa</button>
-    <button class="chip" data-f="cobertura" onclick="setFiltro(this,'cobertura')">Cobertura</button>
-    <button class="chip" data-f="studio" onclick="setFiltro(this,'studio')">Studio</button>
-    <button class="chip" data-f="terreno" onclick="setFiltro(this,'terreno')">Terreno</button>
-    <button class="chip" data-f="comercial" onclick="setFiltro(this,'comercial')">Comercial</button>
-    <div class="ml-auto flex-shrink-0">
-      <select class="sort-sel" id="s-sort" onchange="filtrar()">
-        <option value="recente">Mais recentes</option>
-        <option value="menor">Menor preço</option>
-        <option value="maior">Maior preço</option>
-        <option value="area">Maior área</option>
-      </select>
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="wrap">
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-num serif">R$ 2B<span style="font-size:60%;color:var(--cu)">+</span></div>
+        <div class="stat-lbl"><span class="inline-ml" data-lang="pt">em negócios fechados</span><span class="inline-ml" data-lang="en">in closed deals</span><span class="inline-ml" data-lang="es">en negocios cerrados</span></div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num serif" id="stat-imoveis">0</div>
+        <div class="stat-lbl"><span class="inline-ml" data-lang="pt">imóveis disponíveis</span><span class="inline-ml" data-lang="en">available properties</span><span class="inline-ml" data-lang="es">propiedades disponibles</span></div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num serif">15<span style="font-size:60%;color:var(--cu)">+</span></div>
+        <div class="stat-lbl"><span class="inline-ml" data-lang="pt">anos de mercado</span><span class="inline-ml" data-lang="en">years in market</span><span class="inline-ml" data-lang="es">años en el mercado</span></div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num serif">100<span style="font-size:60%;color:var(--cu)">%</span></div>
+        <div class="stat-lbl"><span class="inline-ml" data-lang="pt">satisfação dos clientes</span><span class="inline-ml" data-lang="en">client satisfaction</span><span class="inline-ml" data-lang="es">satisfacción de clientes</span></div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════ DESTAQUES ══════════════════ -->
-<section id="sec-dest" class="hidden max-w-7xl mx-auto px-5 sm:px-8 mt-12 mb-2">
-  <div class="flex items-center gap-4 mb-6">
-    <div class="divider"></div>
-    <p class="serif text-xl font-semibold" style="color:#e8d8a8">Destaques</p>
-    <div class="divider"></div>
-  </div>
-  <div id="grid-dest" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
-</section>
-
-<!-- ══════════════════ TODOS OS IMÓVEIS ══════════════════ -->
-<section class="max-w-7xl mx-auto px-5 sm:px-8 mt-10 pb-24">
-  <div class="flex items-center justify-between mb-6">
-    <h2 class="serif text-xl font-semibold" id="tit-lista" style="color:#e8d8a8">Todos os Imóveis</h2>
-    <span class="text-xs font-semibold" style="color:#5a4e38" id="cnt-lista">0 imóveis</span>
-  </div>
-
-  <div id="grid-main" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
-
-  <!-- Empty state -->
-  <div id="empty" class="hidden py-24 text-center">
-    <div class="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center"
-         style="background:var(--black-3);border:1px solid rgba(201,168,76,0.15)">
-      <i class="fa-solid fa-magnifying-glass text-2xl" style="color:#5a4e38"></i>
-    </div>
-    <p class="serif text-xl font-semibold mb-2" style="color:#e8d8a8">Nenhum imóvel encontrado</p>
-    <p class="text-sm mb-5" style="color:#5a4e38">Tente outros filtros ou entre em contato</p>
-    <button onclick="resetFiltros()" class="btn-gold px-6 py-2.5 text-xs font-bold rounded-xl">Ver todos</button>
-  </div>
-</section>
-
-<!-- ══════════════════ SOBRE ══════════════════ -->
-<section id="sobre" class="py-20 px-5 relative" style="background:var(--black)">
-  <div class="absolute top-0 left-0 right-0 h-px" style="background:linear-gradient(90deg,transparent,rgba(201,168,76,0.3),transparent)"></div>
-  <div class="max-w-5xl mx-auto">
-    <div class="grid md:grid-cols-2 gap-12 items-center">
-
-      <!-- Left: texto -->
+<!-- EXCLUSIVOS -->
+<section id="exclusivos" class="section">
+  <div class="wrap">
+    <div class="sec-hd" style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:20px">
       <div>
-        <p class="text-[10px] font-black uppercase tracking-[0.25em] mb-4" style="color:var(--gold)">Sobre</p>
-        <h2 class="serif text-3xl sm:text-4xl font-bold leading-snug mb-5" style="color:#f0e8d4">
-          André Camargo<br><span class="gold-text">Corretor Autônomo</span>
+        <div class="label" style="display:flex;align-items:center;margin-bottom:14px">
+          <span class="cu-line"></span>
+          <span class="label-cu"><span class="inline-ml" data-lang="pt">Portfólio exclusivo</span><span class="inline-ml" data-lang="en">Exclusive portfolio</span><span class="inline-ml" data-lang="es">Portafolio exclusivo</span></span>
+        </div>
+        <h2 class="sec-title">
+          <span class="inline-ml" data-lang="pt">Imóveis <em class="serif" style="font-style:italic;color:var(--cu-l)">André Fortunato</em></span>
+          <span class="inline-ml" data-lang="en">André Fortunato <em class="serif" style="font-style:italic;color:var(--cu-l)">Properties</em></span>
+          <span class="inline-ml" data-lang="es">Propiedades <em class="serif" style="font-style:italic;color:var(--cu-l)">André Fortunato</em></span>
         </h2>
-        <div class="divider mb-6"></div>
-        <p class="text-sm leading-relaxed mb-4" style="color:#7a6848">
-          Especialista em intermediação imobiliária de alto padrão, atuo com transparência, dedicação e profissionalismo para transformar o processo de compra, venda ou locação em uma experiência segura e satisfatória.
+        <p class="sec-desc">
+          <span class="inline-ml" data-lang="pt">Imóveis adquiridos, reformados e comercializados diretamente por André Fortunato. Curadoria, qualidade e exclusividade garantidas.</span>
+          <span class="inline-ml" data-lang="en">Properties acquired, renovated and sold directly by André Fortunato. Guaranteed curation, quality and exclusivity.</span>
+          <span class="inline-ml" data-lang="es">Propiedades adquiridas, reformadas y comercializadas directamente por André Fortunato.</span>
         </p>
-        <p class="text-sm leading-relaxed mb-8" style="color:#7a6848">
-          Cada imóvel é tratado com atenção individual. Cada cliente, com respeito e exclusividade.
-        </p>
-        <div class="flex flex-wrap gap-3">
-          <a id="btn-wa-sobre" href="#" target="_blank"
-             class="btn-gold flex items-center gap-2 px-5 py-3 text-sm font-bold rounded-xl">
-            <i class="fa-brands fa-whatsapp"></i> Chamar no WhatsApp
-          </a>
-          <a href="#imoveis"
-             class="btn-ghost flex items-center gap-2 px-5 py-3 text-sm font-bold rounded-xl" style="color:var(--gold)">
-            Ver imóveis <i class="fa-solid fa-arrow-down text-xs"></i>
-          </a>
-        </div>
       </div>
+      <div id="excl-filter" class="filter-bar" style="margin:0;padding:0;border:none"></div>
+    </div>
+    <div id="grid-excl" class="excl-grid"></div>
+    <div id="excl-empty" class="hidden" style="text-align:center;padding:4rem 0;color:var(--pebble)">
+      <i class="fa-solid fa-gem" style="font-size:2rem;color:var(--border2);margin-bottom:16px;display:block"></i>
+      <span class="inline-ml" data-lang="pt">Nenhum imóvel exclusivo disponível no momento.</span>
+      <span class="inline-ml" data-lang="en">No exclusive properties available at the moment.</span>
+      <span class="inline-ml" data-lang="es">No hay propiedades exclusivas disponibles en este momento.</span>
+    </div>
+  </div>
+</section>
 
-      <!-- Right: números -->
-      <div class="grid grid-cols-2 gap-4">
-        <div class="rounded-2xl p-5" style="background:var(--black-3);border:1px solid rgba(201,168,76,0.12)">
-          <p class="serif text-4xl font-bold gold-text leading-none mb-2">5+</p>
-          <p class="text-xs font-semibold uppercase tracking-wide" style="color:#5a4e38">Anos de experiência</p>
-        </div>
-        <div class="rounded-2xl p-5" style="background:var(--black-3);border:1px solid rgba(201,168,76,0.12)">
-          <p class="serif text-4xl font-bold gold-text leading-none mb-2">100+</p>
-          <p class="text-xs font-semibold uppercase tracking-wide" style="color:#5a4e38">Negócios fechados</p>
-        </div>
-        <div class="rounded-2xl p-5 col-span-2" style="background:linear-gradient(135deg,rgba(201,168,76,0.08),rgba(201,168,76,0.03));border:1px solid rgba(201,168,76,0.2)">
-          <div class="flex items-center gap-3">
-            <i class="fa-solid fa-star text-xl" style="color:var(--gold)"></i>
+<!-- PARCEIROS -->
+<section id="parceiros" class="section" style="background:var(--surface);padding-top:0">
+  <div class="wrap">
+    <div class="sec-hd" style="padding-top:clamp(4rem,8vw,7rem)">
+      <div class="label" style="display:flex;align-items:center;margin-bottom:14px">
+        <span class="cu-line"></span>
+        <span><span class="inline-ml" data-lang="pt">Portfólio parceiros</span><span class="inline-ml" data-lang="en">Partner portfolio</span><span class="inline-ml" data-lang="es">Portafolio socios</span></span>
+      </div>
+      <h2 class="sec-title">
+        <span class="inline-ml" data-lang="pt">Imóveis em <em class="serif" style="font-style:italic;color:var(--stone)">parceria</em></span>
+        <span class="inline-ml" data-lang="en">Partner <em class="serif" style="font-style:italic;color:var(--stone)">listings</em></span>
+        <span class="inline-ml" data-lang="es">Inmuebles en <em class="serif" style="font-style:italic;color:var(--stone)">alianza</em></span>
+      </h2>
+      <p class="sec-desc">
+        <span class="inline-ml" data-lang="pt">Seleção criteriosa de imóveis de terceiros intermediados por André Fortunato com o mesmo padrão de atendimento.</span>
+        <span class="inline-ml" data-lang="en">A careful selection of third-party properties brokered by André Fortunato with the same service standard.</span>
+        <span class="inline-ml" data-lang="es">Selección cuidadosa de propiedades de terceros intermediadas con el mismo estándar de servicio.</span>
+      </p>
+    </div>
+    <div class="filter-bar" id="partner-filter">
+      <button class="chip active" data-f="todos" onclick="setPartnerFilter(this,'todos')">Todos</button>
+      <button class="chip" data-f="apartamento" onclick="setPartnerFilter(this,'apartamento')">Apartamento</button>
+      <button class="chip" data-f="casa" onclick="setPartnerFilter(this,'casa')">Casa</button>
+      <button class="chip" data-f="cobertura" onclick="setPartnerFilter(this,'cobertura')">Cobertura</button>
+      <button class="chip" data-f="terreno" onclick="setPartnerFilter(this,'terreno')">Terreno</button>
+      <select class="f-select" id="partner-sort" onchange="renderPartners()">
+        <option value="rec"><span class="inline-ml" data-lang="pt">Mais recentes</span></option>
+        <option value="low">Menor preço</option>
+        <option value="high">Maior preço</option>
+      </select>
+      <span class="f-count" id="partner-count"></span>
+    </div>
+    <div id="grid-partners" class="partner-grid"></div>
+    <div id="partner-empty" class="hidden" style="text-align:center;padding:4rem 0;color:var(--pebble)">
+      <i class="fa-solid fa-building" style="font-size:2rem;color:var(--border2);margin-bottom:16px;display:block"></i>
+      <span>Nenhum imóvel parceiro disponível no momento.</span>
+    </div>
+  </div>
+</section>
+
+<!-- INVESTIR -->
+<section id="investir" class="section" style="background:var(--ob)">
+  <div class="wrap">
+    <div class="sec-hd">
+      <div class="label" style="display:flex;align-items:center;margin-bottom:14px">
+        <span class="cu-line"></span>
+        <span class="label-cu"><span class="inline-ml" data-lang="pt">Para investidores</span><span class="inline-ml" data-lang="en">For investors</span><span class="inline-ml" data-lang="es">Para inversores</span></span>
+      </div>
+      <h2 class="sec-title">
+        <span class="inline-ml" data-lang="pt">Por que investir no<br>mercado imobiliário brasileiro?</span>
+        <span class="inline-ml" data-lang="en">Why invest in the<br>Brazilian real estate market?</span>
+        <span class="inline-ml" data-lang="es">¿Por qué invertir en el<br>mercado inmobiliario brasileño?</span>
+      </h2>
+    </div>
+    <div class="invest-grid">
+      <div>
+        <div class="invest-steps">
+          <div class="invest-step">
+            <div class="step-n">01</div>
             <div>
-              <p class="font-black text-lg" style="color:#f0e8d4">Avaliação 5.0</p>
-              <p class="text-xs" style="color:#5a4e38">Google · Clientes satisfeitos</p>
+              <div class="step-title"><span class="inline-ml" data-lang="pt">Diagnóstico e perfil</span><span class="inline-ml" data-lang="en">Diagnosis & profile</span><span class="inline-ml" data-lang="es">Diagnóstico y perfil</span></div>
+              <div class="step-desc"><span class="inline-ml" data-lang="pt">Entendemos seus objetivos, horizonte de investimento e apetite a risco para indicar os imóveis mais alinhados ao seu perfil.</span><span class="inline-ml" data-lang="en">We understand your goals, investment horizon and risk appetite to recommend properties most aligned to your profile.</span><span class="inline-ml" data-lang="es">Entendemos tus objetivos y apetito al riesgo para recomendar las propiedades más adecuadas.</span></div>
+            </div>
+          </div>
+          <div class="invest-step">
+            <div class="step-n">02</div>
+            <div>
+              <div class="step-title"><span class="inline-ml" data-lang="pt">Curadoria e análise</span><span class="inline-ml" data-lang="en">Curation & analysis</span><span class="inline-ml" data-lang="es">Curaduría y análisis</span></div>
+              <div class="step-desc"><span class="inline-ml" data-lang="pt">Análise comparativa de mercado, avaliação jurídica, histórico do imóvel e projeção de valorização e retorno locatício.</span><span class="inline-ml" data-lang="en">Comparative market analysis, legal due diligence, property history and appreciation/rental return projections.</span><span class="inline-ml" data-lang="es">Análisis de mercado, due diligence legal e historial del inmueble con proyecciones de retorno.</span></div>
+            </div>
+          </div>
+          <div class="invest-step">
+            <div class="step-n">03</div>
+            <div>
+              <div class="step-title"><span class="inline-ml" data-lang="pt">Estruturação jurídica</span><span class="inline-ml" data-lang="en">Legal structuring</span><span class="inline-ml" data-lang="es">Estructuración jurídica</span></div>
+              <div class="step-desc"><span class="inline-ml" data-lang="pt">Assessoria completa para compradores internacionais: abertura de empresa, câmbio, contratos, LGPD/GDPR, tributação.</span><span class="inline-ml" data-lang="en">Full advisory for international buyers: company setup, FX, contracts, compliance and taxation.</span><span class="inline-ml" data-lang="es">Asesoría completa para compradores internacionales: empresa, cambio de divisas, contratos, tributación.</span></div>
+            </div>
+          </div>
+          <div class="invest-step">
+            <div class="step-n">04</div>
+            <div>
+              <div class="step-title"><span class="inline-ml" data-lang="pt">Fechamento e pós-venda</span><span class="inline-ml" data-lang="en">Closing & aftercare</span><span class="inline-ml" data-lang="es">Cierre y postventa</span></div>
+              <div class="step-desc"><span class="inline-ml" data-lang="pt">Acompanhamento do registro de imóvel, gestão de locação, relatórios de rentabilidade e suporte contínuo.</span><span class="inline-ml" data-lang="en">Property registration follow-up, rental management, profitability reports and ongoing support.</span><span class="inline-ml" data-lang="es">Seguimiento del registro, gestión de alquiler, informes de rentabilidad y soporte continuo.</span></div>
             </div>
           </div>
         </div>
       </div>
+      <div>
+        <div class="roi-card">
+          <p class="label label-cu" style="margin-bottom:20px">
+            <span class="cu-line"></span>
+            <span class="inline-ml" data-lang="pt">Indicadores de mercado</span><span class="inline-ml" data-lang="en">Market indicators</span><span class="inline-ml" data-lang="es">Indicadores de mercado</span>
+          </p>
+          <div class="roi-grid">
+            <div class="roi-item">
+              <div class="roi-val">8–12%</div>
+              <div class="roi-lbl"><span class="inline-ml" data-lang="pt">Retorno anual locação</span><span class="inline-ml" data-lang="en">Annual rental yield</span><span class="inline-ml" data-lang="es">Rendimiento alquiler anual</span></div>
+            </div>
+            <div class="roi-item">
+              <div class="roi-val">15%+</div>
+              <div class="roi-lbl"><span class="inline-ml" data-lang="pt">Valorização 5 anos</span><span class="inline-ml" data-lang="en">5-year appreciation</span><span class="inline-ml" data-lang="es">Valorización a 5 años</span></div>
+            </div>
+            <div class="roi-item">
+              <div class="roi-val">USD</div>
+              <div class="roi-lbl"><span class="inline-ml" data-lang="pt">Preços em dólar 40% abaixo do pico histórico</span><span class="inline-ml" data-lang="en">Prices 40% below historical peak in USD</span><span class="inline-ml" data-lang="es">Precios 40% bajo el pico histórico en dólares</span></div>
+            </div>
+            <div class="roi-item">
+              <div class="roi-val">A+</div>
+              <div class="roi-lbl"><span class="inline-ml" data-lang="pt">Segurança jurídica e título de propriedade</span><span class="inline-ml" data-lang="en">Legal security and property title</span><span class="inline-ml" data-lang="es">Seguridad jurídica y título de propiedad</span></div>
+            </div>
+          </div>
+          <p class="label" style="margin-bottom:12px"><span class="inline-ml" data-lang="pt">Moedas aceitas</span><span class="inline-ml" data-lang="en">Accepted currencies</span><span class="inline-ml" data-lang="es">Monedas aceptadas</span></p>
+          <div class="currencies">
+            <span class="currency-pill">🇧🇷 BRL</span>
+            <span class="currency-pill">🇺🇸 USD</span>
+            <span class="currency-pill">🇪🇺 EUR</span>
+            <span class="currency-pill">🇬🇧 GBP</span>
+            <span class="currency-pill">₿ BTC</span>
+          </div>
+          <a href="#contato" class="btn btn-cu" style="width:100%;justify-content:center">
+            <i class="fa-solid fa-chart-line"></i>
+            <span class="inline-ml" data-lang="pt">Falar com André Fortunato</span>
+            <span class="inline-ml" data-lang="en">Talk to André Fortunato</span>
+            <span class="inline-ml" data-lang="es">Hablar con André Fortunato</span>
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ══════════════════ CONTATO ══════════════════ -->
-<section id="contato" class="py-20 px-5" style="background:var(--black-2)">
-  <div class="max-w-lg mx-auto text-center">
-    <p class="text-[10px] font-black uppercase tracking-[0.25em] mb-3" style="color:var(--gold)">Contato</p>
-    <h2 class="serif text-3xl font-bold mb-3" style="color:#f0e8d4">Vamos conversar?</h2>
-    <div class="divider mx-auto mb-5"></div>
-    <p class="text-sm mb-8" style="color:#5a4e38">Disponível de segunda a sábado · Resposta rápida garantida</p>
-
-    <a id="btn-wa-contato" href="#" target="_blank"
-       class="inline-flex items-center gap-3 px-8 py-4 rounded-2xl text-base font-bold transition-all hover:opacity-90 active:scale-95"
-       style="background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;box-shadow:0 12px 32px rgba(37,211,102,0.25)">
-      <i class="fa-brands fa-whatsapp text-2xl"></i>
-      Falar com André Camargo
-    </a>
-
-    <div class="mt-8 flex items-center justify-center gap-5 text-xs" style="color:#5a4e38">
-      <span><i class="fa-solid fa-phone mr-1.5"></i>Ligar</span>
-      <span class="w-px h-3" style="background:rgba(201,168,76,0.2)"></span>
-      <span><i class="fa-brands fa-instagram mr-1.5"></i>Instagram</span>
+<!-- DIFERENCIAIS -->
+<section class="section" style="background:var(--surface)">
+  <div class="wrap">
+    <div class="sec-hd" style="text-align:center;max-width:600px;margin-left:auto;margin-right:auto">
+      <div class="label" style="justify-content:center;margin-bottom:14px">
+        <span class="cu-line"></span>
+        <span class="inline-ml" data-lang="pt">Por que André Fortunato</span><span class="inline-ml" data-lang="en">Why André Fortunato</span><span class="inline-ml" data-lang="es">Por qué André Fortunato</span>
+        <span class="cu-line" style="margin:0 0 0 12px"></span>
+      </div>
+      <h2 class="sec-title" style="font-size:clamp(1.8rem,3.2vw,2.8rem)">
+        <span class="inline-ml" data-lang="pt">Quatro pilares que nos diferenciam</span>
+        <span class="inline-ml" data-lang="en">Four pillars that set us apart</span>
+        <span class="inline-ml" data-lang="es">Cuatro pilares que nos diferencian</span>
+      </h2>
+    </div>
+    <div class="dif-grid">
+      <div class="dif-item">
+        <div class="dif-icon"><i class="fa-solid fa-gem"></i></div>
+        <div class="dif-title"><span class="inline-ml" data-lang="pt">Curadoria Premium</span><span class="inline-ml" data-lang="en">Premium Curation</span><span class="inline-ml" data-lang="es">Curaduría Premium</span></div>
+        <div class="dif-desc"><span class="inline-ml" data-lang="pt">Cada imóvel passa por uma seleção rigorosa de localização, estado de conservação, potencial de valorização e liquidez antes de entrar no portfólio.</span><span class="inline-ml" data-lang="en">Every property undergoes rigorous screening for location, condition, appreciation potential and liquidity before entering the portfolio.</span><span class="inline-ml" data-lang="es">Cada propiedad pasa por un screening riguroso antes de ingresar al portafolio.</span></div>
+      </div>
+      <div class="dif-item">
+        <div class="dif-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+        <div class="dif-title"><span class="inline-ml" data-lang="pt">Assessoria Jurídica</span><span class="inline-ml" data-lang="en">Legal Advisory</span><span class="inline-ml" data-lang="es">Asesoría Jurídica</span></div>
+        <div class="dif-desc"><span class="inline-ml" data-lang="pt">Equipe jurídica especializada em direito imobiliário, LGPD, transações internacionais e estruturação de investimentos para estrangeiros no Brasil.</span><span class="inline-ml" data-lang="en">Legal team specialized in real estate law, GDPR, international transactions and investment structuring for foreign buyers in Brazil.</span><span class="inline-ml" data-lang="es">Equipo jurídico especializado en transacciones internacionales y estructuración de inversiones para extranjeros.</span></div>
+      </div>
+      <div class="dif-item">
+        <div class="dif-icon"><i class="fa-solid fa-earth-americas"></i></div>
+        <div class="dif-title"><span class="inline-ml" data-lang="pt">Presença Global</span><span class="inline-ml" data-lang="en">Global Reach</span><span class="inline-ml" data-lang="es">Presencia Global</span></div>
+        <div class="dif-desc"><span class="inline-ml" data-lang="pt">Atendimento multilingue em português, inglês e espanhol. Transações em múltiplas moedas e experiência com compradores de mais de 20 países.</span><span class="inline-ml" data-lang="en">Multilingual service in Portuguese, English and Spanish. Multi-currency transactions and experience with buyers from over 20 countries.</span><span class="inline-ml" data-lang="es">Servicio multilingüe y transacciones en múltiples divisas con compradores de más de 20 países.</span></div>
+      </div>
+      <div class="dif-item">
+        <div class="dif-icon"><i class="fa-solid fa-shield-halved"></i></div>
+        <div class="dif-title"><span class="inline-ml" data-lang="pt">Portfólio Próprio</span><span class="inline-ml" data-lang="en">Own Portfolio</span><span class="inline-ml" data-lang="es">Portafolio Propio</span></div>
+        <div class="dif-desc"><span class="inline-ml" data-lang="pt">André Fortunato é proprietário de parte dos imóveis anunciados — o que garante total controle sobre qualidade, preço e condições de negociação.</span><span class="inline-ml" data-lang="en">André Fortunato owns part of the listed properties — ensuring total control over quality, pricing and negotiation terms.</span><span class="inline-ml" data-lang="es">André Fortunato es propietario de parte de los inmuebles anunciados, garantizando control total sobre calidad y precio.</span></div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ══════════════════ FOOTER ══════════════════ -->
-<footer class="py-8 px-5 text-center" style="background:var(--black);border-top:1px solid rgba(201,168,76,0.1)">
-  <div class="flex items-center justify-center gap-2 mb-2">
-    <div class="w-6 h-6 rounded-lg flex items-center justify-center" style="background:linear-gradient(135deg,#c9a84c,#a88730)">
-      <span class="text-black text-[9px] font-black" style="font-family:'Cormorant Garamond',serif">AC</span>
+<!-- DEPOIMENTOS -->
+<section id="depoimentos" class="section">
+  <div class="wrap">
+    <div class="sec-hd" style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:20px">
+      <div>
+        <div class="label" style="display:flex;align-items:center;margin-bottom:14px">
+          <span class="cu-line"></span>
+          <span class="inline-ml" data-lang="pt">O que dizem nossos clientes</span><span class="inline-ml" data-lang="en">What our clients say</span><span class="inline-ml" data-lang="es">Lo que dicen nuestros clientes</span>
+        </div>
+        <h2 class="sec-title">
+          <span class="inline-ml" data-lang="pt">Relações construídas<br>com <em class="serif" style="font-style:italic;color:var(--cu-l)">confiança</em></span>
+          <span class="inline-ml" data-lang="en">Relationships built<br>on <em class="serif" style="font-style:italic;color:var(--cu-l)">trust</em></span>
+          <span class="inline-ml" data-lang="es">Relaciones construidas<br>con <em class="serif" style="font-style:italic;color:var(--cu-l)">confianza</em></span>
+        </h2>
+      </div>
     </div>
-    <span class="text-xs font-bold" style="color:#e8d8a8">André Camargo</span>
-    <span class="text-xs" style="color:#3a3020">· Corretor Autônomo</span>
+    <div class="test-grid">
+      <div class="test-card">
+        <div class="test-stars">★★★★★</div>
+        <div class="test-quote">"André Fortunato nos ajudou a adquirir dois apartamentos em São Paulo de forma completamente remota. Toda a estrutura jurídica e cambial foi cuidada pela equipe deles. Excepcional."</div>
+        <div class="test-author">Família Rosenberg</div>
+        <div class="test-meta">🇩🇪 Frankfurt, Alemanha · 2 imóveis adquiridos</div>
+      </div>
+      <div class="test-card">
+        <div class="test-stars">★★★★★</div>
+        <div class="test-quote">"The level of service is truly world-class. André understood our budget and preferences immediately and found us a property that exceeded every expectation. Highly recommended."</div>
+        <div class="test-author">Michael & Sarah Thornton</div>
+        <div class="test-meta">🇬🇧 London, UK · Cobertura em Moema</div>
+      </div>
+      <div class="test-card">
+        <div class="test-stars">★★★★★</div>
+        <div class="test-quote">"Invertir en Brasil parecía complicado hasta que conocimos a André Fortunato. El equipo manejó todo — desde la apertura de la cuenta bancaria hasta el registro de escritura. Profesionalismo total."</div>
+        <div class="test-author">Ricardo Montaño</div>
+        <div class="test-meta">🇦🇷 Buenos Aires, Argentina · Casa em Alphaville</div>
+      </div>
+    </div>
   </div>
-  <p class="text-[10px]" style="color:#3a3020">CRECI-SP · Desenvolvido com <span style="color:var(--gold)">AMiGO Corretor</span></p>
+</section>
+
+<!-- SOBRE -->
+<section id="sobre" class="section" style="background:var(--surface)">
+  <div class="wrap">
+    <div class="sobre-grid">
+      <div class="sobre-img-wrap">
+        <div class="sobre-img-ph"><i class="fa-solid fa-user-tie"></i></div>
+        <div class="sobre-accent">AF</div>
+      </div>
+      <div>
+        <div class="label" style="display:flex;align-items:center;margin-bottom:14px">
+          <span class="cu-line"></span>
+          <span class="inline-ml" data-lang="pt">Sobre</span><span class="inline-ml" data-lang="en">About</span><span class="inline-ml" data-lang="es">Sobre</span>
+        </div>
+        <h2 class="sec-title" style="margin-bottom:20px">
+          André Fortunato
+        </h2>
+        <p style="font-size:.95rem;color:var(--stone);line-height:1.8;margin-bottom:16px">
+          <span class="inline-ml" data-lang="pt">Com mais de 15 anos dedicados ao mercado imobiliário de alto padrão, André Fortunato construiu uma reputação sólida baseada em integridade, discrição e resultados. Corretor autônomo com CRECI ativo, atua diretamente com investidores nacionais e internacionais, oferecendo um serviço verdadeiramente personalizado que vai muito além da intermediação.</span>
+          <span class="inline-ml" data-lang="en">With over 15 years dedicated to the premium real estate market, André Fortunato has built a solid reputation based on integrity, discretion and results. An active CRECI-licensed independent broker, he works directly with national and international investors, offering a truly personalized service that goes well beyond brokerage.</span>
+          <span class="inline-ml" data-lang="es">Con más de 15 años dedicados al mercado inmobiliario premium, André Fortunato ha construido una sólida reputación basada en integridad, discreción y resultados.</span>
+        </p>
+        <p style="font-size:.95rem;color:var(--stone);line-height:1.8;margin-bottom:28px">
+          <span class="inline-ml" data-lang="pt">Além de intermediar imóveis de terceiros, André é proprietário de parte do portfólio que comercializa — o que lhe permite negociar com transparência total e agilidade sem burocracia.</span>
+          <span class="inline-ml" data-lang="en">Beyond brokering third-party properties, André owns part of the portfolio he sells — allowing him to negotiate with full transparency and agility without red tape.</span>
+          <span class="inline-ml" data-lang="es">Además de intermediar propiedades de terceros, André es propietario de parte del portafolio, lo que le permite negociar con total transparencia.</span>
+        </p>
+        <div class="sobre-creds">
+          <div class="cred-item"><i class="fa-solid fa-certificate"></i><span>CRECI-SP · Corretor Autônomo Ativo</span></div>
+          <div class="cred-item"><i class="fa-solid fa-globe"></i><span><span class="inline-ml" data-lang="pt">Atendimento em PT · EN · ES</span><span class="inline-ml" data-lang="en">Service in PT · EN · ES</span><span class="inline-ml" data-lang="es">Atención en PT · EN · ES</span></span></div>
+          <div class="cred-item"><i class="fa-solid fa-handshake"></i><span><span class="inline-ml" data-lang="pt">500+ negócios concluídos</span><span class="inline-ml" data-lang="en">500+ completed deals</span><span class="inline-ml" data-lang="es">500+ negocios concluidos</span></span></div>
+          <div class="cred-item"><i class="fa-solid fa-scale-balanced"></i><span><span class="inline-ml" data-lang="pt">Parceria jurídica com escritórios especializados</span><span class="inline-ml" data-lang="en">Legal partnership with specialized law firms</span><span class="inline-ml" data-lang="es">Alianza jurídica con despachos especializados</span></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTATO -->
+<section id="contato" class="section">
+  <div class="wrap">
+    <div class="sec-hd">
+      <div class="label" style="display:flex;align-items:center;margin-bottom:14px">
+        <span class="cu-line"></span>
+        <span class="label-cu"><span class="inline-ml" data-lang="pt">Fale conosco</span><span class="inline-ml" data-lang="en">Get in touch</span><span class="inline-ml" data-lang="es">Contáctenos</span></span>
+      </div>
+      <h2 class="sec-title">
+        <span class="inline-ml" data-lang="pt">Inicie sua jornada<br>com <em class="serif" style="font-style:italic;color:var(--cu-l)">André Fortunato</em></span>
+        <span class="inline-ml" data-lang="en">Begin your journey<br>with <em class="serif" style="font-style:italic;color:var(--cu-l)">André Fortunato</em></span>
+        <span class="inline-ml" data-lang="es">Inicie su camino<br>con <em class="serif" style="font-style:italic;color:var(--cu-l)">André Fortunato</em></span>
+      </h2>
+    </div>
+    <div class="contato-grid">
+      <div class="contact-aside">
+        <div class="contact-item">
+          <div class="contact-icon"><i class="fa-brands fa-whatsapp"></i></div>
+          <div>
+            <div class="contact-lbl">WhatsApp Business</div>
+            <div class="contact-val"><a id="cont-wa-link" href="#" target="_blank" style="color:var(--cu)">+55 11 9 4356-0902</a></div>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon"><i class="fa-solid fa-envelope"></i></div>
+          <div>
+            <div class="contact-lbl">E-mail</div>
+            <div class="contact-val">contato@andrefortunato.com.br</div>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon"><i class="fa-solid fa-clock"></i></div>
+          <div>
+            <div class="contact-lbl"><span class="inline-ml" data-lang="pt">Atendimento</span><span class="inline-ml" data-lang="en">Hours</span><span class="inline-ml" data-lang="es">Atención</span></div>
+            <div class="contact-val"><span class="inline-ml" data-lang="pt">Seg–Sáb · 8h às 20h (GMT-3)</span><span class="inline-ml" data-lang="en">Mon–Sat · 8am to 8pm (GMT-3)</span><span class="inline-ml" data-lang="es">Lun–Sáb · 8h a 20h (GMT-3)</span></div>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon"><i class="fa-brands fa-instagram"></i></div>
+          <div>
+            <div class="contact-lbl">Instagram</div>
+            <div class="contact-val">@andrefortunatoimoveis</div>
+          </div>
+        </div>
+        <a id="cont-wa-btn" href="#" target="_blank" class="btn btn-wa" style="border-radius:3px;padding:14px 24px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase">
+          <i class="fa-brands fa-whatsapp" style="font-size:18px"></i>
+          <span class="inline-ml" data-lang="pt">Chamar no WhatsApp</span>
+          <span class="inline-ml" data-lang="en">Message on WhatsApp</span>
+          <span class="inline-ml" data-lang="es">Escribir por WhatsApp</span>
+        </a>
+      </div>
+      <form onsubmit="submitForm(event)">
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-label"><span class="inline-ml" data-lang="pt">Nome completo</span><span class="inline-ml" data-lang="en">Full name</span><span class="inline-ml" data-lang="es">Nombre completo</span></label>
+            <input type="text" class="form-input" required placeholder="André Fortunato">
+          </div>
+          <div class="form-field">
+            <label class="form-label"><span class="inline-ml" data-lang="pt">País de origem</span><span class="inline-ml" data-lang="en">Country</span><span class="inline-ml" data-lang="es">País de origen</span></label>
+            <input type="text" class="form-input" placeholder="🇧🇷 Brasil / 🇺🇸 USA...">
+          </div>
+          <div class="form-field">
+            <label class="form-label">WhatsApp</label>
+            <input type="tel" class="form-input" placeholder="+55 11 99999-9999">
+          </div>
+          <div class="form-field">
+            <label class="form-label">E-mail</label>
+            <input type="email" class="form-input" required placeholder="seuemail@email.com">
+          </div>
+          <div class="form-field">
+            <label class="form-label"><span class="inline-ml" data-lang="pt">Tipo de imóvel</span><span class="inline-ml" data-lang="en">Property type</span><span class="inline-ml" data-lang="es">Tipo de inmueble</span></label>
+            <select class="form-input">
+              <option value=""><span class="inline-ml" data-lang="pt">Selecione</span></option>
+              <option>Apartamento</option><option>Casa</option><option>Cobertura</option>
+              <option>Terreno</option><option>Comercial</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label"><span class="inline-ml" data-lang="pt">Orçamento</span><span class="inline-ml" data-lang="en">Budget</span><span class="inline-ml" data-lang="es">Presupuesto</span></label>
+            <select class="form-input">
+              <option value="">Selecione</option>
+              <option>Até R$ 500k</option><option>R$ 500k – R$ 1M</option>
+              <option>R$ 1M – R$ 3M</option><option>Acima de R$ 3M</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label"><span class="inline-ml" data-lang="pt">Finalidade</span><span class="inline-ml" data-lang="en">Purpose</span><span class="inline-ml" data-lang="es">Finalidad</span></label>
+            <select class="form-input">
+              <option><span class="inline-ml" data-lang="pt">Moradia</span></option>
+              <option><span class="inline-ml" data-lang="pt">Investimento / Renda</span></option>
+              <option><span class="inline-ml" data-lang="pt">Visto / Golden Visa</span></option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label"><span class="inline-ml" data-lang="pt">Forma de pagamento</span><span class="inline-ml" data-lang="en">Payment method</span><span class="inline-ml" data-lang="es">Forma de pago</span></label>
+            <select class="form-input">
+              <option><span class="inline-ml" data-lang="pt">À vista</span></option>
+              <option>Financiamento</option>
+              <option>Permuta</option>
+              <option>Cripto / FX</option>
+            </select>
+          </div>
+          <div class="form-field form-full">
+            <label class="form-label"><span class="inline-ml" data-lang="pt">Mensagem</span><span class="inline-ml" data-lang="en">Message</span><span class="inline-ml" data-lang="es">Mensaje</span></label>
+            <textarea class="form-input" placeholder="Conte mais sobre o que procura..."></textarea>
+          </div>
+        </div>
+        <button type="submit" class="form-submit">
+          <i class="fa-solid fa-paper-plane"></i>
+          <span class="inline-ml" data-lang="pt"> Enviar consulta</span>
+          <span class="inline-ml" data-lang="en"> Send enquiry</span>
+          <span class="inline-ml" data-lang="es"> Enviar consulta</span>
+        </button>
+        <p style="font-size:10px;color:var(--pebble);margin-top:12px;line-height:1.6">
+          <i class="fa-solid fa-lock" style="color:var(--cu-d);margin-right:4px"></i>
+          <span class="inline-ml" data-lang="pt">Seus dados são protegidos pela nossa Política de Privacidade (LGPD/GDPR). Nunca compartilhamos suas informações sem consentimento.</span>
+          <span class="inline-ml" data-lang="en">Your data is protected by our Privacy Policy (LGPD/GDPR). We never share your information without consent.</span>
+          <span class="inline-ml" data-lang="es">Sus datos están protegidos por nuestra Política de Privacidad (LGPD/GDPR).</span>
+        </p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+          <div class="nav-mono">AF</div>
+          <div>
+            <div style="font-size:15px;font-weight:500;color:var(--ivory)">André Fortunato</div>
+            <div style="font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--pebble)">Imóveis de Alto Padrão</div>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--pebble);line-height:1.7;max-width:280px;margin-bottom:20px">
+          <span class="inline-ml" data-lang="pt">Curadoria premium de imóveis no Brasil para compradores e investidores nacionais e internacionais.</span>
+          <span class="inline-ml" data-lang="en">Premium real estate curation in Brazil for domestic and international buyers and investors.</span>
+          <span class="inline-ml" data-lang="es">Curaduría premium de inmuebles en Brasil para compradores e inversores nacionales e internacionales.</span>
+        </p>
+        <div style="display:flex;gap:12px">
+          <a href="#" style="width:32px;height:32px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--pebble);font-size:14px;border-radius:2px;transition:color .15s,border-color .15s" onmouseover="this.style.color='var(--cu)';this.style.borderColor='var(--border2)'" onmouseout="this.style.color='var(--pebble)';this.style.borderColor='var(--border)'"><i class="fa-brands fa-instagram"></i></a>
+          <a href="#" style="width:32px;height:32px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--pebble);font-size:14px;border-radius:2px;transition:color .15s" onmouseover="this.style.color='var(--cu)'" onmouseout="this.style.color='var(--pebble)'"><i class="fa-brands fa-linkedin"></i></a>
+          <a href="#" style="width:32px;height:32px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--pebble);font-size:14px;border-radius:2px;transition:color .15s" onmouseover="this.style.color='var(--cu)'" onmouseout="this.style.color='var(--pebble)'"><i class="fa-brands fa-youtube"></i></a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-title"><span class="inline-ml" data-lang="pt">Portfólio</span><span class="inline-ml" data-lang="en">Portfolio</span><span class="inline-ml" data-lang="es">Portafolio</span></div>
+        <div class="footer-links">
+          <a href="#exclusivos"><span class="inline-ml" data-lang="pt">Imóveis Exclusivos AF</span><span class="inline-ml" data-lang="en">Exclusive AF Properties</span><span class="inline-ml" data-lang="es">Inmuebles Exclusivos AF</span></a>
+          <a href="#parceiros"><span class="inline-ml" data-lang="pt">Imóveis Parceiros</span><span class="inline-ml" data-lang="en">Partner Listings</span><span class="inline-ml" data-lang="es">Inmuebles Socios</span></a>
+          <a href="#investir"><span class="inline-ml" data-lang="pt">Investir no Brasil</span><span class="inline-ml" data-lang="en">Invest in Brazil</span><span class="inline-ml" data-lang="es">Invertir en Brasil</span></a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-title"><span class="inline-ml" data-lang="pt">Empresa</span><span class="inline-ml" data-lang="en">Company</span><span class="inline-ml" data-lang="es">Empresa</span></div>
+        <div class="footer-links">
+          <a href="#sobre"><span class="inline-ml" data-lang="pt">Sobre André Fortunato</span><span class="inline-ml" data-lang="en">About André Fortunato</span><span class="inline-ml" data-lang="es">Sobre André Fortunato</span></a>
+          <a href="#contato"><span class="inline-ml" data-lang="pt">Contato</span><span class="inline-ml" data-lang="en">Contact</span><span class="inline-ml" data-lang="es">Contacto</span></a>
+          <a href="#"><span class="inline-ml" data-lang="pt">Blog Imobiliário</span><span class="inline-ml" data-lang="en">Real Estate Blog</span><span class="inline-ml" data-lang="es">Blog Inmobiliario</span></a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-title">Legal</div>
+        <div class="footer-links">
+          <a href="#"><span class="inline-ml" data-lang="pt">Política de Privacidade</span><span class="inline-ml" data-lang="en">Privacy Policy</span><span class="inline-ml" data-lang="es">Política de Privacidad</span></a>
+          <a href="#"><span class="inline-ml" data-lang="pt">Termos de Uso</span><span class="inline-ml" data-lang="en">Terms of Use</span><span class="inline-ml" data-lang="es">Términos de Uso</span></a>
+          <a href="#"><span class="inline-ml" data-lang="pt">LGPD / GDPR</span></a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copy">
+      <span>© 2025 André Fortunato · CRECI-SP · <span class="inline-ml" data-lang="pt">Todos os direitos reservados</span><span class="inline-ml" data-lang="en">All rights reserved</span><span class="inline-ml" data-lang="es">Todos los derechos reservados</span></span>
+      <div class="footer-legal">
+        <a href="#">LGPD</a><a href="#">GDPR</a><a href="#"><span class="inline-ml" data-lang="pt">Privacidade</span><span class="inline-ml" data-lang="en">Privacy</span></a>
+      </div>
+    </div>
+  </div>
 </footer>
 
-<!-- ══════════════════ MODAL DETALHE ══════════════════ -->
-<div id="modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 modal-overlay" onclick="fecharModal(event)">
-  <div class="w-full max-w-4xl max-h-[92vh] flex flex-col scale-in overflow-hidden"
-       style="background:var(--black-2);border:1px solid rgba(201,168,76,0.2);border-radius:20px;box-shadow:0 40px 80px rgba(0,0,0,.7)"
-       onclick="event.stopPropagation()">
-
-    <!-- Galeria -->
-    <div class="relative flex-shrink-0" style="height:280px;background:var(--black)">
-      <div id="m-fotos" class="flex overflow-x-auto scrollbar-hide h-full snap-x snap-mandatory"></div>
-      <!-- Badges -->
-      <div class="absolute top-4 left-4 flex gap-2">
-        <span id="m-badge-oferta" class="tag text-black"></span>
-        <span id="m-badge-dest" class="tag hidden" style="background:var(--gold);color:var(--black)">⭐ Destaque</span>
+<!-- MODAL -->
+<div id="modal-ov" onclick="if(event.target===this)closeModal()">
+  <div id="modal-box">
+    <div class="modal-gallery">
+      <div id="m-gallery-inner"></div>
+      <div class="modal-badges">
+        <span id="m-excl-badge" class="excl-badge hidden">Exclusivo AF</span>
+        <span id="m-offer-badge" style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:5px 10px;background:rgba(12,12,11,.75);backdrop-filter:blur(6px);color:var(--chalk);border:1px solid var(--border)"></span>
       </div>
-      <!-- Close -->
-      <button onclick="fecharModal()" class="absolute top-4 right-4 w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm font-bold"
-              style="background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.12)">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-      <span id="m-foto-n" class="absolute bottom-3 right-4 text-xs font-bold px-2 py-0.5 rounded-full"
-            style="background:rgba(0,0,0,0.6);color:rgba(255,255,255,0.7)"></span>
+      <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
     </div>
-
-    <!-- Conteúdo -->
-    <div class="overflow-y-auto flex-1 p-6">
-      <div class="flex flex-col md:flex-row gap-6">
-
-        <!-- Info -->
-        <div class="flex-1 min-w-0">
-          <div class="flex items-start justify-between gap-3 mb-4">
-            <div>
-              <h2 id="m-titulo" class="serif text-2xl font-bold leading-tight" style="color:#f0e8d4"></h2>
-              <p id="m-end" class="text-xs mt-1 flex items-center gap-1.5" style="color:#6a5840">
-                <i class="fa-solid fa-location-dot" style="color:var(--gold-d)"></i>
-                <span></span>
-              </p>
-            </div>
-            <div class="text-right flex-shrink-0">
-              <p id="m-preco" class="serif text-2xl font-bold gold-text"></p>
-              <p id="m-preco-sub" class="text-[10px] mt-0.5" style="color:#5a4e38"></p>
-            </div>
-          </div>
-
-          <!-- Linha divisória dourada -->
-          <div class="mb-4" style="height:1px;background:linear-gradient(90deg,rgba(201,168,76,0.3),transparent)"></div>
-
-          <!-- Características -->
-          <div id="m-chars" class="flex flex-wrap gap-2 mb-5"></div>
-
-          <!-- Descrição -->
-          <div id="m-desc-wrap" class="hidden mb-5">
-            <p class="text-[9px] font-black uppercase tracking-[0.2em] mb-2" style="color:var(--gold)">Descrição</p>
-            <p id="m-desc" class="text-sm leading-relaxed" style="color:#8a7848"></p>
-          </div>
-
-          <!-- Diferenciais -->
+    <div class="modal-body">
+      <div class="modal-layout">
+        <div>
+          <h2 class="modal-title" id="m-title"></h2>
+          <div class="modal-loc" id="m-loc"><i class="fa-solid fa-location-dot" style="color:var(--cu-d)"></i><span></span></div>
+          <div class="modal-chars" id="m-chars"></div>
+          <div class="modal-desc" id="m-desc"></div>
           <div id="m-dif-wrap" class="hidden">
-            <p class="text-[9px] font-black uppercase tracking-[0.2em] mb-2" style="color:var(--gold)">Diferenciais</p>
-            <div id="m-dif" class="flex flex-wrap gap-2"></div>
+            <div class="modal-dif-label">Diferenciais</div>
+            <div class="modal-difs" id="m-difs"></div>
           </div>
         </div>
-
-        <!-- Card contato -->
-        <div class="md:w-56 flex-shrink-0">
-          <div class="rounded-2xl p-4 sticky top-4" style="background:var(--black-3);border:1px solid rgba(201,168,76,0.2)">
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3" style="background:linear-gradient(135deg,#c9a84c,#a88730)">
-              <span class="font-black text-sm text-black" style="font-family:'Cormorant Garamond',serif">AC</span>
+        <div class="modal-side">
+          <div class="modal-price-box">
+            <div class="modal-price" id="m-price"></div>
+            <div class="modal-price-lbl" id="m-price-lbl"></div>
+          </div>
+          <div class="modal-agent">
+            <div class="modal-agent-logo">AF</div>
+            <div class="modal-agent-name">André Fortunato</div>
+            <div class="modal-agent-role">CRECI-SP · Corretor Autônomo</div>
+            <div class="modal-btns">
+              <a id="m-wa-btn" href="#" target="_blank" class="modal-btn-wa">
+                <i class="fa-brands fa-whatsapp"></i> WhatsApp
+              </a>
+              <a id="m-tel-btn" href="#" class="modal-btn-call">
+                <i class="fa-solid fa-phone"></i>
+                <span class="inline-ml" data-lang="pt">Ligar agora</span>
+                <span class="inline-ml" data-lang="en">Call now</span>
+                <span class="inline-ml" data-lang="es">Llamar ahora</span>
+              </a>
             </div>
-            <p class="text-[9px] font-black uppercase tracking-[0.15em] text-center mb-0.5" style="color:#5a4e38">Corretor</p>
-            <p class="text-sm font-bold text-center mb-4" id="m-corretor" style="color:#e8d8a8">André Camargo</p>
-            <a id="m-btn-wa" href="#" target="_blank"
-               class="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-white text-xs font-bold mb-2 transition-all hover:opacity-90"
-               style="background:linear-gradient(135deg,#25D366,#128C7E)">
-              <i class="fa-brands fa-whatsapp"></i> Quero este imóvel
-            </a>
-            <a id="m-btn-tel" href="#"
-               class="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-bold transition-all hover:opacity-80"
-               style="background:var(--black-4);color:var(--gold);border:1px solid rgba(201,168,76,0.2)">
-              <i class="fa-solid fa-phone text-[10px]"></i> Ligar
-            </a>
-            <p class="text-[9px] text-center mt-3" style="color:#3a3020">Resposta rápida garantida</p>
+          </div>
+          <div class="roi-sim" id="roi-sim" style="display:none">
+            <div class="roi-sim-title"><i class="fa-solid fa-chart-line"></i> Simulador de Retorno</div>
+            <div class="roi-rows" id="roi-rows"></div>
           </div>
         </div>
       </div>
@@ -503,287 +1337,312 @@
   </div>
 </div>
 
-<!-- ══════════════════ TEMPLATE CARD ══════════════════ -->
-<template id="tpl">
-  <div class="card">
-    <!-- Foto -->
-    <div class="relative overflow-hidden" style="height:200px">
-      <div class="foto-w img-placeholder w-full h-full flex items-center justify-center">
-        <i class="fa-solid fa-image text-3xl" style="color:#3a3020"></i>
-      </div>
-      <div class="absolute top-3 left-3 flex gap-1.5">
-        <span class="b-oferta tag"></span>
-        <span class="b-dest tag hidden" style="background:var(--gold);color:var(--black)">⭐</span>
-      </div>
-      <span class="b-tipo tag absolute top-3 right-3" style="background:rgba(0,0,0,0.6);color:rgba(255,255,255,0.75)"></span>
-    </div>
-    <!-- Texto -->
-    <div class="p-4">
-      <h3 class="c-titulo text-sm font-bold leading-snug mb-1 line-clamp-2" style="color:#e8d8a8"></h3>
-      <p class="c-local text-[11px] flex items-center gap-1 mb-3" style="color:#5a4e38">
-        <i class="fa-solid fa-location-dot text-[9px]" style="color:var(--gold-d)"></i><span></span>
-      </p>
-      <div class="c-chars flex gap-3 text-[11px] mb-3" style="color:#6a5840"></div>
-      <div class="flex items-end justify-between pt-3" style="border-top:1px solid rgba(201,168,76,0.1)">
-        <div>
-          <p class="c-preco serif text-lg font-bold leading-none gold-text"></p>
-          <p class="c-preco-tipo text-[9px] mt-0.5" style="color:#5a4e38"></p>
-        </div>
-        <button class="btn-gold px-3 py-1.5 text-[10px] font-bold rounded-xl">Ver detalhes</button>
-      </div>
-    </div>
-  </div>
-</template>
+<!-- TOAST -->
+<div id="toast" style="display:none;position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);color:var(--chalk);padding:12px 24px;border-radius:3px;font-size:13px;z-index:300;white-space:nowrap"></div>
 
 <script>
-// ══════════ CONFIG ══════════
-const CFG = { whatsapp: '5511943560902', nome: 'André Camargo' };
+// ══ CONFIG ══════════════════════════════
+const CFG = { phone: '5511943560902', nome: 'André Fortunato' };
 
-// ══════════ STATE ══════════
-let todos = [], filtroTipo = 'todos', filtroOferta = '';
+// ══ STATE ═══════════════════════════════
+let todos = [], exclFilter = 'todos', partnerFilter = 'todos';
 
-// ══════════ INIT ══════════
+// ══ INIT ════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
+  // Detect lang from browser
+  const bl = (navigator.language || 'pt').slice(0,2).toLowerCase();
+  if (['en','es'].includes(bl)) setLang(bl);
+
+  // Load data
   try {
     const raw = localStorage.getItem('amigo_portal_listings');
     if (raw) {
       const d = JSON.parse(raw);
       todos = (d.imoveis || []).filter(i => i.publicarSite);
-      if (d.config?.whatsapp) CFG.whatsapp = d.config.whatsapp;
-      if (d.config?.nome) CFG.nome = d.config.nome;
-    } else {
-      todos = demo();
+      if (d.config?.whatsapp) CFG.phone = d.config.whatsapp.replace(/\D/g,'');
     }
-  } catch { todos = demo(); }
+  } catch {}
+  if (!todos.length) todos = demoData();
 
-  aplicarLinks();
-  stats();
+  document.getElementById('stat-imoveis').textContent = todos.length;
+  applyWALinks();
   filtrar();
+  renderPartners();
+
+  // Scroll nav
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 60);
+  });
 });
 
-function aplicarLinks() {
-  const wa = 'https://wa.me/' + CFG.whatsapp.replace(/\D/g,'');
-  const msgG = encodeURIComponent('Olá André! Vi seus imóveis no site e gostaria de mais informações.');
-  ['btn-wa-header','btn-wa-sobre','btn-wa-contato'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.href = wa + '?text=' + msgG;
+// ══ LANG ════════════════════════════════
+function setLang(l) {
+  document.documentElement.setAttribute('data-lang', l);
+  document.querySelectorAll('.lang-sw button').forEach(b => {
+    b.classList.toggle('active', b.textContent.toLowerCase() === l);
   });
 }
 
-function stats() {
-  document.getElementById('st-total').textContent = todos.length;
-  document.getElementById('st-venda').textContent  = todos.filter(i => i.tipoOferta === 'venda' || i.tipoOferta === 'ambos').length;
-  document.getElementById('st-loc').textContent    = todos.filter(i => i.tipoOferta === 'locacao' || i.tipoOferta === 'ambos').length;
+// ══ MOBILE MENU ═════════════════════════
+function toggleMob() {
+  const m = document.getElementById('mob-menu');
+  m.style.display = m.style.display === 'block' ? 'none' : 'block';
 }
 
-// ══════════ FILTROS ══════════
-function setFiltro(btn, tipo) {
-  filtroTipo = tipo;
+// ══ WA LINKS ════════════════════════════
+function applyWALinks() {
+  const num = CFG.phone;
+  const msg = encodeURIComponent('Olá André! Vi o seu site e gostaria de saber mais sobre seu portfólio.');
+  const url = `https://wa.me/${num}?text=${msg}`;
+  ['nav-wa','cont-wa-link','cont-wa-btn'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.href = url;
+  });
+}
+
+// ══ FILTRAR (hero search + excl grid) ═══
+function filtrar() {
+  const txt  = (document.getElementById('s-txt')?.value || '').toLowerCase();
+  const tipo = document.getElementById('s-tipo')?.value || '';
+  const fin  = document.getElementById('s-fin')?.value || '';
+  const bud  = document.getElementById('s-bud')?.value || '';
+
+  const excl    = todos.filter(i => i.destaque || isExcl(i));
+  const partner = todos.filter(i => !i.destaque && !isExcl(i));
+
+  const filtered = excl.filter(i => match(i, txt, tipo, fin, bud));
+  renderExcl(filtered);
+
+  const pf = partner.filter(i => match(i, txt, tipo, fin, bud));
+  renderPartners(pf);
+}
+
+function isExcl(i) { return i.destaque || i.exclusivo; }
+
+function match(i, txt, tipo, fin, bud) {
+  if (tipo && i.tipo !== tipo) return false;
+  if (fin && i.tipoOferta !== fin && i.tipoOferta !== 'ambos') return false;
+  if (bud) {
+    const v = numVal(i);
+    if (bud === '500k'  && v > 500000) return false;
+    if (bud === '1m'    && v > 1000000) return false;
+    if (bud === '2m'    && v > 2000000) return false;
+    if (bud === '5m'    && v > 5000000) return false;
+    if (bud === '5m+'   && v < 5000000) return false;
+  }
+  if (txt) {
+    const s = [i.tituloPortal,i.endereco,i.bairro,i.cidade,i.descricaoPortal].join(' ').toLowerCase();
+    if (!s.includes(txt)) return false;
+  }
+  return true;
+}
+
+// ══ RENDER EXCLUSIVOS ════════════════════
+function renderExcl(list) {
+  const g = document.getElementById('grid-excl');
+  const em = document.getElementById('excl-empty');
+  g.innerHTML = '';
+  if (!list.length) { em.classList.remove('hidden'); return; }
+  em.classList.add('hidden');
+  list.forEach(im => {
+    const oferta = im.tipoOferta || 'venda';
+    const fs = (im.fotos||[]).filter(Boolean);
+    const price = oferta === 'locacao' ? im.valorLocacao : im.valorVenda;
+    const div = document.createElement('div');
+    div.className = 'excl-card';
+    div.innerHTML = `
+      <div class="excl-img">
+        ${fs.length ? `<img src="${fs[0]}" alt="${esc(im.tituloPortal||im.endereco)}" loading="lazy" onerror="this.parentElement.classList.add('excl-img-ph');this.remove()">` : `<div class="excl-img-ph"><i class="fa-solid fa-image"></i></div>`}
+        <span class="excl-badge">Exclusivo AF</span>
+        <span class="excl-offer">${ofertaL(oferta)}</span>
+      </div>
+      <div class="excl-info">
+        <div class="excl-type"><span class="label">${tipoEmoji(im.tipo)} ${tipoL(im.tipo)}</span></div>
+        <h3 class="excl-title">${esc(im.tituloPortal || im.endereco)}</h3>
+        <div class="excl-loc"><i class="fa-solid fa-location-dot"></i>${esc([im.bairro,im.cidade].filter(Boolean).join(', '))||'Consulte'}</div>
+        <div class="excl-chars">
+          ${im.quartos  ? `<div class="excl-char"><i class="fa-solid fa-bed"></i>${im.quartos} qts</div>` : ''}
+          ${im.banheiros? `<div class="excl-char"><i class="fa-solid fa-bath"></i>${im.banheiros} banh</div>` : ''}
+          ${im.vagas    ? `<div class="excl-char"><i class="fa-solid fa-car"></i>${im.vagas} vg</div>` : ''}
+          ${im.area     ? `<div class="excl-char"><i class="fa-solid fa-ruler-combined"></i>${im.area} m²</div>` : ''}
+        </div>
+        <div class="excl-price-row">
+          <div>
+            <div class="excl-price serif">${price ? 'R$ ' + fmt(price) : 'Consulte'}</div>
+            <div class="excl-price-sub">${oferta === 'locacao' ? 'por mês' : 'valor total'}</div>
+          </div>
+          <button class="btn btn-cu" onclick="openModal(event,${im.id})" style="padding:10px 18px;font-size:11px">Ver imóvel</button>
+        </div>
+      </div>`;
+    div.addEventListener('click', e => { if (!e.target.closest('button')) openModal(e, im.id); });
+    g.appendChild(div);
+  });
+}
+
+// ══ RENDER PARTNERS ══════════════════════
+function renderPartners(list) {
+  const all = list !== undefined ? list : todos.filter(i => !i.destaque && !isExcl(i));
+  const g  = document.getElementById('grid-partners');
+  const em = document.getElementById('partner-empty');
+  const ct = document.getElementById('partner-count');
+  if (ct) ct.textContent = all.length + (all.length === 1 ? ' imóvel' : ' imóveis');
+  g.innerHTML = '';
+  if (!all.length) { em.classList.remove('hidden'); return; }
+  em.classList.add('hidden');
+  all.forEach(im => {
+    const oferta = im.tipoOferta || 'venda';
+    const fs = (im.fotos||[]).filter(Boolean);
+    const price = oferta === 'locacao' ? im.valorLocacao : im.valorVenda;
+    const div = document.createElement('div');
+    div.className = 'p-card';
+    div.innerHTML = `
+      <div class="p-card-img">
+        ${fs.length ? `<img src="${fs[0]}" alt="${esc(im.tituloPortal||im.endereco)}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=p-card-img-ph><i class=fa-solid fa-image></i></div>'">` : `<div class="p-card-img-ph"><i class="fa-solid fa-image"></i></div>`}
+        <span class="p-badge p-badge-partner">Parceiro</span>
+        <span class="p-badge-offer">${ofertaL(oferta)}</span>
+      </div>
+      <div class="p-body">
+        <div class="p-title">${esc(im.tituloPortal || im.endereco)}</div>
+        <div class="p-loc"><i class="fa-solid fa-location-dot"></i>${esc([im.bairro,im.cidade].filter(Boolean).join(', '))||'Consulte'}</div>
+        <div class="p-chars">
+          ${im.quartos ? `<span><i class="fa-solid fa-bed"></i>${im.quartos} qts</span>` : ''}
+          ${im.vagas   ? `<span><i class="fa-solid fa-car"></i>${im.vagas} vg</span>` : ''}
+          ${im.area    ? `<span><i class="fa-solid fa-ruler-combined"></i>${im.area} m²</span>` : ''}
+        </div>
+        <div class="p-price-row">
+          <div>
+            <div class="p-price serif">${price ? 'R$ ' + fmt(price) : 'Consulte'}</div>
+            <div class="p-price-lbl">${oferta === 'locacao' ? 'por mês' : 'valor total'}</div>
+          </div>
+          <button class="p-cta-sm" onclick="openModal(event,${im.id})">Ver</button>
+        </div>
+      </div>`;
+    div.addEventListener('click', e => { if (!e.target.closest('button')) openModal(e, im.id); });
+    g.appendChild(div);
+  });
+}
+
+function setPartnerFilter(btn, tipo) {
+  partnerFilter = tipo;
   document.querySelectorAll('[data-f]').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  // sync hero selects
-  const el = document.getElementById('s-tipo');
-  if (el && tipo !== 'todos') el.value = tipo;
-  else if (el) el.value = '';
-  filtrar();
+  const list = todos.filter(i => !i.destaque && !isExcl(i));
+  renderPartners(tipo === 'todos' ? list : list.filter(i => i.tipo === tipo));
 }
 
-function filtrar() {
-  const txt  = (document.getElementById('s-text')?.value || '').toLowerCase();
-  const ht   = document.getElementById('s-tipo')?.value || '';
-  const ho   = document.getElementById('s-oferta')?.value || '';
-  const sort = document.getElementById('s-sort')?.value || 'recente';
-  if (ht) filtroTipo = ht;
-  if (ho) filtroOferta = ho;
-  if (!ht) { /* keep chip state */ }
-
-  let lista = todos.filter(i => {
-    if (filtroTipo !== 'todos' && filtroTipo && i.tipo !== filtroTipo) return false;
-    if (filtroOferta && filtroOferta !== 'todos') {
-      if (i.tipoOferta !== filtroOferta && i.tipoOferta !== 'ambos') return false;
-    }
-    if (txt) {
-      const s = [i.endereco,i.bairro,i.cidade,i.tituloPortal,i.descricaoPortal].join(' ').toLowerCase();
-      if (!s.includes(txt)) return false;
-    }
-    return true;
-  });
-
-  lista.sort((a,b) => {
-    if (sort === 'recente') return (b.id||0) - (a.id||0);
-    if (sort === 'menor')   return num(a) - num(b);
-    if (sort === 'maior')   return num(b) - num(a);
-    if (sort === 'area')    return (+(b.area)||0) - (+(a.area)||0);
-    return 0;
-  });
-
-  const dests  = lista.filter(i => i.destaque);
-  const secD   = document.getElementById('sec-dest');
-  if (dests.length && !txt && filtroTipo === 'todos' && !filtroOferta) {
-    secD.classList.remove('hidden');
-    render(document.getElementById('grid-dest'), dests.slice(0,3));
-  } else {
-    secD.classList.add('hidden');
-  }
-
-  document.getElementById('cnt-lista').textContent = lista.length + ' imóvel(is)';
-  document.getElementById('tit-lista').textContent = filtroTipo !== 'todos' ? tipoLabel(filtroTipo) + 's' : 'Todos os Imóveis';
-
-  render(document.getElementById('grid-main'), lista);
-  document.getElementById('empty').classList.toggle('hidden', lista.length > 0);
-}
-
-function resetFiltros() {
-  filtroTipo = 'todos'; filtroOferta = '';
-  ['s-text','s-tipo','s-oferta'].forEach(id => { const e = document.getElementById(id); if(e) e.value=''; });
-  document.querySelectorAll('[data-f]').forEach(b => b.classList.remove('active'));
-  document.querySelector('[data-f="todos"]').classList.add('active');
-  filtrar();
-}
-
-function num(i) {
-  const v = i.tipoOferta === 'locacao' ? i.valorLocacao : i.valorVenda;
-  return +(String(v||'').replace(/\D/g,'')) || 0;
-}
-
-// ══════════ RENDER ══════════
-function render(container, lista) {
-  container.innerHTML = '';
-  lista.forEach(im => {
-    const tpl  = document.getElementById('tpl').content.cloneNode(true);
-    const card = tpl.querySelector('.card');
-
-    // Foto
-    const fw = card.querySelector('.foto-w');
-    const fs = (im.fotos||[]).filter(Boolean);
-    if (fs.length) fw.innerHTML = `<img src="${fs[0]}" alt="" class="w-full h-full object-cover" onerror="this.parentElement.classList.add('img-placeholder');this.remove()">`;
-
-    // Badges
-    const oferta = im.tipoOferta || 'venda';
-    const bo = card.querySelector('.b-oferta');
-    bo.textContent = ofertaLabel(oferta);
-    bo.style.background = oferta === 'locacao' ? '#7c3aed' : '#16a34a';
-    bo.style.color = '#fff';
-    if (im.destaque) card.querySelector('.b-dest').classList.remove('hidden');
-    const bt = card.querySelector('.b-tipo');
-    bt.textContent = tipoEmoji(im.tipo) + ' ' + tipoLabel(im.tipo);
-
-    card.querySelector('.c-titulo').textContent = im.tituloPortal || im.endereco;
-    card.querySelector('.c-local span').textContent = [im.bairro, im.cidade].filter(Boolean).join(', ') || 'Consulte';
-
-    const chars = [];
-    if (im.quartos) chars.push(`<span><i class="fa-solid fa-bed mr-1" style="color:var(--gold-d)"></i>${im.quartos} qts</span>`);
-    if (im.vagas)   chars.push(`<span><i class="fa-solid fa-car mr-1" style="color:var(--gold-d)"></i>${im.vagas} vg</span>`);
-    if (im.area)    chars.push(`<span><i class="fa-solid fa-ruler-combined mr-1" style="color:var(--gold-d)"></i>${im.area}m²</span>`);
-    card.querySelector('.c-chars').innerHTML = chars.join('');
-
-    const preco = oferta === 'locacao' ? im.valorLocacao : im.valorVenda;
-    card.querySelector('.c-preco').textContent = preco ? 'R$ ' + fmt(preco) : 'Consulte';
-    card.querySelector('.c-preco-tipo').textContent = oferta === 'locacao' ? 'por mês' : 'valor total';
-
-    card.addEventListener('click', () => abrirModal(im));
-    container.appendChild(card);
-  });
-}
-
-// ══════════ MODAL ══════════
-function abrirModal(im) {
-  const modal = document.getElementById('modal');
-  modal.classList.remove('hidden');
-  document.body.style.overflow = 'hidden';
-
-  // Fotos
-  const fEl = document.getElementById('m-fotos');
-  const fs   = (im.fotos||[]).filter(Boolean);
-  fEl.innerHTML = '';
-  if (fs.length) {
-    fs.forEach((f,i) => fEl.innerHTML += `<img src="${f}" alt="foto ${i+1}" class="flex-shrink-0 w-full h-full object-cover snap-center" onerror="this.remove()">`);
-    document.getElementById('m-foto-n').textContent = `1 / ${fs.length}`;
-  } else {
-    fEl.innerHTML = `<div class="w-full h-full img-placeholder flex items-center justify-center"><i class="fa-solid fa-image text-5xl" style="color:#3a3020"></i></div>`;
-    document.getElementById('m-foto-n').textContent = '';
-  }
-
+// ══ MODAL ════════════════════════════════
+function openModal(e, id) {
+  e.stopPropagation();
+  const im = todos.find(i => i.id === id || i.id == id);
+  if (!im) return;
+  const fs = (im.fotos||[]).filter(Boolean);
   const oferta = im.tipoOferta || 'venda';
-  const bo = document.getElementById('m-badge-oferta');
-  bo.textContent = ofertaLabel(oferta);
-  bo.style.background = oferta === 'locacao' ? '#7c3aed' : '#16a34a';
-  bo.style.color = '#fff';
-  document.getElementById('m-badge-dest').classList.toggle('hidden', !im.destaque);
+  const price  = oferta === 'locacao' ? im.valorLocacao : im.valorVenda;
+  const excl   = isExcl(im);
 
-  document.getElementById('m-titulo').textContent = im.tituloPortal || im.endereco;
-  document.getElementById('m-end').querySelector('span').textContent =
-    [im.endereco, im.bairro, im.cidade].filter(Boolean).join(' · ');
+  // Gallery
+  const gi = document.getElementById('m-gallery-inner');
+  gi.style.cssText = 'width:100%;height:100%;';
+  if (fs.length) {
+    gi.innerHTML = `<img src="${fs[0]}" style="width:100%;height:100%;object-fit:cover" alt="">`;
+  } else {
+    gi.innerHTML = `<div class="modal-gallery-ph"><i class="fa-solid fa-image" style="font-size:3rem;color:var(--pebble)"></i></div>`;
+  }
 
-  const preco = oferta === 'locacao' ? im.valorLocacao : im.valorVenda;
-  document.getElementById('m-preco').textContent = preco ? 'R$ ' + fmt(preco) : 'Consulte';
-  document.getElementById('m-preco-sub').textContent = oferta === 'locacao' ? 'por mês' : '';
+  document.getElementById('m-excl-badge').classList.toggle('hidden', !excl);
+  document.getElementById('m-offer-badge').textContent = ofertaL(oferta);
+  document.getElementById('m-title').textContent = im.tituloPortal || im.endereco;
+  document.getElementById('m-loc').querySelector('span').textContent = [im.endereco,im.bairro,im.cidade].filter(Boolean).join(' · ');
+  document.getElementById('m-price').textContent = price ? 'R$ ' + fmt(price) : 'Consulte';
+  document.getElementById('m-price-lbl').textContent = oferta === 'locacao' ? 'por mês' : 'valor total';
+  document.getElementById('m-desc').textContent = im.descricaoPortal || '';
 
-  // Características
+  // Chars
   const chars = [
-    im.tipo     ? `<div class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs" style="background:var(--black-3);border:1px solid rgba(201,168,76,0.12);color:#c8b888"><span>${tipoEmoji(im.tipo)}</span> ${tipoLabel(im.tipo)}</div>` : '',
-    im.quartos  ? `<div class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs" style="background:var(--black-3);border:1px solid rgba(201,168,76,0.12);color:#c8b888"><i class="fa-solid fa-bed" style="color:var(--gold-d)"></i> ${im.quartos} quartos</div>` : '',
-    im.banheiros? `<div class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs" style="background:var(--black-3);border:1px solid rgba(201,168,76,0.12);color:#c8b888"><i class="fa-solid fa-bath" style="color:var(--gold-d)"></i> ${im.banheiros} banh.</div>` : '',
-    im.vagas    ? `<div class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs" style="background:var(--black-3);border:1px solid rgba(201,168,76,0.12);color:#c8b888"><i class="fa-solid fa-car" style="color:var(--gold-d)"></i> ${im.vagas} vagas</div>` : '',
-    im.area     ? `<div class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs" style="background:var(--black-3);border:1px solid rgba(201,168,76,0.12);color:#c8b888"><i class="fa-solid fa-ruler-combined" style="color:var(--gold-d)"></i> ${im.area} m²</div>` : '',
-    im.suites   ? `<div class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs" style="background:var(--black-3);border:1px solid rgba(201,168,76,0.12);color:#c8b888"><i class="fa-solid fa-star" style="color:var(--gold-d)"></i> ${im.suites} suítes</div>` : '',
+    im.tipo      ? `<div class="modal-char"><i class="fa-solid fa-building"></i>${tipoL(im.tipo)}</div>` : '',
+    im.quartos   ? `<div class="modal-char"><i class="fa-solid fa-bed"></i>${im.quartos} quartos</div>` : '',
+    im.banheiros ? `<div class="modal-char"><i class="fa-solid fa-bath"></i>${im.banheiros} banh.</div>` : '',
+    im.suites    ? `<div class="modal-char"><i class="fa-solid fa-star"></i>${im.suites} suítes</div>` : '',
+    im.vagas     ? `<div class="modal-char"><i class="fa-solid fa-car"></i>${im.vagas} vagas</div>` : '',
+    im.area      ? `<div class="modal-char"><i class="fa-solid fa-ruler-combined"></i>${im.area} m²</div>` : '',
+    im.condominio? `<div class="modal-char"><i class="fa-solid fa-building-columns"></i>Cond. R$ ${fmt(im.condominio)}/mês</div>` : '',
   ].filter(Boolean);
   document.getElementById('m-chars').innerHTML = chars.join('');
 
-  if (im.descricaoPortal) {
-    document.getElementById('m-desc').textContent = im.descricaoPortal;
-    document.getElementById('m-desc-wrap').classList.remove('hidden');
-  } else document.getElementById('m-desc-wrap').classList.add('hidden');
-
+  // Diferenciais
   const difs = (im.diferenciais||'').split(',').map(d=>d.trim()).filter(Boolean);
   if (difs.length) {
-    document.getElementById('m-dif').innerHTML = difs.map(d =>
-      `<span class="tag" style="background:rgba(201,168,76,0.08);color:var(--gold-l);border:1px solid rgba(201,168,76,0.2)"><i class="fa-solid fa-check text-[8px]"></i> ${d}</span>`
-    ).join('');
+    document.getElementById('m-difs').innerHTML = difs.map(d => `<span class="modal-dif">${esc(d)}</span>`).join('');
     document.getElementById('m-dif-wrap').classList.remove('hidden');
   } else document.getElementById('m-dif-wrap').classList.add('hidden');
 
-  document.getElementById('m-corretor').textContent = CFG.nome;
-  const waNum = CFG.whatsapp.replace(/\D/g,'');
-  const waMsg = encodeURIComponent(`Olá André! Vi o imóvel "${im.tituloPortal||im.endereco}" no seu site e gostaria de mais informações.`);
-  document.getElementById('m-btn-wa').href  = `https://wa.me/${waNum}?text=${waMsg}`;
-  document.getElementById('m-btn-tel').href = `tel:+${waNum}`;
+  // ROI sim
+  const roiSim = document.getElementById('roi-sim');
+  if (price && oferta !== 'locacao') {
+    roiSim.style.display = 'block';
+    const pv = numVal(im);
+    const rentEst = Math.round(pv * 0.006);
+    const yieldPct = ((rentEst * 12) / pv * 100).toFixed(1);
+    document.getElementById('roi-rows').innerHTML = `
+      <div class="roi-row"><span>Valor do imóvel</span><span>R$ ${fmt(pv)}</span></div>
+      <div class="roi-row"><span>Aluguel estimado</span><span>R$ ${fmt(rentEst)}/mês</span></div>
+      <div class="roi-row"><span>Retorno bruto anual</span><span>${yieldPct}% a.a.</span></div>
+    `;
+  } else roiSim.style.display = 'none';
+
+  // WA
+  const waMsg = encodeURIComponent(`Olá André! Tenho interesse no imóvel: ${im.tituloPortal||im.endereco}. Pode me dar mais detalhes?`);
+  document.getElementById('m-wa-btn').href  = `https://wa.me/${CFG.phone}?text=${waMsg}`;
+  document.getElementById('m-tel-btn').href = `tel:+${CFG.phone}`;
+
+  document.getElementById('modal-ov').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
 }
 
-function fecharModal(e) {
-  if (e && e.target !== document.getElementById('modal')) return;
-  document.getElementById('modal').classList.add('hidden');
+function closeModal() {
+  document.getElementById('modal-ov').style.display = 'none';
   document.body.style.overflow = '';
 }
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { document.getElementById('modal').classList.add('hidden'); document.body.style.overflow=''; }});
-document.getElementById('modal').addEventListener('click', function(e){ if(e.target===this){this.classList.add('hidden');document.body.style.overflow='';} });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-// ══════════ HELPERS ══════════
-function tipoLabel(t) {
-  return {apartamento:'Apartamento',casa:'Casa',terreno:'Terreno',comercial:'Comercial',studio:'Studio',cobertura:'Cobertura',sobrado:'Sobrado',galpao:'Galpão',chacara:'Chácara'}[t] || (t?t[0].toUpperCase()+t.slice(1):'Imóvel');
+// ══ FORM ════════════════════════════════
+function submitForm(e) {
+  e.preventDefault();
+  showToast('✅ Consulta enviada! André entrará em contato em breve.');
+  e.target.reset();
 }
-function tipoEmoji(t) {
-  return {apartamento:'🏢',casa:'🏠',terreno:'🌳',comercial:'🏪',studio:'🏙️',cobertura:'🌇',sobrado:'🏡',galpao:'🏭',chacara:'🌿'}[t] || '🏠';
+
+// ══ TOAST ═══════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3500);
 }
-function ofertaLabel(o) {
-  return {venda:'Venda',locacao:'Locação',ambos:'Venda/Locação'}[o] || 'Venda';
-}
+
+// ══ HELPERS ═════════════════════════════
+function tipoL(t) { return {apartamento:'Apartamento',casa:'Casa',terreno:'Terreno',comercial:'Comercial',studio:'Studio',cobertura:'Cobertura',sobrado:'Sobrado',galpao:'Galpão',chacara:'Chácara'}[t]||(t?t[0].toUpperCase()+t.slice(1):'Imóvel'); }
+function tipoEmoji(t) { return {apartamento:'🏢',casa:'🏠',terreno:'🌳',comercial:'🏪',studio:'🏙️',cobertura:'🌇',sobrado:'🏡',galpao:'🏭',chacara:'🌿'}[t]||'🏠'; }
+function ofertaL(o) { return {venda:'Venda',locacao:'Locação',ambos:'Venda / Locação'}[o]||'Venda'; }
 function fmt(v) {
-  const n = +(String(v||'').replace(/\D/g,''));
+  const n = numVal2(v);
   if (!n) return '—';
-  if (n >= 1000000) return (n/1000000).toFixed(n%1000000===0?0:2).replace('.',',') + 'M';
+  if (n >= 1e6) return (n/1e6).toFixed(n%1e6===0?0:2).replace('.',',')+'M';
   return n.toLocaleString('pt-BR');
 }
+function numVal(im) { return numVal2(im.tipoOferta==='locacao'?im.valorLocacao:im.valorVenda); }
+function numVal2(v) { return +(String(v||'').replace(/\D/g,''))||0; }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-// ══════════ DEMO DATA ══════════
-function demo() {
+// ══ DEMO DATA ════════════════════════════
+function demoData() {
   return [
-    {id:6,publicarSite:true,tituloPortal:'Cobertura Duplex com Piscina Privativa',endereco:'Av. Ibirapuera, 2000',bairro:'Moema',cidade:'São Paulo',tipo:'cobertura',tipoOferta:'venda',valorVenda:'4500000',quartos:'4',banheiros:'5',vagas:'3',area:'400',suites:'4',destaque:true,descricaoPortal:'Cobertura duplex exclusiva com piscina privativa e vista 360° para o Parque Ibirapuera. Acabamento de altíssimo padrão.',diferenciais:'Piscina privativa, Vista parque, Terraço gourmet, Adega climatizada, Home cinema',fotos:[]},
-    {id:5,publicarSite:true,tituloPortal:'Apartamento 3 Dormitórios - Jardins',endereco:'Rua Oscar Freire, 842',bairro:'Jardins',cidade:'São Paulo',tipo:'apartamento',tipoOferta:'venda',valorVenda:'2800000',quartos:'3',banheiros:'3',vagas:'2',area:'180',suites:'2',destaque:true,descricaoPortal:'Totalmente reformado no coração dos Jardins. Varanda gourmet, vista privilegiada e acabamento de luxo.',diferenciais:'Varanda gourmet, Piscina, Academia, Portaria 24h',fotos:[]},
-    {id:4,publicarSite:true,tituloPortal:'Casa em Condomínio Fechado - Alphaville',endereco:'Alameda Campinas, 350',bairro:'Alphaville',cidade:'Barueri',tipo:'casa',tipoOferta:'venda',valorVenda:'1950000',quartos:'4',banheiros:'5',vagas:'4',area:'320',suites:'3',destaque:false,descricaoPortal:'Casa ampla com piscina e churrasqueira em condomínio com segurança 24h.',diferenciais:'Piscina, Churrasqueira, Jardim, Segurança 24h, Quadra de tênis',fotos:[]},
-    {id:3,publicarSite:true,tituloPortal:'Apartamento 2 Dorms - Pinheiros',endereco:'Rua dos Pinheiros, 680',bairro:'Pinheiros',cidade:'São Paulo',tipo:'apartamento',tipoOferta:'ambos',valorVenda:'980000',valorLocacao:'5500',quartos:'2',banheiros:'2',vagas:'1',area:'82',suites:'1',destaque:false,descricaoPortal:'Apartamento em ótima localização, a 5 min do metrô. Lazer completo no condomínio.',diferenciais:'Próximo ao metrô, Academia, Salão de festas, Pet friendly',fotos:[]},
-    {id:2,publicarSite:true,tituloPortal:'Studio Alto Padrão - Vila Olímpia',endereco:'Av. Brigadeiro Faria Lima, 1200',bairro:'Vila Olímpia',cidade:'São Paulo',tipo:'studio',tipoOferta:'locacao',valorLocacao:'4800',quartos:'1',banheiros:'1',vagas:'1',area:'48',suites:'0',destaque:false,descricaoPortal:'Studio funcional e sofisticado, ideal para profissionais que valorizam localização e praticidade.',diferenciais:'Coworking, Academia, Lavanderia, Recepção 24h',fotos:[]},
-    {id:1,publicarSite:true,tituloPortal:'Terreno Comercial - Granja Viana',endereco:'Rod. Raposo Tavares, km 25',bairro:'Granja Viana',cidade:'Cotia',tipo:'terreno',tipoOferta:'venda',valorVenda:'1200000',quartos:'',banheiros:'',vagas:'',area:'1500',suites:'',destaque:false,descricaoPortal:'Terreno plano com excelente localização e alta visibilidade. Documentação regularizada.',diferenciais:'Terreno plano, Frente para rodovia, Documento ok, Topografia regular',fotos:[]},
+    {id:10,publicarSite:true,destaque:true,exclusivo:true,tituloPortal:'Cobertura Duplex · Jardim Europa',endereco:'Av. Europa, 600',bairro:'Jardim Europa',cidade:'São Paulo',tipo:'cobertura',tipoOferta:'venda',valorVenda:'8500000',quartos:'4',banheiros:'6',vagas:'4',area:'480',suites:'4',descricaoPortal:'Cobertura duplex exclusiva no mais prestigiado bairro de São Paulo. Piscina privativa aquecida, terraço gourmet com vista para o Parque Europa e acabamento italiano assinado.',diferenciais:'Piscina aquecida privativa,Terraço gourmet assinado,Vista Parque Europa,Elevador privativo,Adega climatizada,Home cinema',fotos:[]},
+    {id:9,publicarSite:true,destaque:true,exclusivo:true,tituloPortal:'Casa em Condomínio · Cidade Jardim',endereco:'Rua Cidade Jardim, 400',bairro:'Cidade Jardim',cidade:'São Paulo',tipo:'casa',tipoOferta:'venda',valorVenda:'5200000',quartos:'5',banheiros:'7',vagas:'5',area:'620',suites:'4',descricaoPortal:'Casa de arquitetura contemporânea em condomínio fechado de alto padrão. Projeto assinado, jardim tropical, piscina e área de lazer completa.',diferenciais:'Piscina,Jardim tropical,Sauna,Quadra esportiva,Segurança 24h,Gerador',fotos:[]},
+    {id:8,publicarSite:true,destaque:false,exclusivo:false,tituloPortal:'Apartamento Alto Padrão · Moema',endereco:'Av. Ibirapuera, 1200',bairro:'Moema',cidade:'São Paulo',tipo:'apartamento',tipoOferta:'ambos',valorVenda:'2800000',valorLocacao:'14000',quartos:'3',banheiros:'4',vagas:'2',area:'195',suites:'2',descricaoPortal:'Apartamento reformado com materiais importados no melhor de Moema. A 5 minutos do Parque Ibirapuera.',diferenciais:'Varanda gourmet,Piscina,Academia,Portaria 24h,Pet friendly',fotos:[]},
+    {id:7,publicarSite:true,destaque:false,exclusivo:false,tituloPortal:'Studio Design · Pinheiros',endereco:'Rua dos Pinheiros, 440',bairro:'Pinheiros',cidade:'São Paulo',tipo:'studio',tipoOferta:'locacao',valorLocacao:'7500',quartos:'1',banheiros:'1',vagas:'1',area:'55',suites:'1',descricaoPortal:'Studio totalmente mobiliado de alto padrão. Ideal para executivos e profissionais que valorizam localização prime e praticidade.',diferenciais:'Mobiliado,Coworking,Academia,Concierge,Lavanderia',fotos:[]},
+    {id:6,publicarSite:true,destaque:false,exclusivo:false,tituloPortal:'Casa com Piscina · Alphaville',endereco:'Alameda Araucária, 200',bairro:'Alphaville',cidade:'Barueri',tipo:'casa',tipoOferta:'venda',valorVenda:'1900000',quartos:'4',banheiros:'5',vagas:'4',area:'380',suites:'3',descricaoPortal:'Casa em condomínio com alto padrão de segurança. Piscina e churrasqueira em área privativa.',diferenciais:'Piscina,Churrasqueira,Segurança 24h,Câmeras,Quadra',fotos:[]},
+    {id:5,publicarSite:true,destaque:false,exclusivo:false,tituloPortal:'Cobertura com Vista · Vila Nova Conceição',endereco:'Rua Funchal, 350',bairro:'Vila Nova Conceição',cidade:'São Paulo',tipo:'cobertura',tipoOferta:'venda',valorVenda:'4100000',quartos:'3',banheiros:'4',vagas:'3',area:'290',suites:'3',descricaoPortal:'Cobertura com terraço privativo e vista 360° para a cidade. Acabamento premium e localização ímpar.',diferenciais:'Terraço privativo,Vista 360°,Churrasqueira,Jacuzzi,2 andares',fotos:[]},
   ];
 }
 </script>
