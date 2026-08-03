@@ -7156,7 +7156,7 @@ function app() {
             processarVideo(file) {
               const MAX = 30 * 1024 * 1024; // 30 MB
               if (file.size > MAX) {
-                alert('Vídeo "' + file.name + '" é muito grande (' + (file.size/1024/1024).toFixed(0) + ' MB).\nUse vídeos de até 30 MB, ou cole o link do YouTube no campo abaixo.');
+                alert('Vídeo ' + file.name + ' é muito grande (' + (file.size/1024/1024).toFixed(0) + ' MB).\nUse vídeos de até 30 MB, ou cole o link do YouTube no campo abaixo.');
                 return Promise.resolve(null);
               }
               return new Promise(resolve => {
