@@ -1614,7 +1614,9 @@ function renderExcl(list) {
   em.classList.add('hidden');
   list.forEach(im => {
     const oferta = im.tipoOferta || 'venda';
-    const fs = [...(Array.isArray(im.fotos) ? im.fotos : []), im.foto].filter(Boolean);
+    const fs = im.medias
+    ? im.medias.filter(Boolean)
+    : [...(Array.isArray(im.fotos) ? im.fotos : []), im.foto].filter(Boolean);
     const price = oferta === 'locacao' ? im.valorLocacao : im.valorVenda;
     const div = document.createElement('div');
     div.className = 'excl-card';
@@ -1659,7 +1661,9 @@ function renderPartners(list) {
   em.classList.add('hidden');
   all.forEach(im => {
     const oferta = im.tipoOferta || 'venda';
-    const fs = [...(Array.isArray(im.fotos) ? im.fotos : []), im.foto].filter(Boolean);
+    const fs = im.medias
+    ? im.medias.filter(Boolean)
+    : [...(Array.isArray(im.fotos) ? im.fotos : []), im.foto].filter(Boolean);
     const price = oferta === 'locacao' ? im.valorLocacao : im.valorVenda;
     const div = document.createElement('div');
     div.className = 'p-card';
@@ -1703,7 +1707,9 @@ function openModal(e, id) {
   e.stopPropagation();
   const im = todos.find(i => i.id === id || i.id == id);
   if (!im) return;
-  const fs = [...(Array.isArray(im.fotos) ? im.fotos : []), im.foto].filter(Boolean);
+  const fs = im.medias
+    ? im.medias.filter(Boolean)
+    : [...(Array.isArray(im.fotos) ? im.fotos : []), im.foto].filter(Boolean);
   const oferta = im.tipoOferta || 'venda';
   const price  = oferta === 'locacao' ? im.valorLocacao : im.valorVenda;
   const excl   = isExcl(im);
@@ -1763,6 +1769,8 @@ function openModal(e, id) {
 
 function closeModal() {
   document.querySelectorAll('.gal-slide video').forEach(v => v.pause());
+  // Parar iframes YouTube/Vimeo removendo src temporariamente
+  document.querySelectorAll('.gal-slide iframe').forEach(f => { f.src = ''; });
   document.getElementById('modal-ov').style.display = 'none';
   document.body.style.overflow = '';
 }
@@ -1825,9 +1833,28 @@ function galInit(fs) {
 
   document.getElementById('gal-thumbs').style.display = 'flex';
 
-  // Detecta se é vídeo
+  // Detecta tipo de mídia
   function isVid(src) {
     return src && (src.startsWith('data:video/') || /\.(mp4|mov|webm|ogg)(\?|$)/i.test(src));
+  }
+  function isYT(src) {
+    return src && (src.includes('youtube.com') || src.includes('youtu.be'));
+  }
+  function isVimeo(src) {
+    return src && src.includes('vimeo.com');
+  }
+  function isEmbed(src) { return isYT(src) || isVimeo(src); }
+
+  function toEmbedUrl(src) {
+    if (isYT(src)) {
+      const m = src.match(/(?:v=|youtu\.be\/)([\w-]{11})/);
+      return m ? 'https://www.youtube.com/embed/' + m[1] + '?autoplay=1&rel=0&modestbranding=1' : src;
+    }
+    if (isVimeo(src)) {
+      const m = src.match(/vimeo\.com\/(\d+)/);
+      return m ? 'https://player.vimeo.com/video/' + m[1] + '?autoplay=1' : src;
+    }
+    return src;
   }
 
   // Build slides
@@ -1835,8 +1862,35 @@ function galInit(fs) {
     const slide = document.createElement('div');
     slide.className = 'gal-slide';
 
-    if (isVid(src)) {
-      // Slide de vídeo
+    if (isEmbed(src)) {
+      // YouTube / Vimeo — iframe carregado ao navegar para o slide
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'width:100%;height:100%;position:relative;background:#000;';
+      // Thumbnail clicável que substitui por iframe
+      const ytId = isYT(src) ? (src.match(/(?:v=|youtu\.be\/)[\w-]{11}/) || [''])[0].replace(/.*[\/=]/,'') : null;
+      const thumb = document.createElement('div');
+      thumb.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#0c0c0b;';
+      if (ytId) {
+        const ti = document.createElement('img');
+        ti.src = 'https://img.youtube.com/vi/' + ytId + '/hqdefault.jpg';
+        ti.style.cssText = 'width:100%;height:100%;object-fit:cover;opacity:.7;';
+        wrap.appendChild(ti);
+      }
+      const playBtn = document.createElement('div');
+      playBtn.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:60px;height:60px;border-radius:50%;background:rgba(184,132,60,.92);display:flex;align-items:center;justify-content:center;pointer-events:none;';
+      playBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="#fff" width="28" height="28"><path d="M8 5v14l11-7z"/></svg>';
+      wrap.appendChild(playBtn);
+      wrap.addEventListener('click', () => {
+        const iframe = document.createElement('iframe');
+        iframe.src = toEmbedUrl(src);
+        iframe.style.cssText = 'width:100%;height:100%;border:none;';
+        iframe.allow = 'autoplay; fullscreen';
+        wrap.innerHTML = '';
+        wrap.appendChild(iframe);
+      });
+      slide.appendChild(wrap);
+    } else if (isVid(src)) {
+      // Vídeo local (data URL)
       const vid = document.createElement('video');
       vid.src = src;
       vid.controls = true;
@@ -1844,7 +1898,6 @@ function galInit(fs) {
       vid.playsInline = true;
       vid.preload = i === 0 ? 'auto' : 'metadata';
       vid.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
-      // Pausar outros vídeos ao navegar
       vid.addEventListener('play', () => {
         document.querySelectorAll('.gal-slide video').forEach(v => { if (v !== vid) v.pause(); });
       });
@@ -1862,10 +1915,18 @@ function galInit(fs) {
     const th = document.createElement('div');
     th.className = 'gal-thumb' + (i === 0 ? ' active' : '');
     th.setAttribute('data-idx', i);
-    if (isVid(src)) {
+    if (isEmbed(src) || isVid(src)) {
       // Ícone de vídeo no thumbnail
-      th.style.cssText = 'background:#1e293b;display:flex;align-items:center;justify-content:center;';
-      th.innerHTML = '<svg viewBox="0 0 24 24" fill="#94a3b8" width="22" height="22"><path d="M8 5v14l11-7z"/></svg>';
+      th.style.cssText = 'background:#1e293b;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;';
+      // Para YouTube, usa thumbnail real
+      const ytIdT = isYT(src) ? (src.match(/(?:v=|youtu\.be\/)[\w-]{11}/) || [''])[0].replace(/.*[\/=]/,'') : null;
+      if (ytIdT) {
+        th.innerHTML = '<img src="https://img.youtube.com/vi/' + ytIdT + '/default.jpg" style="width:100%;height:100%;object-fit:cover;opacity:.65;">';
+      }
+      const ico = document.createElement('div');
+      ico.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);';
+      ico.innerHTML = '<svg viewBox="0 0 24 24" fill="#fff" width="18" height="18" style="opacity:.9"><path d="M8 5v14l11-7z"/></svg>';
+      th.appendChild(ico);
     } else {
       const ti = document.createElement('img');
       ti.src = src; ti.loading = 'lazy';

@@ -4416,18 +4416,28 @@ function app() {
       const publicados = this.captacoes
         .filter(c => c.publicarSite)
         .map(c => {
-          // Garante que fotos[] sempre tenha conteúdo:
-          // usa fotos[] se preenchido, senão cai no campo foto (URL única)
-          const fotosArr = Array.isArray(c.fotos) ? c.fotos.filter(Boolean) : [];
+          // Fotos: exclui data:video/ (muito grandes para localStorage)
+          const fotosArr = (Array.isArray(c.fotos) ? c.fotos.filter(Boolean) : [])
+            .filter(f => !f.startsWith('data:video/'));
           if (!fotosArr.length && c.foto) fotosArr.push(c.foto);
-          return { ...c, fotos: fotosArr };
+
+          // Mídias do portal: videoUrl (YouTube/Vimeo) primeiro, depois fotos
+          const medias = [];
+          if (c.videoUrl) medias.push(c.videoUrl);
+          medias.push(...fotosArr);
+
+          return { ...c, fotos: fotosArr, medias };
         });
       const payload = {
         imoveis: publicados,
         config: { whatsapp: '5511943560902', corretorNome: 'André Camargo' },
         updatedAt: new Date().toISOString(),
       };
-      localStorage.setItem('amigo_portal_listings', JSON.stringify(payload));
+      try {
+        localStorage.setItem('amigo_portal_listings', JSON.stringify(payload));
+      } catch (e) {
+        alert('Aviso: não foi possível sincronizar com o portal. As fotos podem estar muito grandes. Tente remover algumas fotos ou reduza a qualidade.');
+      }
     },
     portalPublicados() { return this.captacoes.filter(c => c.publicarSite).length; },
     portalDestaques() { return this.captacoes.filter(c => c.publicarSite && c.destaque).length; },
