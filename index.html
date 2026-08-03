@@ -7119,64 +7119,130 @@ function app() {
             </div>
           </div>
 
-          <!-- Fotos (URLs) -->
+          <!-- Fotos — upload direto ou URL -->
           <div x-data="{
-            fotoWarn: [],
-            validarFotos(val) {
-              const linhas = val.split('\n').map(l=>l.trim()).filter(Boolean);
-              editingCaptacao.fotos = linhas;
-              this.fotoWarn = linhas.filter(u => {
-                if (!u.startsWith('http')) return true;
-                // detecta links de página (não diretos)
-                if (/photos\.google|drive\.google|dropbox\.com\/(?!s\/.*\?raw)|icloud\.com|wa\.me|instagram\.com|facebook\.com|youtube\.com/.test(u)) return true;
-                return false;
+            abaFoto: 'upload',
+            comprimindo: false,
+            async adicionarArquivos(files) {
+              this.comprimindo = true;
+              for (const file of files) {
+                if (!file.type.startsWith('image/')) continue;
+                const b64 = await this.comprimirImagem(file, 1200, 0.78);
+                if (!editingCaptacao.fotos) editingCaptacao.fotos = [];
+                editingCaptacao.fotos = [...editingCaptacao.fotos, b64];
+              }
+              this.comprimindo = false;
+            },
+            comprimirImagem(file, maxW, qualidade) {
+              return new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                  const img = new Image();
+                  img.onload = () => {
+                    const scale = Math.min(1, maxW / img.width);
+                    const canvas = document.createElement('canvas');
+                    canvas.width  = Math.round(img.width  * scale);
+                    canvas.height = Math.round(img.height * scale);
+                    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                    resolve(canvas.toDataURL('image/jpeg', qualidade));
+                  };
+                  img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
               });
-            }
+            },
+            removerFoto(idx) {
+              editingCaptacao.fotos = (editingCaptacao.fotos||[]).filter((_,i)=>i!==idx);
+            },
+            urlInput: '',
+            adicionarUrl() {
+              const u = this.urlInput.trim();
+              if (!u || !u.startsWith('http')) return;
+              if (!editingCaptacao.fotos) editingCaptacao.fotos = [];
+              editingCaptacao.fotos = [...editingCaptacao.fotos, u];
+              this.urlInput = '';
+            },
+            dragOver: false
           }">
-            <div class="flex items-center justify-between mb-1">
-              <label class="text-[10px] font-black uppercase tracking-wider text-gray-400">URLs das Fotos
-                <span class="normal-case font-normal text-gray-300 ml-1">(uma por linha — URL direta da imagem)</span>
-              </label>
-              <button type="button"
-                      x-show="editingCaptacao.foto && !(editingCaptacao.fotos||[]).includes(editingCaptacao.foto)"
-                      @click="editingCaptacao.fotos = [editingCaptacao.foto, ...(editingCaptacao.fotos||[])].filter(Boolean)"
-                      class="text-[10px] font-bold px-2 py-0.5 rounded-lg transition-all"
-                      style="background:rgba(52,84,72,0.15);color:#345448;border:1px solid #345448">
-                ➕ Usar foto principal
+            <div class="flex items-center gap-1 mb-2">
+              <label class="text-[10px] font-black uppercase tracking-wider text-gray-400">Fotos do Imóvel</label>
+              <span class="ml-auto text-[9px] text-gray-400" x-text="(editingCaptacao.fotos||[]).length + ' foto(s)'"></span>
+            </div>
+
+            <!-- Abas Upload / URL -->
+            <div class="flex gap-1 mb-2">
+              <button type="button" @click="abaFoto='upload'"
+                      class="flex-1 py-1.5 text-[10px] font-bold rounded-lg border transition-all"
+                      :style="abaFoto==='upload' ? 'background:#345448;color:#fff;border-color:#345448' : 'background:#fff;color:#9ca3af;border-color:#e5e7eb'">
+                📁 Upload / iCloud / Câmera
+              </button>
+              <button type="button" @click="abaFoto='url'"
+                      class="flex-1 py-1.5 text-[10px] font-bold rounded-lg border transition-all"
+                      :style="abaFoto==='url' ? 'background:#345448;color:#fff;border-color:#345448' : 'background:#fff;color:#9ca3af;border-color:#e5e7eb'">
+                🔗 Link direto (URL)
               </button>
             </div>
-            <textarea rows="3"
-                      :value="(editingCaptacao.fotos||[]).join('\n')"
-                      @input="validarFotos($event.target.value)"
-                      placeholder="https://i.imgur.com/exemplo.jpg&#10;https://meusite.com/foto2.jpg"
-                      class="w-full mt-1 px-3 py-2 rounded-xl border text-xs focus:outline-none resize-none font-mono"
-                      :style="fotoWarn.length ? 'border-color:#f59e0b;background:#fffbeb' : 'border-color:#d0ddd8'"></textarea>
 
-            <!-- Aviso de URL inválida -->
-            <div x-show="fotoWarn.length > 0" class="mt-2 p-3 rounded-xl text-xs" style="background:#fffbeb;border:1px solid #f59e0b">
-              <p class="font-black text-amber-700 mb-1">⚠️ URL de página detectada — a foto não vai aparecer no site.</p>
-              <p class="text-amber-600 mb-2">Use apenas links diretos para o arquivo de imagem (terminam em <strong>.jpg .png .webp</strong>).</p>
-              <div class="space-y-1">
-                <p class="font-bold text-amber-700">Como obter o link correto:</p>
-                <p class="text-amber-600">📷 <strong>Google Fotos:</strong> Abra a foto → ⋮ → "Compartilhar" → "Criar link" → clique com botão direito na imagem aberta → "Copiar endereço da imagem"</p>
-                <p class="text-amber-600">☁️ <strong>Google Drive:</strong> Clique com botão direito → "Obter link" → mude para "qualquer pessoa" → substitua <code>/view</code> por <code>/uc?export=view</code> na URL</p>
-                <p class="text-amber-600">📦 <strong>Dropbox:</strong> No link de compartilhamento, troque <code>?dl=0</code> por <code>?raw=1</code></p>
-                <p class="text-amber-600">🖼️ <strong>Mais fácil:</strong> Use <a href="https://imgur.com" target="_blank" class="underline font-bold">imgur.com</a> — arraste a foto, copie o link direto (.jpg)</p>
-              </div>
-            </div>
-
-            <!-- Preview das fotos válidas -->
-            <template x-if="(editingCaptacao.fotos||[]).filter(u => u.startsWith('http') && fotoWarn.indexOf(u)===-1).length > 0">
-              <div class="mt-2 flex gap-2 flex-wrap">
-                <template x-for="(url, i) in (editingCaptacao.fotos||[]).filter(u => u.startsWith('http') && fotoWarn.indexOf(u)===-1)" :key="i">
-                  <div class="relative w-16 h-16 rounded-lg overflow-hidden border-2 border-green-200">
-                    <img :src="url" class="w-full h-full object-cover"
-                         onerror="this.parentElement.style.borderColor='#fca5a5';this.src='';this.parentElement.innerHTML='<div style=&quot;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#fef2f2;font-size:18px&quot;>❌</div>'">
-                    <div class="absolute bottom-0 left-0 right-0 text-center text-[8px] font-bold text-white" style="background:rgba(0,0,0,0.5)">OK</div>
+            <!-- ABA UPLOAD -->
+            <div x-show="abaFoto==='upload'">
+              <!-- Drop zone -->
+              <label
+                class="flex flex-col items-center justify-center gap-2 w-full rounded-xl border-2 border-dashed cursor-pointer transition-all"
+                style="min-height:90px;padding:16px"
+                :style="dragOver ? 'border-color:#345448;background:rgba(52,84,72,0.06)' : 'border-color:#d1d5db;background:#f9fafb'"
+                @dragover.prevent="dragOver=true"
+                @dragleave="dragOver=false"
+                @drop.prevent="dragOver=false; adicionarArquivos($event.dataTransfer.files)">
+                <input type="file" accept="image/*" multiple class="sr-only"
+                       @change="adicionarArquivos($event.target.files); $event.target.value=''">
+                <template x-if="!comprimindo">
+                  <div class="text-center">
+                    <div class="text-2xl mb-1">🖼️</div>
+                    <p class="text-xs font-semibold text-gray-500">Clique ou arraste fotos aqui</p>
+                    <p class="text-[10px] text-gray-400 mt-0.5">iPhone · iCloud · Câmera · Qualquer arquivo de imagem</p>
                   </div>
                 </template>
+                <template x-if="comprimindo">
+                  <div class="text-center">
+                    <div class="text-xl mb-1 animate-spin">⚙️</div>
+                    <p class="text-xs font-semibold text-gray-500">Comprimindo imagem...</p>
+                  </div>
+                </template>
+              </label>
+            </div>
+
+            <!-- ABA URL -->
+            <div x-show="abaFoto==='url'">
+              <div class="flex gap-2">
+                <input type="url" x-model="urlInput"
+                       @keydown.enter.prevent="adicionarUrl()"
+                       placeholder="https://exemplo.com/foto.jpg"
+                       class="flex-1 px-3 py-2 rounded-xl border text-xs focus:outline-none focus:ring-2 focus:ring-green-200 font-mono"
+                       style="border-color:#d0ddd8">
+                <button type="button" @click="adicionarUrl()"
+                        class="px-3 py-2 rounded-xl text-xs font-bold text-white transition-all"
+                        style="background:#345448">Adicionar</button>
               </div>
-            </template>
+              <p class="text-[10px] text-gray-400 mt-1.5">⚠️ Só funciona com link direto terminando em .jpg .png .webp — links do iCloud, Google Fotos e Drive não são diretos. Use a aba Upload.</p>
+            </div>
+
+            <!-- Grade de miniaturas -->
+            <div x-show="(editingCaptacao.fotos||[]).length > 0" class="mt-3 grid grid-cols-4 gap-2">
+              <template x-for="(f, idx) in (editingCaptacao.fotos||[])" :key="idx">
+                <div class="relative rounded-xl overflow-hidden border border-gray-200 group" style="aspect-ratio:1">
+                  <img :src="f" class="w-full h-full object-cover">
+                  <!-- capa escura no hover -->
+                  <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                       style="background:rgba(0,0,0,0.5)">
+                    <button type="button" @click="removerFoto(idx)"
+                            class="w-7 h-7 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center">✕</button>
+                  </div>
+                  <!-- badge principal -->
+                  <div x-show="idx===0" class="absolute top-1 left-1 text-[8px] font-bold px-1 rounded" style="background:#345448;color:#fff">capa</div>
+                </div>
+              </template>
+            </div>
+            <p x-show="(editingCaptacao.fotos||[]).length > 1" class="text-[9px] text-gray-400 mt-1">A primeira foto é usada como capa no portal.</p>
           </div>
 
           <!-- Diferenciais -->
