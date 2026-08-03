@@ -7119,130 +7119,128 @@ function app() {
             </div>
           </div>
 
-          <!-- Fotos — upload direto ou URL -->
+          <!-- Fotos do Imóvel — grade 16:9 com drag & drop -->
           <div x-data="{
-            abaFoto: 'upload',
-            comprimindo: false,
-            async adicionarArquivos(files) {
-              this.comprimindo = true;
-              for (const file of files) {
-                if (!file.type.startsWith('image/')) continue;
-                const b64 = await this.comprimirImagem(file, 1200, 0.78);
-                if (!editingCaptacao.fotos) editingCaptacao.fotos = [];
-                editingCaptacao.fotos = [...editingCaptacao.fotos, b64];
-              }
-              this.comprimindo = false;
-            },
-            comprimirImagem(file, maxW, qualidade) {
+            processando: 0,
+            gridDragOver: false,
+
+            /* Recorta e comprime para 16:9 · 1280×720 · JPEG 82% */
+            comprimirParaWide(file) {
               return new Promise(resolve => {
                 const reader = new FileReader();
-                reader.onload = e => {
+                reader.onload = ev => {
                   const img = new Image();
                   img.onload = () => {
-                    const scale = Math.min(1, maxW / img.width);
-                    const canvas = document.createElement('canvas');
-                    canvas.width  = Math.round(img.width  * scale);
-                    canvas.height = Math.round(img.height * scale);
-                    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-                    resolve(canvas.toDataURL('image/jpeg', qualidade));
+                    const W = 1280, H = 720, ratio = 16/9;
+                    const src = img.width / img.height;
+                    let sx, sy, sw, sh;
+                    if (src > ratio) {
+                      sh = img.height; sw = sh * ratio;
+                      sx = (img.width - sw) / 2; sy = 0;
+                    } else {
+                      sw = img.width; sh = sw / ratio;
+                      sx = 0; sy = (img.height - sh) / 2;
+                    }
+                    const c = document.createElement('canvas');
+                    c.width = W; c.height = H;
+                    c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+                    resolve(c.toDataURL('image/jpeg', 0.82));
                   };
-                  img.src = e.target.result;
+                  img.src = ev.target.result;
                 };
                 reader.readAsDataURL(file);
               });
             },
-            removerFoto(idx) {
-              editingCaptacao.fotos = (editingCaptacao.fotos||[]).filter((_,i)=>i!==idx);
-            },
-            urlInput: '',
-            adicionarUrl() {
-              const u = this.urlInput.trim();
-              if (!u || !u.startsWith('http')) return;
+
+            async processarArquivos(files) {
+              const lista = [...files].filter(f => f.type.startsWith('image/'));
+              if (!lista.length) return;
+              this.processando += lista.length;
+              const resultados = await Promise.all(lista.map(f => this.comprimirParaWide(f)));
               if (!editingCaptacao.fotos) editingCaptacao.fotos = [];
-              editingCaptacao.fotos = [...editingCaptacao.fotos, u];
-              this.urlInput = '';
+              editingCaptacao.fotos = [...editingCaptacao.fotos, ...resultados];
+              this.processando -= lista.length;
             },
-            dragOver: false
+
+            remover(idx) {
+              editingCaptacao.fotos = (editingCaptacao.fotos||[]).filter((_,i) => i !== idx);
+            }
           }">
-            <div class="flex items-center gap-1 mb-2">
+
+            <!-- Cabeçalho -->
+            <div class="flex items-center mb-2">
               <label class="text-[10px] font-black uppercase tracking-wider text-gray-400">Fotos do Imóvel</label>
-              <span class="ml-auto text-[9px] text-gray-400" x-text="(editingCaptacao.fotos||[]).length + ' foto(s)'"></span>
+              <span class="ml-2 text-[9px] text-gray-300">— formato 16:9, recorte automático</span>
+              <span class="ml-auto text-[9px] font-bold text-gray-400"
+                    x-text="(editingCaptacao.fotos||[]).length + ' foto(s)'"></span>
             </div>
 
-            <!-- Abas Upload / URL -->
-            <div class="flex gap-1 mb-2">
-              <button type="button" @click="abaFoto='upload'"
-                      class="flex-1 py-1.5 text-[10px] font-bold rounded-lg border transition-all"
-                      :style="abaFoto==='upload' ? 'background:#345448;color:#fff;border-color:#345448' : 'background:#fff;color:#9ca3af;border-color:#e5e7eb'">
-                📁 Upload / iCloud / Câmera
-              </button>
-              <button type="button" @click="abaFoto='url'"
-                      class="flex-1 py-1.5 text-[10px] font-bold rounded-lg border transition-all"
-                      :style="abaFoto==='url' ? 'background:#345448;color:#fff;border-color:#345448' : 'background:#fff;color:#9ca3af;border-color:#e5e7eb'">
-                🔗 Link direto (URL)
-              </button>
-            </div>
+            <!-- GRADE de fotos + slot de adicionar -->
+            <div class="grid grid-cols-2 gap-2"
+                 :class="gridDragOver ? 'ring-2 ring-green-400 rounded-xl' : ''"
+                 @dragover.prevent="gridDragOver=true"
+                 @dragleave.self="gridDragOver=false"
+                 @drop.prevent="gridDragOver=false; processarArquivos($event.dataTransfer.files)">
 
-            <!-- ABA UPLOAD -->
-            <div x-show="abaFoto==='upload'">
-              <!-- Drop zone -->
-              <label
-                class="flex flex-col items-center justify-center gap-2 w-full rounded-xl border-2 border-dashed cursor-pointer transition-all"
-                style="min-height:90px;padding:16px"
-                :style="dragOver ? 'border-color:#345448;background:rgba(52,84,72,0.06)' : 'border-color:#d1d5db;background:#f9fafb'"
-                @dragover.prevent="dragOver=true"
-                @dragleave="dragOver=false"
-                @drop.prevent="dragOver=false; adicionarArquivos($event.dataTransfer.files)">
+              <!-- Fotos existentes -->
+              <template x-for="(f, idx) in (editingCaptacao.fotos||[])" :key="idx">
+                <div class="relative rounded-xl overflow-hidden border-2 group transition-all"
+                     style="aspect-ratio:16/9"
+                     :style="idx===0 ? 'border-color:#345448' : 'border-color:#e5e7eb'">
+                  <img :src="f" class="w-full h-full object-cover select-none" draggable="false">
+
+                  <!-- Overlay hover -->
+                  <div class="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                       style="background:rgba(0,0,0,0.48)">
+                    <!-- Mover para capa -->
+                    <button x-show="idx > 0" type="button"
+                            @click="editingCaptacao.fotos = [f, ...(editingCaptacao.fotos||[]).filter((_,i)=>i!==idx)]"
+                            title="Definir como capa"
+                            class="w-8 h-8 rounded-full bg-white/20 border border-white/40 text-white text-xs font-bold flex items-center justify-center hover:bg-white/35 transition-all">⭐</button>
+                    <!-- Remover -->
+                    <button type="button" @click="remover(idx)"
+                            class="w-8 h-8 rounded-full bg-red-500/80 border border-red-400 text-white text-xs font-bold flex items-center justify-center hover:bg-red-600 transition-all">✕</button>
+                  </div>
+
+                  <!-- Badge capa -->
+                  <div x-show="idx===0"
+                       class="absolute top-1.5 left-1.5 text-[8px] font-black px-1.5 py-0.5 rounded"
+                       style="background:#345448;color:#fff;letter-spacing:.06em">CAPA</div>
+                  <!-- Número -->
+                  <div class="absolute bottom-1.5 right-2 text-[8px] font-bold text-white/60"
+                       x-text="idx+1 + '/' + (editingCaptacao.fotos||[]).length"></div>
+                </div>
+              </template>
+
+              <!-- Slot para adicionar (sempre o último) -->
+              <label class="relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed cursor-pointer transition-all select-none"
+                     style="aspect-ratio:16/9;border-color:#d1d5db;background:#f9fafb"
+                     @dragover.prevent.stop="$el.style.borderColor='#345448'; $el.style.background='rgba(52,84,72,0.06)'"
+                     @dragleave="$el.style.borderColor='#d1d5db'; $el.style.background='#f9fafb'"
+                     @drop.prevent.stop="$el.style.borderColor='#d1d5db'; $el.style.background='#f9fafb'; processarArquivos($event.dataTransfer.files)">
                 <input type="file" accept="image/*" multiple class="sr-only"
-                       @change="adicionarArquivos($event.target.files); $event.target.value=''">
-                <template x-if="!comprimindo">
-                  <div class="text-center">
-                    <div class="text-2xl mb-1">🖼️</div>
-                    <p class="text-xs font-semibold text-gray-500">Clique ou arraste fotos aqui</p>
-                    <p class="text-[10px] text-gray-400 mt-0.5">iPhone · iCloud · Câmera · Qualquer arquivo de imagem</p>
+                       @change="processarArquivos($event.target.files); $event.target.value=''">
+
+                <template x-if="processando === 0">
+                  <div class="text-center px-2">
+                    <div class="text-xl mb-1 text-gray-300">＋</div>
+                    <p class="text-[10px] font-semibold text-gray-400 leading-tight">Arraste ou<br>clique para adicionar</p>
+                    <p class="text-[9px] text-gray-300 mt-1">iCloud · iPhone · Câmera</p>
                   </div>
                 </template>
-                <template x-if="comprimindo">
-                  <div class="text-center">
-                    <div class="text-xl mb-1 animate-spin">⚙️</div>
-                    <p class="text-xs font-semibold text-gray-500">Comprimindo imagem...</p>
+
+                <template x-if="processando > 0">
+                  <div class="text-center px-2">
+                    <div class="text-lg text-gray-400 mb-1" style="animation:spin 1s linear infinite">⚙️</div>
+                    <p class="text-[10px] text-gray-400" x-text="'Processando ' + processando + ' foto(s)...'"></p>
                   </div>
                 </template>
               </label>
             </div>
 
-            <!-- ABA URL -->
-            <div x-show="abaFoto==='url'">
-              <div class="flex gap-2">
-                <input type="url" x-model="urlInput"
-                       @keydown.enter.prevent="adicionarUrl()"
-                       placeholder="https://exemplo.com/foto.jpg"
-                       class="flex-1 px-3 py-2 rounded-xl border text-xs focus:outline-none focus:ring-2 focus:ring-green-200 font-mono"
-                       style="border-color:#d0ddd8">
-                <button type="button" @click="adicionarUrl()"
-                        class="px-3 py-2 rounded-xl text-xs font-bold text-white transition-all"
-                        style="background:#345448">Adicionar</button>
-              </div>
-              <p class="text-[10px] text-gray-400 mt-1.5">⚠️ Só funciona com link direto terminando em .jpg .png .webp — links do iCloud, Google Fotos e Drive não são diretos. Use a aba Upload.</p>
-            </div>
-
-            <!-- Grade de miniaturas -->
-            <div x-show="(editingCaptacao.fotos||[]).length > 0" class="mt-3 grid grid-cols-4 gap-2">
-              <template x-for="(f, idx) in (editingCaptacao.fotos||[])" :key="idx">
-                <div class="relative rounded-xl overflow-hidden border border-gray-200 group" style="aspect-ratio:1">
-                  <img :src="f" class="w-full h-full object-cover">
-                  <!-- capa escura no hover -->
-                  <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                       style="background:rgba(0,0,0,0.5)">
-                    <button type="button" @click="removerFoto(idx)"
-                            class="w-7 h-7 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center">✕</button>
-                  </div>
-                  <!-- badge principal -->
-                  <div x-show="idx===0" class="absolute top-1 left-1 text-[8px] font-bold px-1 rounded" style="background:#345448;color:#fff">capa</div>
-                </div>
-              </template>
-            </div>
-            <p x-show="(editingCaptacao.fotos||[]).length > 1" class="text-[9px] text-gray-400 mt-1">A primeira foto é usada como capa no portal.</p>
+            <p class="text-[9px] text-gray-400 mt-1.5">
+              Arraste fotos diretamente para a grade. ⭐ define a capa. Fotos recortadas automaticamente para 16:9.
+            </p>
           </div>
 
           <!-- Diferenciais -->
