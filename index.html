@@ -2147,6 +2147,34 @@ tailwind.config = {
     <button @click="novaCaptacao()" class="px-5 py-2.5 rounded-xl text-white font-bold text-sm" style="background:#7c3aed">
       + Nova Captação
     </button>
+    <a href="/portal.html" target="_blank"
+       class="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90 active:scale-95"
+       style="background:linear-gradient(135deg,#2d4a3e,#3d6354);color:#fff">
+      <i class="fa-solid fa-globe text-xs"></i> Ver Portal
+    </a>
+  </div>
+
+  <!-- Portal Stats Banner -->
+  <div class="mb-4 rounded-2xl p-4 flex items-center gap-4"
+       style="background:linear-gradient(135deg,#2d4a3e 0%,#3d6354 100%)"
+       x-show="captacoes.length > 0">
+    <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(255,255,255,0.15)">
+      <i class="fa-solid fa-globe text-white text-base"></i>
+    </div>
+    <div class="flex-1 min-w-0">
+      <p class="text-xs font-black uppercase tracking-wider" style="color:rgba(255,255,255,0.6)">Portal Essense Imóveis</p>
+      <p class="text-white font-bold text-sm mt-0.5">
+        <span x-text="portalPublicados()"></span> publicado(s) no site
+        <span x-show="portalDestaques() > 0" class="ml-2 text-[11px] font-bold px-2 py-0.5 rounded-full" style="background:#b48860">
+          ⭐ <span x-text="portalDestaques()"></span> destaque(s)
+        </span>
+      </p>
+    </div>
+    <a href="/portal.html" target="_blank"
+       class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold flex-shrink-0 transition-all hover:opacity-80"
+       style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.25)">
+      <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Abrir
+    </a>
   </div>
 
   <!-- Lista de Captações -->
@@ -4351,6 +4379,11 @@ function app() {
         status: 'contato', etapasFeitas: [], acoesExtras: [],
         notas: '', foto: '', dataCadastro: this.todayStr(),
         proximoContato: this.todayStr(),
+        // Portal fields
+        publicarSite: false, tituloPortal: '', descricaoPortal: '',
+        fotos: [], videoUrl: '', valorVenda: '', valorLocacao: '',
+        tipoOferta: 'venda', banheiros: '', suites: '', condominio: '', iptu: '',
+        diferenciais: '', destaque: false,
       };
       this.showCaptacaoModal = true;
     },
@@ -4370,13 +4403,26 @@ function app() {
       }
       this.showCaptacaoModal = false;
       this.editingCaptacao = null;
+      this.syncPortal();
       this.showToast('✅ Captação salva!');
     },
     excluirCaptacao(id) {
       if (!confirm('Excluir esta captação?')) return;
       this.captacoes = this.captacoes.filter(c => c.id !== id);
+      this.syncPortal();
       this.showToast('Captação removida');
     },
+    syncPortal() {
+      const publicados = this.captacoes.filter(c => c.publicarSite);
+      const payload = {
+        imoveis: publicados,
+        config: { whatsapp: '5511943560902', corretorNome: 'André Camargo' },
+        updatedAt: new Date().toISOString(),
+      };
+      localStorage.setItem('amigo_portal_listings', JSON.stringify(payload));
+    },
+    portalPublicados() { return this.captacoes.filter(c => c.publicarSite).length; },
+    portalDestaques() { return this.captacoes.filter(c => c.publicarSite && c.destaque).length; },
     abrirTimelineCaptacao(cap) {
       this.captacaoTimelineItem = JSON.parse(JSON.stringify(cap));
       this.showCaptacaoTimeline = true;
@@ -6977,6 +7023,148 @@ function app() {
         <textarea x-model="editingCaptacao.notas" rows="3" placeholder="Características, condições, pendências..."
                   class="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 resize-none"></textarea>
       </div>
+
+      <!-- ═══ PORTAL MODULE ═══ -->
+      <div class="rounded-2xl overflow-hidden" style="border:2px solid #e8f0ec">
+        <!-- Toggle header -->
+        <div class="flex items-center justify-between px-4 py-3 cursor-pointer select-none"
+             :style="editingCaptacao.publicarSite ? 'background:linear-gradient(135deg,#2d4a3e,#3d6354)' : 'background:#f8faf8'"
+             @click="editingCaptacao.publicarSite = !editingCaptacao.publicarSite">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                 :style="editingCaptacao.publicarSite ? 'background:rgba(255,255,255,0.2)' : 'background:#e8f0ec'">
+              <i class="fa-solid fa-globe text-sm" :style="editingCaptacao.publicarSite ? 'color:#fff' : 'color:#345448'"></i>
+            </div>
+            <div>
+              <p class="text-sm font-black leading-none" :style="editingCaptacao.publicarSite ? 'color:#fff' : 'color:#345448'">Publicar no Portal</p>
+              <p class="text-[10px] mt-0.5 leading-none" :style="editingCaptacao.publicarSite ? 'color:rgba(255,255,255,0.65)' : 'color:#7a9e8a'">Aparece no site público da Essense</p>
+            </div>
+          </div>
+          <!-- Toggle pill -->
+          <div class="w-11 h-6 rounded-full relative flex-shrink-0 transition-all"
+               :style="editingCaptacao.publicarSite ? 'background:#b48860' : 'background:#d1d5db'">
+            <div class="w-4 h-4 bg-white rounded-full absolute top-1 transition-all shadow"
+                 :style="editingCaptacao.publicarSite ? 'left:calc(100% - 20px)' : 'left:4px'"></div>
+          </div>
+        </div>
+
+        <!-- Portal form (quando ativo) -->
+        <div x-show="editingCaptacao.publicarSite" x-collapse class="px-4 pb-4 space-y-3" style="border-top:1px solid #e8f0ec; padding-top:14px">
+
+          <!-- Título do anúncio -->
+          <div>
+            <label class="text-[10px] font-black uppercase tracking-wider text-gray-400">Título do Anúncio</label>
+            <input type="text" x-model="editingCaptacao.tituloPortal"
+                   :placeholder="'Ex: Apartamento ' + (editingCaptacao.quartos||'') + ' dorms - ' + (editingCaptacao.bairro||editingCaptacao.endereco||'...')"
+                   class="w-full mt-1 px-3 py-2 rounded-xl border text-sm focus:outline-none focus:ring-2"
+                   style="border-color:#d0ddd8; --tw-ring-color:#b48860">
+          </div>
+
+          <!-- Tipo de oferta -->
+          <div>
+            <label class="text-[10px] font-black uppercase tracking-wider text-gray-400">Tipo de Oferta</label>
+            <div class="flex gap-2 mt-1">
+              <template x-for="o in [{v:'venda',l:'🏷️ Venda'},{v:'locacao',l:'🔑 Locação'},{v:'ambos',l:'🔄 Ambos'}]" :key="o.v">
+                <button @click="editingCaptacao.tipoOferta=o.v" type="button"
+                        class="flex-1 py-2 rounded-xl text-xs font-bold border-2 transition-all"
+                        :style="editingCaptacao.tipoOferta===o.v ? 'background:#2d4a3e;color:#fff;border-color:#2d4a3e' : 'background:#fff;border-color:#d0ddd8;color:#6b7280'"
+                        x-text="o.l"></button>
+              </template>
+            </div>
+          </div>
+
+          <!-- Valores -->
+          <div class="grid grid-cols-2 gap-2">
+            <div x-show="editingCaptacao.tipoOferta !== 'locacao'">
+              <label class="text-[10px] font-black uppercase tracking-wider text-gray-400">Valor Venda (R$)</label>
+              <input type="number" x-model="editingCaptacao.valorVenda" placeholder="Ex: 980000"
+                     class="w-full mt-1 px-3 py-2 rounded-xl border text-sm focus:outline-none"
+                     style="border-color:#d0ddd8">
+            </div>
+            <div x-show="editingCaptacao.tipoOferta !== 'venda'">
+              <label class="text-[10px] font-black uppercase tracking-wider text-gray-400">Valor Locação (R$/mês)</label>
+              <input type="number" x-model="editingCaptacao.valorLocacao" placeholder="Ex: 3500"
+                     class="w-full mt-1 px-3 py-2 rounded-xl border text-sm focus:outline-none"
+                     style="border-color:#d0ddd8">
+            </div>
+          </div>
+
+          <!-- Características extras -->
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="text-[10px] font-black uppercase tracking-wider text-gray-400">Banheiros</label>
+              <input type="number" x-model="editingCaptacao.banheiros" placeholder="0"
+                     class="w-full mt-1 px-3 py-2 rounded-xl border text-sm focus:outline-none"
+                     style="border-color:#d0ddd8">
+            </div>
+            <div>
+              <label class="text-[10px] font-black uppercase tracking-wider text-gray-400">Suítes</label>
+              <input type="number" x-model="editingCaptacao.suites" placeholder="0"
+                     class="w-full mt-1 px-3 py-2 rounded-xl border text-sm focus:outline-none"
+                     style="border-color:#d0ddd8">
+            </div>
+            <div>
+              <label class="text-[10px] font-black uppercase tracking-wider text-gray-400">Cond. (R$/mês)</label>
+              <input type="number" x-model="editingCaptacao.condominio" placeholder="0"
+                     class="w-full mt-1 px-3 py-2 rounded-xl border text-sm focus:outline-none"
+                     style="border-color:#d0ddd8">
+            </div>
+          </div>
+
+          <!-- Fotos (URLs) -->
+          <div>
+            <label class="text-[10px] font-black uppercase tracking-wider text-gray-400">URLs das Fotos
+              <span class="normal-case font-normal text-gray-300 ml-1">(uma por linha)</span>
+            </label>
+            <textarea rows="3"
+                      :value="(editingCaptacao.fotos||[]).join('\n')"
+                      @input="editingCaptacao.fotos = $event.target.value.split('\n').map(l=>l.trim()).filter(Boolean)"
+                      placeholder="https://link-da-foto-1.jpg&#10;https://link-da-foto-2.jpg"
+                      class="w-full mt-1 px-3 py-2 rounded-xl border text-xs focus:outline-none resize-none font-mono"
+                      style="border-color:#d0ddd8"></textarea>
+          </div>
+
+          <!-- Diferenciais -->
+          <div>
+            <label class="text-[10px] font-black uppercase tracking-wider text-gray-400">Diferenciais
+              <span class="normal-case font-normal text-gray-300 ml-1">(separados por vírgula)</span>
+            </label>
+            <input type="text" x-model="editingCaptacao.diferenciais"
+                   placeholder="Piscina, Churrasqueira, Academia, Portaria 24h"
+                   class="w-full mt-1 px-3 py-2 rounded-xl border text-sm focus:outline-none"
+                   style="border-color:#d0ddd8">
+          </div>
+
+          <!-- Descrição -->
+          <div>
+            <label class="text-[10px] font-black uppercase tracking-wider text-gray-400">Descrição do Anúncio</label>
+            <textarea x-model="editingCaptacao.descricaoPortal" rows="3"
+                      placeholder="Descreva os pontos fortes do imóvel para o comprador/locatário..."
+                      class="w-full mt-1 px-3 py-2 rounded-xl border text-sm focus:outline-none resize-none"
+                      style="border-color:#d0ddd8"></textarea>
+          </div>
+
+          <!-- Destaque toggle -->
+          <label class="flex items-center gap-3 cursor-pointer py-2 px-3 rounded-xl" style="background:#fdf6ee;border:1px solid #e8d8c0">
+            <input type="checkbox" x-model="editingCaptacao.destaque" class="sr-only">
+            <div class="w-8 h-4 rounded-full relative transition-all"
+                 :style="editingCaptacao.destaque ? 'background:#b48860' : 'background:#d1d5db'">
+              <div class="w-3 h-3 bg-white rounded-full absolute top-0.5 transition-all shadow"
+                   :style="editingCaptacao.destaque ? 'left:calc(100% - 14px)' : 'left:2px'"></div>
+            </div>
+            <span class="text-xs font-bold" style="color:#7a5530">⭐ Marcar como Destaque no portal</span>
+          </label>
+
+          <!-- Link portal -->
+          <a href="/portal.html" target="_blank"
+             class="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all hover:opacity-80"
+             style="background:linear-gradient(135deg,#2d4a3e,#3d6354);color:#fff">
+            <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+            Visualizar no portal público
+          </a>
+        </div>
+      </div>
+      <!-- ═══ /PORTAL MODULE ═══ -->
 
       <!-- Botões -->
       <div class="flex gap-3 pt-2">

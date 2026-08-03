@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Essense Imóveis – Encontre o imóvel ideal</title>
+<meta name="description" content="Essense Negócios Imobiliários – Imóveis de alto padrão para venda e locação.">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #2d4a3e;
+    --green-l: #3d6354;
+    --green-xl: #e8f0ec;
+    --gold: #b48860;
+    --gold-l: #c9a070;
+    --gold-xl: #fdf6ee;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #f4f6f4; color: #1a2e25; }
+  .font-display { font-family: 'Playfair Display', serif; }
+  .bg-green { background: var(--green); }
+  .bg-green-l { background: var(--green-l); }
+  .text-green { color: var(--green); }
+  .text-gold { color: var(--gold); }
+  .border-gold { border-color: var(--gold); }
+  .bg-gold { background: var(--gold); }
+  .hero-gradient { background: linear-gradient(160deg, #1a2e25 0%, #2d4a3e 55%, #3d6354 100%); }
+  .card-hover { transition: transform .2s, box-shadow .2s; }
+  .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 48px rgba(45,74,62,0.18); }
+  .tag { display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.04em; }
+  .scrollbar-hide::-webkit-scrollbar { display:none; }
+  .scrollbar-hide { -ms-overflow-style:none; scrollbar-width:none; }
+  .img-placeholder { background: linear-gradient(135deg, #e8f0ec, #d0e0d8); }
+  .chip { padding:6px 14px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s; }
+  .chip.active { background:var(--green); color:#fff; }
+  .chip:not(.active) { background:#fff;color:#4a6358;border:1.5px solid #d0ddd8; }
+  .chip:not(.active):hover { border-color:var(--green); color:var(--green); }
+  input[type=range] { accent-color: var(--green); }
+  .detail-overlay { background: rgba(10,25,18,.85); backdrop-filter: blur(6px); }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  .fade-in { animation: fadeIn .35s ease both; }
+  .skeleton { background: linear-gradient(90deg,#e8eee8 25%,#d8e4d8 50%,#e8eee8 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; }
+  @keyframes shimmer { 0%{background-position:200%} 100%{background-position:-200%} }
+  .nav-link { position:relative; }
+  .nav-link::after { content:'';position:absolute;bottom:-2px;left:0;width:0;height:2px;background:var(--gold);transition:width .2s; }
+  .nav-link:hover::after { width:100%; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════ HEADER ═══════════════════════════ -->
+<header class="sticky top-0 z-50 shadow-lg" style="background:var(--green)">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
+    <!-- Logo -->
+    <a href="#" class="flex items-center gap-2.5">
+      <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--gold)">
+        <i class="fa-solid fa-house-chimney text-white text-sm"></i>
+      </div>
+      <div>
+        <span class="font-display font-bold text-white text-lg leading-none">Essense</span>
+        <span class="block text-[9px] font-semibold tracking-widest uppercase" style="color:var(--gold-l)">Negócios Imobiliários</span>
+      </div>
+    </a>
+
+    <!-- Nav desktop -->
+    <nav class="hidden md:flex items-center gap-6">
+      <a href="#imoveis" class="nav-link text-sm font-semibold text-white/80 hover:text-white transition-colors">Imóveis</a>
+      <a href="#sobre" class="nav-link text-sm font-semibold text-white/80 hover:text-white transition-colors">Sobre</a>
+      <a href="#contato" class="nav-link text-sm font-semibold text-white/80 hover:text-white transition-colors">Contato</a>
+    </nav>
+
+    <!-- CTA -->
+    <div class="flex items-center gap-2">
+      <a id="btn-whatsapp-header" href="#" target="_blank"
+         class="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95"
+         style="background:var(--gold)">
+        <i class="fa-brands fa-whatsapp"></i> Falar com corretor
+      </a>
+      <button class="md:hidden text-white" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+        <i class="fa-solid fa-bars text-lg"></i>
+      </button>
+    </div>
+  </div>
+  <!-- Mobile menu -->
+  <div id="mobile-menu" class="hidden md:hidden border-t px-4 py-3 space-y-2" style="background:var(--green-l);border-color:rgba(255,255,255,0.1)">
+    <a href="#imoveis" class="block text-sm font-semibold text-white/80 py-1.5">Imóveis</a>
+    <a href="#sobre" class="block text-sm font-semibold text-white/80 py-1.5">Sobre</a>
+    <a href="#contato" class="block text-sm font-semibold text-white/80 py-1.5">Contato</a>
+  </div>
+</header>
+
+<!-- ═══════════════════════════ HERO ═══════════════════════════ -->
+<section class="hero-gradient pt-16 pb-20 px-4 text-center relative overflow-hidden">
+  <!-- Decos -->
+  <div class="absolute top-0 right-0 w-96 h-96 rounded-full opacity-5" style="background:radial-gradient(circle,#b48860,transparent);transform:translate(30%,-30%)"></div>
+  <div class="absolute bottom-0 left-0 w-64 h-64 rounded-full opacity-5" style="background:radial-gradient(circle,#b48860,transparent);transform:translate(-30%,30%)"></div>
+
+  <div class="relative z-10 max-w-3xl mx-auto">
+    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold mb-5" style="background:rgba(180,136,96,0.2);color:#c9a46e;border:1px solid rgba(180,136,96,0.3)">
+      <i class="fa-solid fa-star text-[9px]"></i> Alto Padrão · São Paulo e Região
+    </div>
+    <h1 class="font-display text-4xl sm:text-5xl font-bold text-white leading-tight mb-4">
+      Encontre o imóvel<br><span style="color:var(--gold)">perfeito para você</span>
+    </h1>
+    <p class="text-white/70 text-lg mb-10">Imóveis selecionados com excelência e cuidado pela Essense Negócios Imobiliários</p>
+
+    <!-- Barra de busca -->
+    <div class="bg-white rounded-2xl p-3 shadow-2xl max-w-2xl mx-auto flex flex-col sm:flex-row gap-2">
+      <div class="relative flex-1">
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+        <input id="hero-search" type="text" placeholder="Bairro, cidade ou endereço..."
+               class="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl focus:outline-none text-gray-700"
+               style="background:#f8faf8"
+               oninput="filtrarImoveis()">
+      </div>
+      <select id="hero-tipo" class="px-3 py-2.5 text-sm rounded-xl focus:outline-none text-gray-700 font-semibold"
+              style="background:#f8faf8; min-width:130px" onchange="filtrarImoveis()">
+        <option value="">Todos os tipos</option>
+        <option value="apartamento">Apartamento</option>
+        <option value="casa">Casa</option>
+        <option value="terreno">Terreno</option>
+        <option value="comercial">Comercial</option>
+        <option value="studio">Studio</option>
+      </select>
+      <select id="hero-oferta" class="px-3 py-2.5 text-sm rounded-xl focus:outline-none text-gray-700 font-semibold"
+              style="background:#f8faf8; min-width:110px" onchange="filtrarImoveis()">
+        <option value="">Venda/Locação</option>
+        <option value="venda">Venda</option>
+        <option value="locacao">Locação</option>
+      </select>
+      <button onclick="filtrarImoveis()" class="px-5 py-2.5 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 flex items-center gap-2 justify-center"
+              style="background:var(--green)">
+        <i class="fa-solid fa-search"></i> Buscar
+      </button>
+    </div>
+
+    <!-- Stats rápidas -->
+    <div id="hero-stats" class="flex items-center justify-center gap-6 mt-8 text-white/60 text-sm">
+      <span><strong id="stat-total" class="text-white">0</strong> imóveis</span>
+      <span class="w-1 h-1 rounded-full bg-white/30"></span>
+      <span><strong id="stat-venda" class="text-white">0</strong> para venda</span>
+      <span class="w-1 h-1 rounded-full bg-white/30"></span>
+      <span><strong id="stat-locacao" class="text-white">0</strong> para locação</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ FILTROS ═══════════════════════════ -->
+<section class="bg-white border-b sticky top-16 z-40 shadow-sm" id="imoveis">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-2 overflow-x-auto scrollbar-hide">
+    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider flex-shrink-0 mr-1">Filtrar:</span>
+    <button class="chip active flex-shrink-0" data-filter="todos" onclick="setFiltro(this,'todos')">Todos</button>
+    <button class="chip flex-shrink-0" data-filter="apartamento" onclick="setFiltro(this,'apartamento')">🏢 Apartamentos</button>
+    <button class="chip flex-shrink-0" data-filter="casa" onclick="setFiltro(this,'casa')">🏠 Casas</button>
+    <button class="chip flex-shrink-0" data-filter="terreno" onclick="setFiltro(this,'terreno')">🌳 Terrenos</button>
+    <button class="chip flex-shrink-0" data-filter="comercial" onclick="setFiltro(this,'comercial')">🏪 Comercial</button>
+    <button class="chip flex-shrink-0" data-filter="studio" onclick="setFiltro(this,'studio')">🏙️ Studio</button>
+    <div class="ml-auto flex-shrink-0 flex items-center gap-2">
+      <select id="sort-select" class="text-xs font-semibold rounded-lg px-3 py-1.5 border border-gray-200 focus:outline-none text-gray-600" onchange="filtrarImoveis()">
+        <option value="recente">Mais recentes</option>
+        <option value="menor">Menor preço</option>
+        <option value="maior">Maior preço</option>
+        <option value="area">Maior área</option>
+      </select>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ DESTAQUES ═══════════════════════════ -->
+<section id="sec-destaques" class="max-w-7xl mx-auto px-4 sm:px-6 mt-10 mb-4 hidden">
+  <h2 class="font-display text-xl font-bold text-green-900 mb-4 flex items-center gap-2">
+    <i class="fa-solid fa-star text-sm" style="color:var(--gold)"></i> Imóveis em Destaque
+  </h2>
+  <div id="grid-destaques" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+</section>
+
+<!-- ═══════════════════════════ TODOS OS IMÓVEIS ═══════════════════════════ -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 mt-8 pb-20">
+  <div class="flex items-center justify-between mb-5">
+    <h2 class="font-display text-xl font-bold text-green-900" id="titulo-lista">Todos os Imóveis</h2>
+    <span class="text-sm text-gray-400 font-semibold" id="contador-lista">0 imóveis</span>
+  </div>
+
+  <!-- Grid -->
+  <div id="grid-imoveis" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+
+  <!-- Empty state -->
+  <div id="empty-state" class="hidden py-20 text-center">
+    <div class="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center" style="background:var(--green-xl)">
+      <i class="fa-solid fa-house-circle-xmark text-3xl" style="color:var(--green)"></i>
+    </div>
+    <h3 class="text-lg font-bold text-gray-700 mb-1">Nenhum imóvel encontrado</h3>
+    <p class="text-gray-400 text-sm">Tente ajustar os filtros ou entre em contato conosco</p>
+    <button onclick="resetFiltros()" class="mt-4 px-5 py-2 rounded-xl text-sm font-bold text-white" style="background:var(--green)">Ver todos</button>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ SOBRE / CTA ═══════════════════════════ -->
+<section id="sobre" class="py-16 px-4" style="background:var(--green)">
+  <div class="max-w-4xl mx-auto text-center">
+    <p class="text-xs font-black tracking-widest uppercase mb-3" style="color:var(--gold)">✦ Sobre nós ✦</p>
+    <h2 class="font-display text-3xl font-bold text-white mb-4">Especialistas em imóveis de alto padrão</h2>
+    <p class="text-white/70 text-base leading-relaxed mb-8 max-w-2xl mx-auto">
+      A Essense Negócios Imobiliários atua com excelência, transparência e compromisso na intermediação de imóveis residenciais e comerciais. Nosso time é preparado para oferecer a melhor experiência na compra, venda ou locação do seu imóvel.
+    </p>
+    <div class="grid grid-cols-3 gap-6 mb-10">
+      <div>
+        <p class="font-display text-3xl font-bold text-white" id="stat-anos">5+</p>
+        <p class="text-white/50 text-sm mt-1">Anos de mercado</p>
+      </div>
+      <div>
+        <p class="font-display text-3xl font-bold" style="color:var(--gold)" id="stat-neg">100+</p>
+        <p class="text-white/50 text-sm mt-1">Negócios fechados</p>
+      </div>
+      <div>
+        <p class="font-display text-3xl font-bold text-white">⭐ 5.0</p>
+        <p class="text-white/50 text-sm mt-1">Avaliação Google</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ CONTATO ═══════════════════════════ -->
+<section id="contato" class="py-16 px-4 bg-white">
+  <div class="max-w-xl mx-auto text-center">
+    <p class="text-xs font-black tracking-widest uppercase mb-2" style="color:var(--gold)">✦ Contato ✦</p>
+    <h2 class="font-display text-2xl font-bold mb-2" style="color:var(--green)">Fale com um corretor</h2>
+    <p class="text-gray-500 text-sm mb-8">Estamos prontos para ajudar você a encontrar o imóvel ideal</p>
+    <a id="btn-whatsapp-contato" href="#" target="_blank"
+       class="inline-flex items-center gap-3 px-8 py-4 rounded-2xl text-white font-bold text-lg transition-all hover:opacity-90 active:scale-95 shadow-lg"
+       style="background:linear-gradient(135deg,#25D366,#128C7E);box-shadow:0 8px 24px rgba(37,211,102,0.35)">
+      <i class="fa-brands fa-whatsapp text-2xl"></i>
+      Chamar no WhatsApp
+    </a>
+    <p class="text-gray-300 text-xs mt-4">Resposta em até 5 minutos</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ FOOTER ═══════════════════════════ -->
+<footer class="py-8 px-4 text-center text-sm" style="background:#111c16;color:#6b8f7a">
+  <div class="flex items-center justify-center gap-2 mb-2">
+    <i class="fa-solid fa-house-chimney" style="color:var(--gold)"></i>
+    <span class="font-bold text-white">Essense</span>
+    <span>Negócios Imobiliários</span>
+  </div>
+  <p class="text-xs">CRECI: SP-XXXXX · Desenvolvido com <span style="color:var(--gold)">AMiGO Corretor</span></p>
+</footer>
+
+<!-- ═══════════════════════════ MODAL DETALHE ═══════════════════════════ -->
+<div id="modal-imovel" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 detail-overlay" onclick="fecharModal(event)">
+  <div class="bg-white rounded-3xl overflow-hidden w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl fade-in" onclick="event.stopPropagation()">
+
+    <!-- Galeria de fotos -->
+    <div class="relative flex-shrink-0 bg-gray-900" style="height:280px">
+      <div id="modal-fotos" class="flex overflow-x-auto scrollbar-hide h-full snap-x snap-mandatory"></div>
+      <!-- Badge tipo oferta -->
+      <div class="absolute top-4 left-4 flex gap-2">
+        <span id="modal-badge-oferta" class="tag text-white text-xs"></span>
+        <span id="modal-badge-destaque" class="tag hidden" style="background:var(--gold);color:#fff">⭐ DESTAQUE</span>
+      </div>
+      <!-- Fechar -->
+      <button onclick="fecharModal()" class="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center text-white font-bold" style="background:rgba(0,0,0,0.5)">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <!-- Counter fotos -->
+      <div id="modal-foto-counter" class="absolute bottom-4 right-4 text-white text-xs font-bold px-2 py-1 rounded-full" style="background:rgba(0,0,0,0.5)"></div>
+    </div>
+
+    <!-- Conteúdo -->
+    <div class="overflow-y-auto flex-1 p-6">
+      <div class="flex flex-col md:flex-row gap-6">
+        <!-- Info principal -->
+        <div class="flex-1 min-w-0">
+          <div class="flex items-start justify-between gap-2 mb-3">
+            <div>
+              <h2 id="modal-titulo" class="font-display text-2xl font-bold leading-tight" style="color:var(--green)"></h2>
+              <p id="modal-endereco" class="text-gray-500 text-sm mt-1 flex items-center gap-1">
+                <i class="fa-solid fa-location-dot text-xs" style="color:var(--gold)"></i>
+                <span></span>
+              </p>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <p id="modal-preco" class="font-display text-2xl font-bold" style="color:var(--green)"></p>
+              <p id="modal-preco-cond" class="text-gray-400 text-xs mt-0.5"></p>
+            </div>
+          </div>
+
+          <!-- Características -->
+          <div id="modal-caracteristicas" class="flex flex-wrap gap-3 mb-5 pb-5" style="border-bottom:1px solid #e8ede8"></div>
+
+          <!-- Descrição -->
+          <div id="modal-descricao-wrap" class="mb-5 hidden">
+            <h3 class="text-sm font-black uppercase tracking-wider mb-2" style="color:var(--green)">Descrição</h3>
+            <p id="modal-descricao" class="text-gray-600 text-sm leading-relaxed"></p>
+          </div>
+
+          <!-- Diferenciais -->
+          <div id="modal-diferenciais-wrap" class="mb-5 hidden">
+            <h3 class="text-sm font-black uppercase tracking-wider mb-3" style="color:var(--green)">Diferenciais</h3>
+            <div id="modal-diferenciais" class="flex flex-wrap gap-2"></div>
+          </div>
+        </div>
+
+        <!-- Card contato -->
+        <div class="md:w-64 flex-shrink-0">
+          <div class="rounded-2xl p-5 sticky top-4" style="background:var(--green-xl);border:1.5px solid #d0ddd8">
+            <p class="text-xs font-black uppercase tracking-wider mb-1" style="color:var(--green)">Corretor responsável</p>
+            <p class="font-bold text-gray-800 text-sm mb-3" id="modal-corretor">André Camargo</p>
+            <a id="modal-btn-wa" href="#" target="_blank"
+               class="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-white font-bold text-sm mb-2 transition-all hover:opacity-90"
+               style="background:#25D366">
+              <i class="fa-brands fa-whatsapp text-base"></i> Quero este imóvel
+            </a>
+            <a id="modal-btn-tel" href="#" class="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold text-sm transition-all hover:bg-gray-100"
+               style="background:white;color:var(--green);border:1.5px solid #d0ddd8">
+              <i class="fa-solid fa-phone text-xs"></i> Ligar agora
+            </a>
+            <p class="text-[10px] text-gray-400 text-center mt-3">Resposta em minutos</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ TEMPLATE CARD ═══════════════════════════ -->
+<template id="tpl-card">
+  <div class="bg-white rounded-2xl overflow-hidden card-hover cursor-pointer border border-gray-100 shadow-sm" onclick="abrirModal(this)">
+    <!-- Foto -->
+    <div class="relative overflow-hidden" style="height:200px">
+      <div class="foto-container w-full h-full img-placeholder flex items-center justify-center">
+        <i class="fa-solid fa-image text-3xl" style="color:#b8cfc4"></i>
+      </div>
+      <!-- Badges -->
+      <div class="absolute top-3 left-3 flex gap-1.5">
+        <span class="badge-oferta tag text-white text-[10px]"></span>
+        <span class="badge-destaque tag hidden text-[10px]" style="background:var(--gold);color:#fff">⭐ Destaque</span>
+      </div>
+      <div class="badge-tipo tag absolute top-3 right-3 text-[10px] text-white"></div>
+    </div>
+    <!-- Info -->
+    <div class="p-4">
+      <h3 class="card-titulo font-bold text-gray-900 text-sm leading-snug mb-1 line-clamp-2"></h3>
+      <p class="card-local text-xs text-gray-400 flex items-center gap-1 mb-3">
+        <i class="fa-solid fa-location-dot text-[9px]" style="color:var(--gold)"></i>
+        <span></span>
+      </p>
+      <!-- Características -->
+      <div class="card-caracteristicas flex items-center gap-3 text-xs text-gray-500 mb-3"></div>
+      <!-- Preço -->
+      <div class="flex items-end justify-between pt-3" style="border-top:1px solid #f0f5f0">
+        <div>
+          <p class="card-preco font-display font-bold text-lg leading-none" style="color:var(--green)"></p>
+          <p class="card-preco-tipo text-[10px] text-gray-400 mt-0.5"></p>
+        </div>
+        <button class="px-3 py-1.5 rounded-xl text-xs font-bold text-white transition-all hover:opacity-90"
+                style="background:var(--green)">Ver detalhes</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+// ═══════════════════ CONFIGURAÇÕES ═══════════════════
+const CONFIG = {
+  whatsapp: '5511943560902',   // será sobrescrito pelos dados do portal
+  corretorNome: 'André Camargo',
+  corretorCRE: '',
+};
+
+// ═══════════════════ DADOS ═══════════════════
+let todosImoveis = [];
+let filtroTipo = 'todos';
+let filtroOferta = '';
+let buscaTexto = '';
+let sortMode = 'recente';
+
+function carregarDados() {
+  // Tenta carregar do localStorage (mesma origin que o CRM)
+  try {
+    const raw = localStorage.getItem('amigo_portal_listings');
+    if (raw) {
+      const data = JSON.parse(raw);
+      todosImoveis = (data.imoveis || []).filter(i => i.publicarSite);
+      if (data.config) {
+        if (data.config.whatsapp) CONFIG.whatsapp = data.config.whatsapp;
+        if (data.config.corretorNome) CONFIG.corretorNome = data.config.corretorNome;
+      }
+    } else {
+      // Fallback: imóveis demo para visualização
+      todosImoveis = getDemoImoveis();
+    }
+  } catch(e) {
+    todosImoveis = getDemoImoveis();
+  }
+  configurarLinks();
+  atualizarStats();
+  filtrarImoveis();
+}
+
+function configurarLinks() {
+  const waBase = `https://wa.me/${CONFIG.whatsapp.replace(/\D/g,'')}`;
+  document.getElementById('btn-whatsapp-header').href = waBase + '?text=Olá! Vi os imóveis no site da Essense e gostaria de mais informações.';
+  document.getElementById('btn-whatsapp-contato').href = waBase + '?text=Olá! Gostaria de falar com um corretor da Essense.';
+}
+
+function atualizarStats() {
+  document.getElementById('stat-total').textContent = todosImoveis.length;
+  document.getElementById('stat-venda').textContent = todosImoveis.filter(i => i.tipoOferta === 'venda' || i.tipoOferta === 'ambos').length;
+  document.getElementById('stat-locacao').textContent = todosImoveis.filter(i => i.tipoOferta === 'locacao' || i.tipoOferta === 'ambos').length;
+}
+
+// ═══════════════════ FILTROS ═══════════════════
+function setFiltro(btn, tipo) {
+  filtroTipo = tipo;
+  document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filtrarImoveis();
+}
+
+function filtrarImoveis() {
+  buscaTexto = (document.getElementById('hero-search')?.value || '').toLowerCase();
+  const heroTipo = document.getElementById('hero-tipo')?.value || '';
+  const heroOferta = document.getElementById('hero-oferta')?.value || '';
+  sortMode = document.getElementById('sort-select')?.value || 'recente';
+  if (heroTipo) filtroTipo = heroTipo;
+  if (heroOferta) filtroOferta = heroOferta;
+
+  let lista = todosImoveis.filter(i => {
+    if (filtroTipo !== 'todos' && filtroTipo && i.tipo !== filtroTipo) return false;
+    if (filtroOferta && filtroOferta !== 'todos') {
+      if (i.tipoOferta !== filtroOferta && i.tipoOferta !== 'ambos') return false;
+    }
+    if (buscaTexto) {
+      const txt = [i.endereco,i.bairro,i.cidade,i.tituloPortal,i.descricaoPortal].join(' ').toLowerCase();
+      if (!txt.includes(buscaTexto)) return false;
+    }
+    return true;
+  });
+
+  // Ordenar
+  lista.sort((a,b) => {
+    if (sortMode === 'recente') return (b.id||0) - (a.id||0);
+    if (sortMode === 'menor') return precoNum(a) - precoNum(b);
+    if (sortMode === 'maior') return precoNum(b) - precoNum(a);
+    if (sortMode === 'area') return (Number(b.area)||0) - (Number(a.area)||0);
+    return 0;
+  });
+
+  const destaques = lista.filter(i => i.destaque);
+  const normais = lista;
+
+  // Destaques
+  const secDest = document.getElementById('sec-destaques');
+  if (destaques.length > 0 && !buscaTexto && filtroTipo === 'todos' && !filtroOferta) {
+    secDest.classList.remove('hidden');
+    renderGrid(document.getElementById('grid-destaques'), destaques.slice(0,3));
+  } else {
+    secDest.classList.add('hidden');
+  }
+
+  // Lista principal
+  document.getElementById('contador-lista').textContent = lista.length + ' imóvel(is)';
+  const tituloFiltro = filtroTipo !== 'todos' ? tipoLabel(filtroTipo) + 's' : 'Imóveis';
+  document.getElementById('titulo-lista').textContent = tituloFiltro;
+
+  renderGrid(document.getElementById('grid-imoveis'), normais);
+  document.getElementById('empty-state').classList.toggle('hidden', lista.length > 0);
+}
+
+function resetFiltros() {
+  filtroTipo = 'todos';
+  filtroOferta = '';
+  buscaTexto = '';
+  document.getElementById('hero-search').value = '';
+  document.getElementById('hero-tipo').value = '';
+  document.getElementById('hero-oferta').value = '';
+  document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+  document.querySelector('[data-filter="todos"]').classList.add('active');
+  filtrarImoveis();
+}
+
+function precoNum(i) {
+  const v = i.tipoOferta === 'locacao' ? i.valorLocacao : i.valorVenda;
+  return Number(String(v||'').replace(/\D/g,'')) || 0;
+}
+
+// ═══════════════════ RENDER CARDS ═══════════════════
+function renderGrid(container, lista) {
+  container.innerHTML = '';
+  lista.forEach(imovel => {
+    const tpl = document.getElementById('tpl-card').content.cloneNode(true);
+    const card = tpl.querySelector('div');
+
+    // Dados
+    card.dataset.id = imovel.id;
+
+    // Foto principal
+    const fotoContainer = card.querySelector('.foto-container');
+    const fotos = imovel.fotos?.filter(f=>f) || [];
+    if (fotos.length > 0) {
+      fotoContainer.innerHTML = `<img src="${fotos[0]}" alt="${imovel.tituloPortal||imovel.endereco}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<div class=\\'w-full h-full img-placeholder flex items-center justify-center\\'><i class=\\'fa-solid fa-image text-3xl\\' style=\\'color:#b8cfc4\\'></i></div>'">`;
+    }
+
+    // Badges
+    const oferta = imovel.tipoOferta || 'venda';
+    const badgeOferta = card.querySelector('.badge-oferta');
+    badgeOferta.textContent = ofertaLabel(oferta);
+    badgeOferta.style.background = oferta === 'locacao' ? '#6366f1' : '#10b981';
+
+    if (imovel.destaque) card.querySelector('.badge-destaque').classList.remove('hidden');
+
+    const badgeTipo = card.querySelector('.badge-tipo');
+    badgeTipo.textContent = tipoEmoji(imovel.tipo) + ' ' + tipoLabel(imovel.tipo);
+    badgeTipo.style.background = 'rgba(0,0,0,0.5)';
+
+    // Título e local
+    card.querySelector('.card-titulo').textContent = imovel.tituloPortal || imovel.endereco;
+    card.querySelector('.card-local span').textContent = [imovel.bairro, imovel.cidade].filter(Boolean).join(', ') || 'Consulte';
+
+    // Características
+    const chars = [];
+    if (imovel.quartos) chars.push(`<span class="flex items-center gap-1"><i class="fa-solid fa-bed text-[10px]" style="color:var(--gold)"></i> ${imovel.quartos} qts</span>`);
+    if (imovel.vagas) chars.push(`<span class="flex items-center gap-1"><i class="fa-solid fa-car text-[10px]" style="color:var(--gold)"></i> ${imovel.vagas} vg</span>`);
+    if (imovel.area) chars.push(`<span class="flex items-center gap-1"><i class="fa-solid fa-ruler-combined text-[10px]" style="color:var(--gold)"></i> ${imovel.area}m²</span>`);
+    card.querySelector('.card-caracteristicas').innerHTML = chars.join('');
+
+    // Preço
+    const preco = oferta === 'locacao' ? imovel.valorLocacao : imovel.valorVenda;
+    card.querySelector('.card-preco').textContent = preco ? 'R$ ' + fmtMoeda(preco) : 'Consulte';
+    card.querySelector('.card-preco-tipo').textContent = oferta === 'locacao' ? '/mês' : 'valor total';
+
+    // Click para abrir modal
+    card.addEventListener('click', () => abrirModalById(imovel.id));
+
+    container.appendChild(card);
+  });
+}
+
+// ═══════════════════ MODAL ═══════════════════
+let imovelAberto = null;
+
+function abrirModalById(id) {
+  const imovel = todosImoveis.find(i => i.id == id);
+  if (!imovel) return;
+  imovelAberto = imovel;
+
+  const modal = document.getElementById('modal-imovel');
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+
+  // Fotos
+  const fotosEl = document.getElementById('modal-fotos');
+  const fotos = (imovel.fotos || []).filter(f=>f);
+  fotosEl.innerHTML = '';
+  if (fotos.length > 0) {
+    fotos.forEach((f,i) => {
+      fotosEl.innerHTML += `<img src="${f}" alt="Foto ${i+1}" class="flex-shrink-0 w-full h-full object-cover snap-center" onerror="this.style.display='none'">`;
+    });
+    document.getElementById('modal-foto-counter').textContent = `1 / ${fotos.length}`;
+  } else {
+    fotosEl.innerHTML = `<div class="w-full h-full img-placeholder flex items-center justify-center"><i class="fa-solid fa-image text-5xl" style="color:#b8cfc4"></i></div>`;
+    document.getElementById('modal-foto-counter').textContent = '';
+  }
+
+  // Badges
+  const oferta = imovel.tipoOferta || 'venda';
+  const badgeOferta = document.getElementById('modal-badge-oferta');
+  badgeOferta.textContent = ofertaLabel(oferta);
+  badgeOferta.style.background = oferta === 'locacao' ? '#6366f1' : '#10b981';
+  document.getElementById('modal-badge-destaque').classList.toggle('hidden', !imovel.destaque);
+
+  // Título
+  document.getElementById('modal-titulo').textContent = imovel.tituloPortal || imovel.endereco;
+  document.getElementById('modal-endereco').querySelector('span').textContent = [imovel.endereco, imovel.bairro, imovel.cidade].filter(Boolean).join(' · ');
+
+  // Preço
+  const preco = oferta === 'locacao' ? imovel.valorLocacao : imovel.valorVenda;
+  document.getElementById('modal-preco').textContent = preco ? 'R$ ' + fmtMoeda(preco) : 'Consulte';
+  document.getElementById('modal-preco-cond').textContent = oferta === 'locacao' ? 'por mês' : '';
+
+  // Características
+  const chars = [
+    imovel.tipo ? `<div class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm" style="background:#f0f5f0"><span>${tipoEmoji(imovel.tipo)}</span><span class="font-semibold text-gray-700">${tipoLabel(imovel.tipo)}</span></div>` : '',
+    imovel.quartos ? `<div class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm" style="background:#f0f5f0"><i class="fa-solid fa-bed" style="color:var(--gold)"></i><span class="font-semibold text-gray-700">${imovel.quartos} quartos</span></div>` : '',
+    imovel.banheiros ? `<div class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm" style="background:#f0f5f0"><i class="fa-solid fa-bath" style="color:var(--gold)"></i><span class="font-semibold text-gray-700">${imovel.banheiros} banheiros</span></div>` : '',
+    imovel.vagas ? `<div class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm" style="background:#f0f5f0"><i class="fa-solid fa-car" style="color:var(--gold)"></i><span class="font-semibold text-gray-700">${imovel.vagas} vagas</span></div>` : '',
+    imovel.area ? `<div class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm" style="background:#f0f5f0"><i class="fa-solid fa-ruler-combined" style="color:var(--gold)"></i><span class="font-semibold text-gray-700">${imovel.area} m²</span></div>` : '',
+    imovel.suites ? `<div class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm" style="background:#f0f5f0"><i class="fa-solid fa-star" style="color:var(--gold)"></i><span class="font-semibold text-gray-700">${imovel.suites} suítes</span></div>` : '',
+  ].filter(Boolean);
+  document.getElementById('modal-caracteristicas').innerHTML = chars.join('');
+
+  // Descrição
+  if (imovel.descricaoPortal) {
+    document.getElementById('modal-descricao').textContent = imovel.descricaoPortal;
+    document.getElementById('modal-descricao-wrap').classList.remove('hidden');
+  } else {
+    document.getElementById('modal-descricao-wrap').classList.add('hidden');
+  }
+
+  // Diferenciais
+  const difs = (imovel.diferenciais || '').split(',').map(d=>d.trim()).filter(Boolean);
+  if (difs.length > 0) {
+    document.getElementById('modal-diferenciais').innerHTML = difs.map(d =>
+      `<span class="tag" style="background:var(--green-xl);color:var(--green);border:1px solid #c8dcd0"><i class="fa-solid fa-check text-[9px]"></i> ${d}</span>`
+    ).join('');
+    document.getElementById('modal-diferenciais-wrap').classList.remove('hidden');
+  } else {
+    document.getElementById('modal-diferenciais-wrap').classList.add('hidden');
+  }
+
+  // Corretor
+  document.getElementById('modal-corretor').textContent = CONFIG.corretorNome;
+
+  // Botões contato
+  const waNum = CONFIG.whatsapp.replace(/\D/g,'');
+  const waMsg = encodeURIComponent(`Olá! Vi o imóvel "${imovel.tituloPortal || imovel.endereco}" no site da Essense e gostaria de mais informações.`);
+  document.getElementById('modal-btn-wa').href = `https://wa.me/${waNum}?text=${waMsg}`;
+  document.getElementById('modal-btn-tel').href = `tel:+${waNum}`;
+}
+
+function fecharModal(e) {
+  if (e && e.target !== document.getElementById('modal-imovel') && e.type !== 'click') return;
+  if (e && e.currentTarget === document.getElementById('modal-imovel') && e.target !== e.currentTarget) return;
+  document.getElementById('modal-imovel').classList.add('hidden');
+  document.body.style.overflow = '';
+  imovelAberto = null;
+}
+
+// Fechar com ESC
+document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
+
+// Click fora fecha modal
+document.getElementById('modal-imovel').addEventListener('click', function(e) {
+  if (e.target === this) fecharModal();
+});
+
+// ═══════════════════ HELPERS ═══════════════════
+function tipoLabel(t) {
+  const map = {apartamento:'Apartamento',casa:'Casa',terreno:'Terreno',comercial:'Comercial',studio:'Studio',cobertura:'Cobertura',sobrado:'Sobrado'};
+  return map[t] || (t ? t.charAt(0).toUpperCase()+t.slice(1) : 'Imóvel');
+}
+function tipoEmoji(t) {
+  const map = {apartamento:'🏢',casa:'🏠',terreno:'🌳',comercial:'🏪',studio:'🏙️',cobertura:'🌇',sobrado:'🏡'};
+  return map[t] || '🏠';
+}
+function ofertaLabel(o) {
+  if (o === 'locacao') return 'Locação';
+  if (o === 'ambos') return 'Venda/Locação';
+  return 'Venda';
+}
+function fmtMoeda(v) {
+  const n = Number(String(v||'').replace(/\D/g,''));
+  if (!n) return '—';
+  if (n >= 1000000) return (n/1000000).toFixed(n%1000000===0?0:1) + 'M';
+  if (n >= 1000) return (n/1000).toFixed(0) + 'K';
+  return n.toLocaleString('pt-BR');
+}
+
+// ═══════════════════ DADOS DEMO ═══════════════════
+function getDemoImoveis() {
+  return [
+    { id:1, publicarSite:true, tituloPortal:'Apartamento Alto Padrão - Jardins', endereco:'Rua Oscar Freire, 842', bairro:'Jardins', cidade:'São Paulo', tipo:'apartamento', tipoOferta:'venda', valorVenda:'2800000', quartos:'3', banheiros:'3', vagas:'2', area:'180', suites:'2', destaque:true, descricaoPortal:'Lindo apartamento totalmente reformado no coração dos Jardins. Acabamento de luxo, varanda gourmet e vista privilegiada.', diferenciais:'Varanda gourmet, Piscina, Academia, Portaria 24h, 2 vagas cobertas', fotos:[] },
+    { id:2, publicarSite:true, tituloPortal:'Studio Moderno - Vila Olímpia', endereco:'Av. Brigadeiro Faria Lima, 1200', bairro:'Vila Olímpia', cidade:'São Paulo', tipo:'studio', tipoOferta:'locacao', valorLocacao:'4500', quartos:'1', banheiros:'1', vagas:'1', area:'45', suites:'0', destaque:false, descricaoPortal:'Studio funcional e moderno, próximo ao metro. Ideal para profissionais.', diferenciais:'Academia, Coworking, Lavanderia', fotos:[] },
+    { id:3, publicarSite:true, tituloPortal:'Casa em Condomínio - Alphaville', endereco:'Alameda Campinas, 350', bairro:'Alphaville', cidade:'Barueri', tipo:'casa', tipoOferta:'venda', valorVenda:'1950000', quartos:'4', banheiros:'5', vagas:'4', area:'320', suites:'3', destaque:true, descricaoPortal:'Belíssima casa em condomínio fechado com segurança 24h, piscina e churrasqueira.', diferenciais:'Piscina, Churrasqueira, Jardim, Segurança 24h, Quadra', fotos:[] },
+    { id:4, publicarSite:true, tituloPortal:'Cobertura Duplex - Moema', endereco:'Av. Ibirapuera, 2000', bairro:'Moema', cidade:'São Paulo', tipo:'cobertura', tipoOferta:'venda', valorVenda:'4500000', quartos:'4', banheiros:'5', vagas:'3', area:'400', suites:'4', destaque:true, descricaoPortal:'Cobertura duplex com piscina privativa e vista 360° para o Parque Ibirapuera.', diferenciais:'Piscina privativa, Vista parque, Terraço, Adega, Home cinema', fotos:[] },
+    { id:5, publicarSite:true, tituloPortal:'Apartamento 2 Dormitórios - Pinheiros', endereco:'Rua dos Pinheiros, 680', bairro:'Pinheiros', cidade:'São Paulo', tipo:'apartamento', tipoOferta:'ambos', valorVenda:'980000', valorLocacao:'5500', quartos:'2', banheiros:'2', vagas:'1', area:'82', suites:'1', destaque:false, descricaoPortal:'Apartamento em ótima localização, próximo ao metrô e ao melhor da gastronomia paulistana.', diferenciais:'Próximo ao metrô, Academia, Salão de festas', fotos:[] },
+    { id:6, publicarSite:true, tituloPortal:'Terreno Comercial - Granja Viana', endereco:'Rod. Raposo Tavares, km 25', bairro:'Granja Viana', cidade:'Cotia', tipo:'terreno', tipoOferta:'venda', valorVenda:'1200000', quartos:'', banheiros:'', vagas:'', area:'1500', suites:'', destaque:false, descricaoPortal:'Terreno plano em excelente localização, frente para rodovia. Ideal para investimento.', diferenciais:'Frente para rodovia, Terreno plano, Documentação ok', fotos:[] },
+  ];
+}
+
+// ═══════════════════ INIT ═══════════════════
+document.addEventListener('DOMContentLoaded', carregarDados);
+</script>
+</body>
+</html>
