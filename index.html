@@ -4426,7 +4426,32 @@ function app() {
           if (c.videoUrl) medias.push(c.videoUrl);
           medias.push(...fotosArr);
 
-          return { ...c, fotos: fotosArr, medias };
+          // Whitelist: apenas campos seguros para o portal público
+          return {
+            id: c.id,
+            tipo: c.tipo,
+            subtipo: c.subtipo,
+            titulo: c.titulo,
+            descricao: c.descricao,
+            cidade: c.cidade,
+            bairro: c.bairro,
+            endereco: c.enderecoPublico || c.bairro || c.cidade,
+            valor: c.valor,
+            valorCondominio: c.valorCondominio,
+            valorIPTU: c.valorIPTU,
+            area: c.area,
+            quartos: c.quartos,
+            banheiros: c.banheiros,
+            vagas: c.vagas,
+            suites: c.suites,
+            mobiliado: c.mobiliado,
+            caracteristicas: c.caracteristicas,
+            destaque: c.destaque,
+            exclusivo: c.exclusivo,
+            videoUrl: c.videoUrl,
+            fotos: fotosArr,
+            medias: medias,
+          };
         });
       const payload = {
         imoveis: publicados,
@@ -5894,8 +5919,26 @@ function app() {
 
     // ========== Auth ==========
     fazerLogin() {
-      const senhaBase = 'Corretor2026';
-      const senhaAtual = localStorage.getItem('corretor_senha') || senhaBase;
+      // Senha nunca fica hardcoded: o corretor define na primeira vez
+      const senhaAtual = localStorage.getItem('corretor_senha');
+      if (!senhaAtual) {
+        // Primeiro acesso: força definição de senha
+        const novaSenha = prompt('Primeiro acesso! Defina sua senha (mín. 6 caracteres):');
+        if (!novaSenha || novaSenha.length < 6) {
+          alert('Senha inválida. Use ao menos 6 caracteres.');
+          return;
+        }
+        const confirmSenha = prompt('Confirme sua senha:');
+        if (novaSenha !== confirmSenha) {
+          alert('As senhas não coincidem. Tente novamente.');
+          return;
+        }
+        localStorage.setItem('corretor_senha', novaSenha);
+        localStorage.setItem('amigo_session', 'ok');
+        this.loggedIn = true;
+        this.inicializar();
+        return;
+      }
       const usuarios = { 'Admin': senhaAtual };
       if (usuarios[this.loginUser] && usuarios[this.loginUser] === this.loginPass) {
         this.loggedIn = true;
@@ -5964,10 +6007,12 @@ function app() {
       this.driveLoading = true;
       try {
         const dados = {
-          versao: '1.0',
+          versao: '1.1',
           data: new Date().toISOString(),
           app: 'AMiGO Corretor',
           clientes: this.clientes,
+          captacoes: this.captacoes,
+          feed: this.activityFeed,
         };
         const json = JSON.stringify(dados, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
@@ -6120,8 +6165,7 @@ function app() {
     salvarConta() {
       this.contaErro = ''; this.contaSucesso = '';
       if (this.contaSenhaNova) {
-        const usuarios = { 'Admin': 'Corretor2026' };
-        const senhaAtualCorreta = Object.values(usuarios)[0];
+        const senhaAtualCorreta = localStorage.getItem('corretor_senha') || '';
         if (this.contaSenhaAtual !== senhaAtualCorreta) { this.contaErro = 'Senha atual incorreta.'; return; }
         if (this.contaSenhaNova.length < 6) { this.contaErro = 'Nova senha deve ter ao menos 6 caracteres.'; return; }
         if (this.contaSenhaNova !== this.contaSenhaConfirm) { this.contaErro = 'As senhas não coincidem.'; return; }
