@@ -10,6 +10,37 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+    from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCr5q-PYWTSMROKkaCJjjvCSO7LiNi_i0Y",
+    authDomain: "amigo-corretor-d6ae3.firebaseapp.com",
+    projectId: "amigo-corretor-d6ae3",
+    storageBucket: "amigo-corretor-d6ae3.firebasestorage.app",
+    messagingSenderId: "663861608611",
+    appId: "1:663861608611:web:e0a22a4fb3472dc5bc7f16"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  // Expõe para o Alpine.js (acessado via window)
+  window._fbSignIn = (email, password) => signInWithEmailAndPassword(auth, email, password);
+  window._fbSignOut = () => signOut(auth);
+
+  // Dispara evento quando estado de auth muda — Alpine escuta via document
+  onAuthStateChanged(auth, (user) => {
+    document.dispatchEvent(new CustomEvent('fb-auth-change', { detail: { user } }));
+  });
+
+  // Sinaliza que Firebase está pronto
+  window._fbReady = true;
+  document.dispatchEvent(new Event('fb-ready'));
+</script>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#345448">
 <script>
@@ -1202,7 +1233,7 @@ tailwind.config = {
               <p class="text-[10px] text-gray-400 mt-0.5" x-text="activityFeed.length + ' eventos registrados'"></p>
             </div>
           </div>
-          <button @click="activityFeed = []; localStorage.removeItem('amigo_feed')"
+          <button @click="activityFeed = []; localStorage.removeItem(this._keyFeed)"
                   class="text-[10px] font-bold px-2 py-1 rounded-lg transition-all text-gray-400 hover:text-red-500 hover:bg-red-50">
             <i class="fa-solid fa-trash-can" style="font-size:9px"></i> Limpar
           </button>
@@ -4022,11 +4053,11 @@ tailwind.config = {
 function app() {
   return {
     darkMode: localStorage.getItem('darkMode') === 'true',
-    activityFeed: JSON.parse(localStorage.getItem('amigo_feed') || '[]'),
+    activityFeed: [],  // carregado após login Firebase
     page: 'dashboard',
     menuOpen: false,
     section: 'vendas',
-    captacoes: JSON.parse(localStorage.getItem('amigo_captacoes') || '[]'),
+    captacoes: [],  // carregado após login Firebase
     imoveis: JSON.parse(localStorage.getItem('amigo_imoveis') || '[]'),
     imoveisBusca: '',
     imoveisFiltroStatus: '',
@@ -4131,7 +4162,12 @@ function app() {
     cropImgNW: 0, cropImgNH: 0, cropImgDispW: 0, cropImgDispH: 0,
     cropDragging: false, cropDragLX: 0, cropDragLY: 0,
     mediaViewer: { show: false, current: null, list: [], idx: 0 },
-    loggedIn: localStorage.getItem('amigo_session') === 'ok' || sessionStorage.getItem('amigo_session') === 'ok',
+    loggedIn: false,  // Firebase onAuthStateChanged define isso no init
+    firebaseUser: null,
+    firebaseUID: null,
+    get _keyClientes() { return 'amigo_clientes_' + (this.firebaseUID || 'local'); },
+    get _keyCaptacoes() { return 'amigo_captacoes_' + (this.firebaseUID || 'local'); },
+    get _keyFeed() { return 'amigo_feed_' + (this.firebaseUID || 'local'); },
     loginUser: '',
     loginPass: '',
     loginError: '',
@@ -4275,10 +4311,34 @@ function app() {
 
     init() {
       if (this.darkMode) document.documentElement.classList.add('dark');
-      const saved = localStorage.getItem('amigo_corretor_clientes');
-      if (saved) this.clientes = JSON.parse(saved);
-      this.$watch('clientes', (val) => localStorage.setItem('amigo_corretor_clientes', JSON.stringify(val)));
-      this.$watch('captacoes', (val) => localStorage.setItem('amigo_captacoes', JSON.stringify(val)));
+
+      // ── Firebase Auth: escuta mudanças de estado ──────────────────────
+      document.addEventListener('fb-auth-change', (e) => {
+        const user = e.detail?.user;
+        if (user) {
+          this.firebaseUser = user;
+          this.firebaseUID = user.uid;
+          this.loggedIn = true;
+          // Carrega dados isolados por UID do corretor autenticado
+          const savedC = localStorage.getItem(this._keyClientes);
+          this.clientes = savedC ? JSON.parse(savedC) : [];
+          const savedCap = localStorage.getItem(this._keyCaptacoes);
+          this.captacoes = savedCap ? JSON.parse(savedCap) : [];
+          const savedFeed = localStorage.getItem(this._keyFeed);
+          this.activityFeed = savedFeed ? JSON.parse(savedFeed) : [];
+        } else {
+          this.firebaseUser = null;
+          this.firebaseUID = null;
+          this.loggedIn = false;
+          this.clientes = [];
+          this.captacoes = [];
+          this.activityFeed = [];
+        }
+      });
+      // ─────────────────────────────────────────────────────────────────
+
+      this.$watch('clientes', (val) => localStorage.setItem(this._keyClientes, JSON.stringify(val)));
+      this.$watch('captacoes', (val) => localStorage.setItem(this._keyCaptacoes, JSON.stringify(val)));
       this.versiculo = this.versiculos[Math.floor(Math.random() * this.versiculos.length)];
       const req = indexedDB.open('amigo_corretor_media', 1);
       req.onupgradeneeded = (e) => {
@@ -4934,7 +4994,7 @@ function app() {
       const item = { icon, text, time: new Date().toISOString(), id: Date.now() };
       this.activityFeed.unshift(item);
       if (this.activityFeed.length > 20) this.activityFeed = this.activityFeed.slice(0, 20);
-      localStorage.setItem('amigo_feed', JSON.stringify(this.activityFeed));
+      localStorage.setItem(this._keyFeed, JSON.stringify(this.activityFeed));
     },
     feedTimeAgo(iso) {
       const diff = Date.now() - new Date(iso).getTime();
@@ -4971,7 +5031,7 @@ function app() {
     },
 
     save() {
-      localStorage.setItem('amigo_corretor_clientes', JSON.stringify(this.clientes));
+      localStorage.setItem(this._keyClientes, JSON.stringify(this.clientes));
       // Backup automático no Drive com debounce de 5s
       if (this.driveConectado && this.driveToken) {
         clearTimeout(this.driveAutoBackupTimer);
@@ -5917,37 +5977,24 @@ function app() {
       this.mediaViewer.current = lst[newIdx];
     },
 
-    // ========== Auth ==========
-    fazerLogin() {
-      // Senha nunca fica hardcoded: o corretor define na primeira vez
-      const senhaAtual = localStorage.getItem('corretor_senha');
-      if (!senhaAtual) {
-        // Primeiro acesso: força definição de senha
-        const novaSenha = prompt('Primeiro acesso! Defina sua senha (mín. 6 caracteres):');
-        if (!novaSenha || novaSenha.length < 6) {
-          alert('Senha inválida. Use ao menos 6 caracteres.');
-          return;
-        }
-        const confirmSenha = prompt('Confirme sua senha:');
-        if (novaSenha !== confirmSenha) {
-          alert('As senhas não coincidem. Tente novamente.');
-          return;
-        }
-        localStorage.setItem('corretor_senha', novaSenha);
-        localStorage.setItem('amigo_session', 'ok');
-        this.loggedIn = true;
-        this.inicializar();
-        return;
-      }
-      const usuarios = { 'Admin': senhaAtual };
-      if (usuarios[this.loginUser] && usuarios[this.loginUser] === this.loginPass) {
-        this.loggedIn = true;
-        this.loginError = '';
-        if (this.loginRemember) localStorage.setItem('amigo_session', 'ok');
-        else sessionStorage.setItem('amigo_session', 'ok');
-      } else {
-        this.loginError = 'Usuário ou senha incorretos.';
-        setTimeout(() => this.loginError = '', 3000);
+    // ========== Auth Firebase ==========
+    async fazerLogin() {
+      this.loginError = '';
+      const email = this.loginUser.includes('@') ? this.loginUser : this.loginUser + '@amigocorretor.app';
+      try {
+        await window._fbSignIn(email, this.loginPass);
+        // onAuthStateChanged cuida de setar loggedIn = true
+      } catch (err) {
+        const msgs = {
+          'auth/user-not-found': 'Usuário não encontrado.',
+          'auth/wrong-password': 'Senha incorreta.',
+          'auth/invalid-email': 'E-mail inválido.',
+          'auth/invalid-credential': 'E-mail ou senha incorretos.',
+          'auth/too-many-requests': 'Muitas tentativas. Aguarde alguns minutos.',
+          'auth/user-disabled': 'Acesso bloqueado. Contate o administrador.',
+        };
+        this.loginError = msgs[err.code] || 'Erro ao entrar. Tente novamente.';
+        setTimeout(() => this.loginError = '', 4000);
       }
     },
     // ========== GOOGLE DRIVE ==========
@@ -6090,10 +6137,10 @@ function app() {
       this.driveLoading = false;
     },
 
-    fazerLogout() {
+    async fazerLogout() {
+      await window._fbSignOut();
       this.loggedIn = false;
-      localStorage.removeItem('amigo_session');
-      sessionStorage.removeItem('amigo_session');
+      this.firebaseUser = null;
       this.loginUser = ''; this.loginPass = '';
     },
 
