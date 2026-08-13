@@ -485,7 +485,7 @@ tailwind.config = {
       <button @click="page='agenda'" :class="page==='agenda' ? 'bg-white text-green-700' : 'text-white hover:bg-green-700'" class="px-3 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2">
         <i class="fa-solid fa-calendar-days text-sm"></i><span>Agenda</span>
       </button>
-      <button x-show="isAdmin" @click="showAdminPanel=true; carregarUsuarios()"
+      <button x-show="isAdmin" @click="showAdminPanel=true; adminLoading=true; window._fbAllUsers().then(snap => { adminUsers = snap.docs.map(d => ({ uid: d.id, ...d.data() })); adminLoading=false; }).catch(() => { adminLoading=false; })"
               class="ml-2 bg-yellow-400 hover:bg-yellow-300 text-yellow-900 px-3 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 shadow-md">
         <i class="fa-solid fa-crown text-sm"></i><span>Admin</span>
       </button>
