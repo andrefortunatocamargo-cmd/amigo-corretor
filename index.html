@@ -41,6 +41,11 @@
   window._fbReady = true;
   document.dispatchEvent(new Event('fb-ready'));
 </script>
+<!-- EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+  (function(){ emailjs.init({ publicKey: 'yoQ4HetdhYiz7cS7M' }); })();
+</script>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#345448">
 <script>
@@ -6259,7 +6264,7 @@ function app() {
         return;
       }
       const sysUrl = window.location.origin + window.location.pathname;
-      await emailjs.send('SEU_SERVICE_ID', 'SEU_TEMPLATE_ID', {
+      await emailjs.send('service_c02ra3o', 'template_018xrpq', {
         to_name:   nome,
         to_email:  email,
         senha:     senha,
