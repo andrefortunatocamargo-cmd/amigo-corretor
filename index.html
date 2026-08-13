@@ -4343,35 +4343,52 @@ function app() {
       document.addEventListener('fb-auth-change', async (e) => {
         const user = e.detail?.user;
         if (user) {
+          // Admin garantido por email
+          const ADMIN_EMAILS = ['andrefortunatocamargo@gmail.com'];
+          const isAdminEmail = ADMIN_EMAILS.includes(user.email);
+
           // Verificar perfil no Firestore
           try {
             const snap = await window._fbGetUser(user.uid);
             let profile;
             if (snap.exists()) {
               profile = snap.data();
-              if (profile.ativo === false) {
+              if (profile.ativo === false && !isAdminEmail) {
                 await window._fbSignOut();
                 this.loginError = 'Acesso bloqueado. Contate o administrador.';
                 setTimeout(() => this.loginError = '', 5000);
                 return;
               }
+              // Garante que admin_email sempre seja admin no Firestore
+              if (isAdminEmail && profile.role !== 'admin') {
+                profile.role = 'admin';
+                await window._fbSetUser(user.uid, { role: 'admin' });
+              }
             } else {
-              // Primeiro acesso: 1º usuário vira admin automaticamente
+              // Primeiro acesso: cria perfil
               const todos = await window._fbAllUsers();
               const isFirst = todos.empty;
               profile = {
                 nome: user.displayName || user.email.split('@')[0],
                 email: user.email,
-                role: isFirst ? 'admin' : 'corretor',
+                role: (isFirst || isAdminEmail) ? 'admin' : 'corretor',
                 ativo: true,
                 criadoEm: new Date().toISOString(),
               };
               await window._fbSetUser(user.uid, profile);
             }
             this.currentUserProfile = profile;
-            this.isAdmin = profile.role === 'admin';
+            this.isAdmin = profile.role === 'admin' || isAdminEmail;
           } catch(err) {
-            console.warn('Firestore indisponível, continuando sem perfil:', err);
+            console.warn('Firestore indisponível, usando fallback:', err);
+            // Fallback: usa email para definir role sem Firestore
+            this.currentUserProfile = {
+              nome: user.displayName || user.email.split('@')[0],
+              email: user.email,
+              role: isAdminEmail ? 'admin' : 'corretor',
+              ativo: true,
+            };
+            this.isAdmin = isAdminEmail;
           }
           this.firebaseUser = user;
           this.firebaseUID = user.uid;
