@@ -509,19 +509,26 @@ tailwind.config = {
       <button @click="openClientModal()" class="ml-2 bg-white text-green-700 hover:bg-green-100 px-3 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 shadow-md">
         <i class="fa-solid fa-plus"></i><span>Novo</span>
       </button>
-      <!-- WhatsApp config button -->
-      <button @click="waConfigOpen=true; waSheetInput=waSheetUrl"
+      <!-- WhatsApp config button: admin abre Make.com, outros abrem WhatsApp direto -->
+      <button x-show="isAdmin" @click="waConfigOpen=true; waSheetInput=waSheetUrl"
               class="relative ml-1 px-3 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-1.5 shadow-md"
               :class="waSheetUrl ? 'bg-[#25D366] text-white hover:bg-[#20b358]' : 'bg-white text-gray-500 hover:bg-gray-100'"
               title="Integração WhatsApp Business">
         <i class="fa-brands fa-whatsapp text-sm"></i>
         <span class="text-xs">WA Business</span>
-        <!-- Badge de pendentes -->
         <span x-show="waLeadPendentes.length > 0 || waLeadPopup"
               class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center"
               x-text="waLeadPendentes.length + (waLeadPopup ? 1 : 0)">
         </span>
       </button>
+      <a x-show="!isAdmin"
+         :href="contaTelefone ? 'https://wa.me/55' + contaTelefone.replace(/\D/g,'') : '#'"
+         @click.prevent="contaTelefone ? window.open('https://wa.me/55' + contaTelefone.replace(/\D/g,''), '_blank') : (showContaPanel=true)"
+         class="relative ml-1 px-3 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-1.5 shadow-md bg-[#25D366] text-white hover:bg-[#20b358]"
+         :title="contaTelefone ? 'Abrir WhatsApp' : 'Configure seu WhatsApp em Minha Conta'">
+        <i class="fa-brands fa-whatsapp text-sm"></i>
+        <span class="text-xs">WA Business</span>
+      </a>
     </nav>
     <!-- Mobile: only show Novo + WA buttons in header -->
     <div class="flex sm:hidden items-center gap-1">
@@ -529,7 +536,7 @@ tailwind.config = {
               class="bg-white text-green-700 hover:bg-green-100 w-9 h-9 rounded-lg font-bold transition-all flex items-center justify-center shadow-md">
         <i class="fa-solid fa-plus text-sm"></i>
       </button>
-      <button @click="waConfigOpen=true; waSheetInput=waSheetUrl"
+      <button x-show="isAdmin" @click="waConfigOpen=true; waSheetInput=waSheetUrl"
               class="relative w-9 h-9 rounded-lg font-bold transition-all flex items-center justify-center shadow-md"
               :class="waSheetUrl ? 'bg-[#25D366] text-white hover:bg-[#20b358]' : 'bg-white text-gray-500 hover:bg-gray-100'"
               title="Integração WhatsApp Business">
@@ -539,6 +546,11 @@ tailwind.config = {
               x-text="waLeadPendentes.length + (waLeadPopup ? 1 : 0)">
         </span>
       </button>
+      <a x-show="!isAdmin"
+         @click.prevent="contaTelefone ? window.open('https://wa.me/55' + contaTelefone.replace(/\D/g,''), '_blank') : (showContaPanel=true)"
+         class="relative w-9 h-9 rounded-lg font-bold transition-all flex items-center justify-center shadow-md bg-[#25D366] text-white hover:bg-[#20b358] cursor-pointer">
+        <i class="fa-brands fa-whatsapp text-sm"></i>
+      </a>
     </div>
   </div>
 </header>
