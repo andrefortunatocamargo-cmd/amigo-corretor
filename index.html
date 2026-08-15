@@ -332,8 +332,8 @@ tailwind.config = {
 
       <!-- Botões de acesso rápido -->
       <div class="flex items-center gap-1.5">
-        <!-- WhatsApp Suporte Dropdown -->
-        <div class="relative" x-data="{ suporteAberto: false }" @click.outside="suporteAberto = false">
+        <!-- WhatsApp Suporte Dropdown — só para usuários Essense -->
+        <div class="relative" x-show="contaImobiliaria.toLowerCase().includes('essense') || (!contaImobiliaria && isAdmin)" x-data="{ suporteAberto: false }" @click.outside="suporteAberto = false">
           <button @click="suporteAberto = !suporteAberto"
              class="flex items-center gap-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-2 py-1.5 sm:px-3 rounded-lg transition-colors shadow-sm">
             <i class="fa-brands fa-whatsapp text-sm"></i>
@@ -392,11 +392,18 @@ tailwind.config = {
             </a>
           </div>
         </div>
-        <!-- Site imobiliária -->
-        <a href="https://www.essenseimoveis.com.br" target="_blank"
+        <!-- Site imobiliária — Essense ou site do usuário -->
+        <a x-show="contaImobiliaria.toLowerCase().includes('essense') || (!contaImobiliaria && isAdmin)"
+           href="https://www.essenseimoveis.com.br" target="_blank"
            class="flex items-center gap-1.5 bg-[#345448] hover:bg-[#243c33] text-white text-xs font-bold px-2 py-1.5 sm:px-3 rounded-lg transition-colors shadow-sm">
           <i class="fa-solid fa-globe text-xs"></i>
           <span class="hidden sm:inline">Buscar Imóveis</span>
+        </a>
+        <a x-show="!contaImobiliaria.toLowerCase().includes('essense') && contaImobiliaria && contaSite"
+           :href="contaSite.startsWith('http') ? contaSite : 'https://' + contaSite" target="_blank"
+           class="flex items-center gap-1.5 bg-[#345448] hover:bg-[#243c33] text-white text-xs font-bold px-2 py-1.5 sm:px-3 rounded-lg transition-colors shadow-sm">
+          <i class="fa-solid fa-globe text-xs"></i>
+          <span class="hidden sm:inline" x-text="contaImobiliaria || 'Site'"></span>
         </a>
         <!-- Claude IA -->
         <a href="claude://"
@@ -4180,6 +4187,7 @@ function app() {
     contaCreci: localStorage.getItem('corretor_creci') || '',
     contaImobiliaria: localStorage.getItem('corretor_imobiliaria') || '',
     contaImobiliariaLogo: localStorage.getItem('corretor_imobiliaria_logo') || '',
+    contaSite: localStorage.getItem('corretor_site') || '',
     contaCidade: localStorage.getItem('corretor_cidade') || '',
     contaBairro: localStorage.getItem('corretor_bairro') || '',
     contaTelefone: localStorage.getItem('corretor_telefone') || '',
@@ -4205,7 +4213,7 @@ function app() {
     adminMsg: { text: '', tipo: '' },
     novoCorretor: { nome: '', email: '', telefone: '' },
     showCompletarPerfil: false,
-    perfilForm: { creci: '', imobiliaria: '', imobiliariaLogo: '', telefone: '', bairro: '', cidade: '' },
+    perfilForm: { creci: '', imobiliaria: '', imobiliariaLogo: '', site: '', telefone: '', bairro: '', cidade: '' },
     adminBloqueioLoading: null,
     get _keyClientes() { return 'amigo_clientes_' + (this.firebaseUID || 'local'); },
     get _keyCaptacoes() { return 'amigo_captacoes_' + (this.firebaseUID || 'local'); },
@@ -4400,6 +4408,7 @@ function app() {
             if (profile.foto) this.contaFoto = profile.foto;
             if (profile.imobiliaria) this.contaImobiliaria = profile.imobiliaria;
             if (profile.imobiliariaLogo) this.contaImobiliariaLogo = profile.imobiliariaLogo;
+            if (profile.site) this.contaSite = profile.site;
             if (profile.cidade) this.contaCidade = profile.cidade;
             if (profile.bairro) this.contaBairro = profile.bairro;
             if (profile.telefone) this.contaTelefone = profile.telefone;
@@ -6266,6 +6275,7 @@ function app() {
           creci:           this.perfilForm.creci.trim(),
           imobiliaria:     this.perfilForm.imobiliaria.trim(),
           imobiliariaLogo: this.perfilForm.imobiliariaLogo || '',
+          site:            this.perfilForm.site.trim(),
           telefone:        this.perfilForm.telefone.trim(),
           bairro:          this.perfilForm.bairro.trim(),
           cidade:          this.perfilForm.cidade.trim(),
@@ -6277,6 +6287,7 @@ function app() {
         if (dados.creci) this.contaCreci = 'CRECI ' + dados.creci;
         if (dados.imobiliaria) this.contaImobiliaria = dados.imobiliaria;
         if (dados.imobiliariaLogo) this.contaImobiliariaLogo = dados.imobiliariaLogo;
+        if (dados.site) this.contaSite = dados.site;
         if (dados.cidade) this.contaCidade = dados.cidade;
         if (dados.bairro) this.contaBairro = dados.bairro;
         if (dados.telefone) this.contaTelefone = dados.telefone;
@@ -6524,6 +6535,7 @@ function app() {
       localStorage.setItem('corretor_creci', this.contaCreci);
       localStorage.setItem('corretor_imobiliaria', this.contaImobiliaria);
       localStorage.setItem('corretor_imobiliaria_logo', this.contaImobiliariaLogo);
+      localStorage.setItem('corretor_site', this.contaSite);
       localStorage.setItem('corretor_cidade', this.contaCidade);
       localStorage.setItem('corretor_bairro', this.contaBairro);
       localStorage.setItem('corretor_telefone', this.contaTelefone);
@@ -6536,6 +6548,7 @@ function app() {
           foto: this.contaFoto,
           imobiliaria: this.contaImobiliaria,
           imobiliariaLogo: this.contaImobiliariaLogo,
+          site: this.contaSite,
           cidade: this.contaCidade,
           bairro: this.contaBairro,
           telefone: this.contaTelefone,
@@ -7269,6 +7282,10 @@ function app() {
         <div>
           <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Nome da Imobiliária</label>
           <input type="text" x-model="contaImobiliaria" placeholder="Ex: Imobiliária XYZ" class="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Site da Imobiliária</label>
+          <input type="text" x-model="contaSite" placeholder="Ex: www.imobiliariaxyz.com.br" class="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
@@ -8235,6 +8252,12 @@ function app() {
             📁 Escolher logo
           </button>
         </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-gray-600 mb-1">Site da Imobiliária</label>
+        <input x-model="perfilForm.site" type="text" placeholder="Ex: www.imobiliariaxyz.com.br"
+               class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
       </div>
 
       <div>
