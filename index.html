@@ -4198,7 +4198,9 @@ function app() {
     adminUsers: [],
     adminLoading: false,
     adminMsg: { text: '', tipo: '' },
-    novoCorretor: { nome: '', email: '', telefone: '', creci: '', imobiliaria: '' },
+    novoCorretor: { nome: '', email: '', telefone: '' },
+    showCompletarPerfil: false,
+    perfilForm: { creci: '', imobiliaria: '', telefone: '', bairro: '', cidade: '' },
     adminBloqueioLoading: null,
     get _keyClientes() { return 'amigo_clientes_' + (this.firebaseUID || 'local'); },
     get _keyCaptacoes() { return 'amigo_captacoes_' + (this.firebaseUID || 'local'); },
@@ -4387,6 +4389,17 @@ function app() {
             }
             this.currentUserProfile = profile;
             this.isAdmin = profile.role === 'admin' || isAdminEmail;
+            // Primeiro acesso de corretor — pedir para completar perfil
+            if (!this.isAdmin && profile.perfilCompleto === false) {
+              this.perfilForm = {
+                creci: profile.creci || '',
+                imobiliaria: profile.imobiliaria || '',
+                telefone: profile.telefone || '',
+                bairro: profile.bairro || '',
+                cidade: profile.cidade || '',
+              };
+              this.showCompletarPerfil = true;
+            }
           } catch(err) {
             console.warn('Firestore indisponível, usando fallback:', err);
             // Fallback: usa email para definir role sem Firestore
@@ -6229,6 +6242,28 @@ function app() {
 
     // ══════════ PAINEL ADMIN ══════════════════════════════════════════
 
+    async salvarPerfilCorretor() {
+      if (!this.perfilForm.creci.trim() || !this.perfilForm.imobiliaria.trim()) {
+        alert('Por favor, preencha CRECI e Imobiliária.');
+        return;
+      }
+      try {
+        const dados = {
+          creci:        this.perfilForm.creci.trim(),
+          imobiliaria:  this.perfilForm.imobiliaria.trim(),
+          telefone:     this.perfilForm.telefone.trim(),
+          bairro:       this.perfilForm.bairro.trim(),
+          cidade:       this.perfilForm.cidade.trim(),
+          perfilCompleto: true,
+        };
+        await window._fbSetUser(this.firebaseUID, dados);
+        Object.assign(this.currentUserProfile, dados);
+        this.showCompletarPerfil = false;
+      } catch(e) {
+        alert('Erro ao salvar perfil. Tente novamente.');
+      }
+    },
+
     abrirAdmin() {
       document.getElementById('adminPainelOverlay').style.display = 'flex';
       this.carregarUsuarios();
@@ -6265,24 +6300,20 @@ function app() {
           nome: this.novoCorretor.nome.trim(),
           email: this.novoCorretor.email.trim(),
           telefone: this.novoCorretor.telefone.trim(),
-          creci: this.novoCorretor.creci.trim(),
-          imobiliaria: this.novoCorretor.imobiliaria.trim(),
           role: 'corretor',
           ativo: true,
+          perfilCompleto: false,
           criadoEm: new Date().toISOString(),
         };
         await window._fbSetUser(uid, profile);
-        // Enviar e-mail de boas-vindas via EmailJS
         await this.enviarEmailBoasVindas(
           this.novoCorretor.nome.trim(),
           this.novoCorretor.email.trim(),
           senhaTemp,
-          this.novoCorretor.telefone.trim(),
-          this.novoCorretor.creci.trim(),
-          this.novoCorretor.imobiliaria.trim()
+          this.novoCorretor.telefone.trim()
         );
         this.adminMsg = { text: `✅ Corretor ${this.novoCorretor.nome} criado e convite enviado!`, tipo: 'ok' };
-        this.novoCorretor = { nome: '', email: '', telefone: '', creci: '', imobiliaria: '' };
+        this.novoCorretor = { nome: '', email: '', telefone: '' };
         await this.carregarUsuarios();
       } catch(e) {
         const msgs = {
@@ -7920,16 +7951,6 @@ function app() {
             <input x-model="novoCorretor.telefone" type="text" placeholder="Ex: 11999998888"
                    class="w-full px-3 py-2.5 rounded-xl border border-amber-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400">
           </div>
-          <div>
-            <label class="block text-xs font-bold text-gray-600 mb-1">CRECI</label>
-            <input x-model="novoCorretor.creci" type="text" placeholder="Ex: CRECI 123456-F"
-                   class="w-full px-3 py-2.5 rounded-xl border border-amber-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400">
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-gray-600 mb-1">Imobiliária</label>
-            <input x-model="novoCorretor.imobiliaria" type="text" placeholder="Ex: Essense Negócios Imobiliários"
-                   class="w-full px-3 py-2.5 rounded-xl border border-amber-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400">
-          </div>
           <div class="bg-white border border-amber-100 rounded-xl px-3 py-2 text-[11px] text-amber-700 flex items-start gap-2">
             <i class="fa-solid fa-circle-info mt-0.5 flex-shrink-0"></i>
             <span>Uma senha provisória será gerada automaticamente e enviada por e-mail junto com o link de acesso.</span>
@@ -8046,6 +8067,64 @@ function app() {
 </div><!-- /admin overlay -->
 
 </div><!-- /loggedIn -->
+
+<!-- ══════════ MODAL COMPLETAR PERFIL (primeiro acesso corretor) ══════ -->
+<div x-show="showCompletarPerfil"
+     class="fixed inset-0 flex items-center justify-center p-4"
+     style="z-index:10000; background:rgba(0,0,0,0.7); backdrop-filter:blur(6px)">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+
+    <!-- Header -->
+    <div class="px-6 py-5 text-white text-center" style="background:linear-gradient(135deg,#243c33,#345448)">
+      <div class="text-3xl mb-2">🏠</div>
+      <h2 class="text-lg font-black">Bem-vindo(a) ao AMiGO Corretor!</h2>
+      <p class="text-green-200 text-xs mt-1">Complete seu cadastro para começar</p>
+    </div>
+
+    <!-- Formulário -->
+    <div class="px-6 py-5 space-y-4">
+      <p class="text-sm text-gray-500 text-center">Essas informações ajudam o administrador a conhecer você e aparecem no painel de gestão.</p>
+
+      <div>
+        <label class="block text-xs font-bold text-gray-600 mb-1">CRECI *</label>
+        <input x-model="perfilForm.creci" type="text" placeholder="Ex: CRECI 328576-F"
+               class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-gray-600 mb-1">Imobiliária *</label>
+        <input x-model="perfilForm.imobiliaria" type="text" placeholder="Ex: Essense Negócios Imobiliários"
+               class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-gray-600 mb-1">WhatsApp</label>
+        <input x-model="perfilForm.telefone" type="text" placeholder="Ex: 11999998888"
+               class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1">Cidade</label>
+          <input x-model="perfilForm.cidade" type="text" placeholder="Ex: São Paulo"
+                 class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1">Bairro principal</label>
+          <input x-model="perfilForm.bairro" type="text" placeholder="Ex: Moema"
+                 class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
+        </div>
+      </div>
+
+      <button @click="salvarPerfilCorretor()"
+              class="w-full py-3 rounded-xl text-white font-bold text-sm transition-all active:scale-95"
+              style="background:linear-gradient(135deg,#345448,#4a7062)">
+        <i class="fa-solid fa-check mr-2"></i> Salvar e Entrar no Sistema
+      </button>
+    </div>
+  </div>
+</div>
+<!-- ══════════════════════════════════════════════════════════════════ -->
 
 <script>
 (function() {
