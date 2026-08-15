@@ -15,7 +15,8 @@
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
     from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-  import { getFirestore, doc, getDoc, setDoc, updateDoc, getDocs, collection }
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, getDocs, collection,
+           addDoc, onSnapshot, query, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove }
     from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
   const firebaseConfig = {
@@ -38,6 +39,21 @@
   window._fbSetUser = (uid, data) => setDoc(doc(db, 'usuarios', uid), data, { merge: true });
   window._fbUpdateUser = (uid, data) => updateDoc(doc(db, 'usuarios', uid), data);
   window._fbAllUsers = () => getDocs(collection(db, 'usuarios'));
+
+  // ── Chat ──────────────────────────────────────────────────────────────────
+  window._chatSend = (msg) => addDoc(collection(db, 'chat_mensagens'), {
+    ...msg, ts: serverTimestamp()
+  });
+  window._chatListen = (cb) => onSnapshot(
+    query(collection(db, 'chat_mensagens'), orderBy('ts', 'asc'), limit(200)),
+    (snap) => { const msgs = []; snap.forEach(d => msgs.push({ id: d.id, ...d.data() })); cb(msgs); }
+  );
+  window._chatGetConfig = (uid) => getDoc(doc(db, 'chat_configs', uid));
+  window._chatSaveConfig = (uid, data) => setDoc(doc(db, 'chat_configs', uid), data, { merge: true });
+  window._chatBlock = (uid, targetUid) =>
+    setDoc(doc(db, 'chat_configs', uid), { bloqueados: arrayUnion(targetUid) }, { merge: true });
+  window._chatUnblock = (uid, targetUid) =>
+    setDoc(doc(db, 'chat_configs', uid), { bloqueados: arrayRemove(targetUid) }, { merge: true });
   window._fbCreateUser = async (email, password) => {
     const apiKey = firebaseConfig.apiKey;
     const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`, {
@@ -505,6 +521,23 @@ tailwind.config = {
       <button x-show="isAdmin" onclick="document.getElementById('adminPainelOverlay').style.display='flex'; window._alpineAdminLoad && window._alpineAdminLoad()"
               class="ml-2 bg-yellow-400 hover:bg-yellow-300 text-yellow-900 px-3 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 shadow-md">
         <i class="fa-solid fa-crown text-sm"></i><span>Admin</span>
+      </button>
+      <!-- Chat: campainha -->
+      <button @click="abrirChat()"
+              class="relative ml-1 px-3 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-1.5 shadow-md bg-white text-green-700 hover:bg-green-50"
+              title="Chat da equipe">
+        <i class="fa-solid fa-comments text-sm"
+           :class="chatNotifBlink ? 'animate-bounce text-green-600' : ''"></i>
+        <span class="text-xs hidden sm:inline">Chat</span>
+        <span x-show="chatUnread > 0"
+              class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center"
+              :class="chatNotifBlink ? 'animate-ping' : ''"
+              x-text="chatUnread > 9 ? '9+' : chatUnread">
+        </span>
+        <!-- Anel piscante extra -->
+        <span x-show="chatNotifBlink"
+              class="absolute -top-1 -right-1 w-5 h-5 bg-red-400 rounded-full animate-ping opacity-75">
+        </span>
       </button>
       <button @click="openClientModal()" class="ml-2 bg-white text-green-700 hover:bg-green-100 px-3 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 shadow-md">
         <i class="fa-solid fa-plus"></i><span>Novo</span>
@@ -4237,6 +4270,22 @@ function app() {
     showCompletarPerfil: false,
     perfilForm: { creci: '', imobiliaria: '', imobiliariaLogo: '', site: '', telefone: '', bairro: '', cidade: '' },
     adminBloqueioLoading: null,
+
+    // ── Chat interno ──────────────────────────────────────────────────────
+    showChat: false,
+    chatMensagens: [],
+    chatInput: '',
+    chatImagePreview: null,
+    chatImageBase64: null,
+    chatUnread: 0,
+    chatLastSeen: localStorage.getItem('chat_last_seen') || null,
+    chatMuted: localStorage.getItem('chat_muted') === '1',
+    chatBloqueados: [],
+    chatListener: null,
+    chatEnviando: false,
+    chatContextMenu: null,
+    chatNotifBlink: false,
+    chatNotifTimer: null,
     get _keyClientes() { return 'amigo_clientes_' + (this.firebaseUID || 'local'); },
     get _keyCaptacoes() { return 'amigo_captacoes_' + (this.firebaseUID || 'local'); },
     get _keyFeed() { return 'amigo_feed_' + (this.firebaseUID || 'local'); },
@@ -4459,6 +4508,7 @@ function app() {
           this.firebaseUser = user;
           this.firebaseUID = user.uid;
           this.loggedIn = true;
+          this.$nextTick(() => this.initChat());
           const savedC = localStorage.getItem(this._keyClientes);
           this.clientes = savedC ? JSON.parse(savedC) : [];
           const savedCap = localStorage.getItem(this._keyCaptacoes);
@@ -4474,6 +4524,8 @@ function app() {
           this.clientes = [];
           this.captacoes = [];
           this.activityFeed = [];
+          if (this.chatListener) { this.chatListener(); this.chatListener = null; }
+          this.chatMensagens = []; this.chatUnread = 0; this.showChat = false;
         }
       });
       // ─────────────────────────────────────────────────────────────────
@@ -6327,6 +6379,169 @@ function app() {
         alert('Erro ao salvar perfil. Tente novamente.');
       }
     },
+
+    // ══════════════════════════════════════════════════════════════════════
+    // CHAT INTERNO
+    // ══════════════════════════════════════════════════════════════════════
+    async initChat() {
+      if (this.chatListener) return;
+      // Carregar config (mute + bloqueados)
+      try {
+        const snap = await window._chatGetConfig(this.firebaseUID);
+        if (snap.exists()) {
+          const d = snap.data();
+          this.chatMuted = !!d.muted;
+          this.chatBloqueados = d.bloqueados || [];
+          localStorage.setItem('chat_muted', this.chatMuted ? '1' : '0');
+        }
+      } catch(e) { /* offline */ }
+
+      // Listener em tempo real
+      this.chatListener = window._chatListen((msgs) => {
+        const anteriores = this.chatMensagens.length;
+        this.chatMensagens = msgs.filter(m => !this.chatBloqueados.includes(m.uid));
+
+        // Detectar novas mensagens de outros usuários
+        const ultima = msgs[msgs.length - 1];
+        if (ultima && ultima.uid !== this.firebaseUID) {
+          const tsUltima = ultima.ts?.seconds ? ultima.ts.seconds * 1000 : Date.now();
+          const lastSeen = this.chatLastSeen ? parseInt(this.chatLastSeen) : 0;
+          if (tsUltima > lastSeen) {
+            const novas = msgs.filter(m => {
+              if (m.uid === this.firebaseUID) return false;
+              const t = m.ts?.seconds ? m.ts.seconds * 1000 : 0;
+              return t > lastSeen;
+            });
+            this.chatUnread = novas.length;
+            if (!this.showChat && !this.chatMuted && this.chatUnread > 0) {
+              this.chatNotifBlink = true;
+              clearTimeout(this.chatNotifTimer);
+              this.chatNotifTimer = setTimeout(() => { this.chatNotifBlink = false; }, 8000);
+            }
+          }
+        }
+
+        // Scroll automático se chat aberto
+        if (this.showChat) this.$nextTick(() => {
+          const el = document.getElementById('chatMsgList');
+          if (el) el.scrollTop = el.scrollHeight;
+        });
+      });
+    },
+
+    abrirChat() {
+      this.showChat = true;
+      this.chatNotifBlink = false;
+      this.chatUnread = 0;
+      const now = Date.now().toString();
+      this.chatLastSeen = now;
+      localStorage.setItem('chat_last_seen', now);
+      this.$nextTick(() => {
+        const el = document.getElementById('chatMsgList');
+        if (el) el.scrollTop = el.scrollHeight;
+        document.getElementById('chatInputField')?.focus();
+      });
+    },
+
+    fecharChat() {
+      this.showChat = false;
+      this.chatContextMenu = null;
+    },
+
+    async enviarMensagemChat() {
+      const texto = this.chatInput.trim();
+      if ((!texto && !this.chatImageBase64) || this.chatEnviando) return;
+      this.chatEnviando = true;
+      try {
+        await window._chatSend({
+          uid: this.firebaseUID,
+          nome: this.contaNome || 'Usuário',
+          imobiliaria: this.contaImobiliaria || '',
+          foto: this.contaFoto || '',
+          texto: texto || '',
+          imagem: this.chatImageBase64 || null,
+        });
+        this.chatInput = '';
+        this.chatImageBase64 = null;
+        this.chatImagePreview = null;
+      } catch(e) {
+        this.showToast('❌ Erro ao enviar mensagem');
+      }
+      this.chatEnviando = false;
+    },
+
+    chatAnexarImagem(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const MAX = 800;
+          const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width * ratio;
+          canvas.height = img.height * ratio;
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          this.chatImageBase64 = canvas.toDataURL('image/jpeg', 0.7);
+          this.chatImagePreview = this.chatImageBase64;
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+      event.target.value = '';
+    },
+
+    async chatToggleMute() {
+      this.chatMuted = !this.chatMuted;
+      localStorage.setItem('chat_muted', this.chatMuted ? '1' : '0');
+      try { await window._chatSaveConfig(this.firebaseUID, { muted: this.chatMuted }); } catch(e) {}
+      this.showToast(this.chatMuted ? '🔕 Chat silenciado' : '🔔 Notificações ativadas');
+    },
+
+    async chatBloquearUsuario(uid, nome) {
+      if (!confirm(`Bloquear ${nome}? Você não verá mais as mensagens desta pessoa.`)) return;
+      this.chatBloqueados = [...this.chatBloqueados, uid];
+      this.chatMensagens = this.chatMensagens.filter(m => m.uid !== uid);
+      this.chatContextMenu = null;
+      try { await window._chatBlock(this.firebaseUID, uid); } catch(e) {}
+      this.showToast(`🚫 ${nome} bloqueado`);
+    },
+
+    async chatDesbloquearUsuario(uid, nome) {
+      this.chatBloqueados = this.chatBloqueados.filter(u => u !== uid);
+      try { await window._chatUnblock(this.firebaseUID, uid); } catch(e) {}
+      this.showToast(`✅ ${nome} desbloqueado`);
+    },
+
+    chatFormatarTs(ts) {
+      if (!ts?.seconds) return '';
+      const d = new Date(ts.seconds * 1000);
+      const agora = new Date();
+      const hoje = agora.toDateString() === d.toDateString();
+      if (hoje) return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' +
+             d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    },
+
+    chatDetectarLink(texto) {
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      return texto.replace(urlRegex, url =>
+        `<a href="${url}" target="_blank" rel="noopener" class="underline text-blue-600 break-all">${url}</a>`
+      );
+    },
+
+    chatGetIniciais(nome) {
+      return (nome || '?').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+    },
+
+    chatGetCor(uid) {
+      const cores = ['#345448','#4a7062','#b48860','#6366f1','#ec4899','#14b8a6','#f59e0b','#ef4444'];
+      let h = 0;
+      for (let i = 0; i < (uid||'').length; i++) h = (h * 31 + uid.charCodeAt(i)) % cores.length;
+      return cores[h];
+    },
+    // ══════════════════════════════════════════════════════════════════════
 
     abrirAdmin() {
       document.getElementById('adminPainelOverlay').style.display = 'flex';
@@ -8238,6 +8453,174 @@ function app() {
     </div><!-- /scroll -->
   </div><!-- /painel -->
 </div><!-- /admin overlay -->
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- CHAT INTERNO                                                           -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div x-show="showChat"
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0 translate-x-8"
+     x-transition:enter-end="opacity-100 translate-x-0"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100 translate-x-0"
+     x-transition:leave-end="opacity-0 translate-x-8"
+     class="fixed right-0 top-0 bottom-0 z-[9000] flex flex-col shadow-2xl"
+     style="width:min(420px,100vw); background:#f5f7f5;"
+     @click.outside="fecharChat()"
+     @keydown.escape.window="fecharChat()">
+
+  <!-- Header do chat -->
+  <div class="flex items-center justify-between px-4 py-3 text-white flex-shrink-0"
+       style="background:linear-gradient(135deg,#243c33,#345448)">
+    <div class="flex items-center gap-2">
+      <i class="fa-solid fa-comments text-lg"></i>
+      <div>
+        <p class="font-black text-sm">Chat da Equipe</p>
+        <p class="text-green-200 text-[10px]" x-text="chatMensagens.length + ' mensagens'"></p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <!-- Mute toggle -->
+      <button @click="chatToggleMute()"
+              :title="chatMuted ? 'Ativar notificações' : 'Silenciar'"
+              class="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-white hover:bg-opacity-20">
+        <i :class="chatMuted ? 'fa-solid fa-bell-slash text-yellow-300' : 'fa-solid fa-bell text-white'" class="text-sm"></i>
+      </button>
+      <!-- Fechar -->
+      <button @click="fecharChat()"
+              class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-20 transition-colors">
+        <i class="fa-solid fa-xmark text-white text-sm"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Lista de mensagens -->
+  <div id="chatMsgList"
+       class="flex-1 overflow-y-auto px-3 py-3 space-y-3"
+       style="overscroll-behavior:contain"
+       @click="chatContextMenu=null">
+
+    <!-- Empty state -->
+    <div x-show="chatMensagens.length === 0"
+         class="flex flex-col items-center justify-center h-full text-center py-16">
+      <div class="text-5xl mb-3">💬</div>
+      <p class="font-bold text-gray-700 text-sm">Nenhuma mensagem ainda</p>
+      <p class="text-gray-400 text-xs mt-1">Seja o primeiro a enviar uma mensagem!</p>
+    </div>
+
+    <!-- Mensagens -->
+    <template x-for="msg in chatMensagens" :key="msg.id">
+      <div :class="msg.uid === firebaseUID ? 'flex flex-row-reverse items-end gap-2' : 'flex items-end gap-2'"
+           class="group">
+
+        <!-- Avatar -->
+        <div class="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-white text-xs font-black"
+             :style="msg.foto ? '' : ('background:' + chatGetCor(msg.uid))">
+          <img x-show="msg.foto" :src="msg.foto" class="w-full h-full object-cover">
+          <span x-show="!msg.foto" x-text="chatGetIniciais(msg.nome)"></span>
+        </div>
+
+        <!-- Balão -->
+        <div :class="msg.uid === firebaseUID
+               ? 'bg-green-700 text-white rounded-tl-2xl rounded-tr-sm rounded-bl-2xl rounded-br-2xl'
+               : 'bg-white text-gray-800 rounded-tl-sm rounded-tr-2xl rounded-bl-2xl rounded-br-2xl shadow-sm'"
+             class="max-w-[75%] px-3 py-2 relative"
+             @contextmenu.prevent="msg.uid !== firebaseUID && (chatContextMenu = msg)"
+             @click.stop>
+
+          <!-- Nome + imobiliária (só nas mensagens de outros) -->
+          <div x-show="msg.uid !== firebaseUID" class="mb-0.5">
+            <span class="text-[11px] font-black" :style="'color:' + chatGetCor(msg.uid)" x-text="msg.nome"></span>
+            <span x-show="msg.imobiliaria" class="text-[10px] text-gray-400 ml-1" x-text="'· ' + msg.imobiliaria"></span>
+          </div>
+
+          <!-- Imagem -->
+          <img x-show="msg.imagem" :src="msg.imagem"
+               class="rounded-xl max-w-full mb-1 cursor-pointer"
+               style="max-height:240px;object-fit:cover"
+               @click="openMediaViewer({url: msg.imagem, type: 'image/jpeg'}, [])">
+
+          <!-- Texto com links clicáveis -->
+          <p x-show="msg.texto"
+             class="text-sm leading-snug break-words whitespace-pre-wrap"
+             x-html="chatDetectarLink(msg.texto)"></p>
+
+          <!-- Horário -->
+          <p :class="msg.uid === firebaseUID ? 'text-green-200' : 'text-gray-400'"
+             class="text-[10px] mt-1 text-right" x-text="chatFormatarTs(msg.ts)"></p>
+        </div>
+
+        <!-- Botão de opções (visível no hover, só mensagens alheias) -->
+        <button x-show="msg.uid !== firebaseUID"
+                @click.stop="chatContextMenu = chatContextMenu?.id === msg.id ? null : msg"
+                class="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center flex-shrink-0 self-center">
+          <i class="fa-solid fa-ellipsis-vertical text-gray-500 text-xs"></i>
+        </button>
+      </div>
+    </template>
+  </div>
+
+  <!-- Context menu (bloquear) -->
+  <div x-show="chatContextMenu"
+       x-transition
+       class="mx-3 mb-1 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden flex-shrink-0">
+    <div x-show="chatContextMenu" class="px-3 py-2 border-b border-gray-100">
+      <p class="text-xs font-bold text-gray-700" x-text="chatContextMenu?.nome"></p>
+      <p class="text-[10px] text-gray-400" x-text="chatContextMenu?.imobiliaria"></p>
+    </div>
+    <button @click="chatBloquearUsuario(chatContextMenu.uid, chatContextMenu.nome)"
+            class="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-red-50 transition-colors text-left">
+      <i class="fa-solid fa-ban text-red-500 text-sm"></i>
+      <span class="text-sm text-red-600 font-semibold">Bloquear usuário</span>
+    </button>
+    <button @click="chatContextMenu=null"
+            class="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-gray-50 transition-colors text-left">
+      <i class="fa-solid fa-xmark text-gray-400 text-sm"></i>
+      <span class="text-sm text-gray-500">Cancelar</span>
+    </button>
+  </div>
+
+  <!-- Preview imagem antes de enviar -->
+  <div x-show="chatImagePreview" class="mx-3 mb-1 relative flex-shrink-0">
+    <img :src="chatImagePreview" class="h-20 rounded-xl object-cover border border-gray-200">
+    <button @click="chatImagePreview=null; chatImageBase64=null"
+            class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <!-- Composer -->
+  <div class="px-3 pb-3 pt-2 flex-shrink-0 bg-white border-t border-gray-100">
+    <div class="flex items-end gap-2">
+      <!-- Anexar imagem -->
+      <label class="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer transition-colors hover:bg-green-50"
+             style="color:#345448;border:1.5px solid #c5d9d0">
+        <i class="fa-solid fa-image text-sm"></i>
+        <input type="file" accept="image/*" class="hidden" @change="chatAnexarImagem($event)">
+      </label>
+
+      <!-- Input de texto -->
+      <textarea id="chatInputField"
+                x-model="chatInput"
+                @keydown.enter.prevent="if(!$event.shiftKey) enviarMensagemChat()"
+                placeholder="Mensagem… (Enter para enviar)"
+                rows="1"
+                class="flex-1 resize-none rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-300 max-h-28 overflow-y-auto"
+                style="field-sizing:content"></textarea>
+
+      <!-- Enviar -->
+      <button @click="enviarMensagemChat()"
+              :disabled="chatEnviando || (!chatInput.trim() && !chatImageBase64)"
+              class="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-white transition-all active:scale-95 disabled:opacity-40"
+              style="background:linear-gradient(135deg,#345448,#4a7062)">
+        <i :class="chatEnviando ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-paper-plane'" class="text-sm"></i>
+      </button>
+    </div>
+    <p class="text-[10px] text-gray-400 mt-1 text-center">Shift+Enter para nova linha · Clique direito em mensagem para bloquear</p>
+  </div>
+
+</div>
+<!-- /chat -->
 
 </div><!-- /loggedIn -->
 
