@@ -2267,7 +2267,7 @@ tailwind.config = {
     <button @click="novaCaptacao()" class="px-5 py-2.5 rounded-xl text-white font-bold text-sm" style="background:#7c3aed">
       + Nova Captação
     </button>
-    <a href="/portal.html" target="_blank"
+    <a href="portal.html" target="_blank"
        class="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90 active:scale-95"
        style="background:linear-gradient(135deg,#2d4a3e,#3d6354);color:#fff">
       <i class="fa-solid fa-globe text-xs"></i> Ver Portal
@@ -2290,7 +2290,7 @@ tailwind.config = {
         </span>
       </p>
     </div>
-    <a href="/portal.html" target="_blank"
+    <a href="portal.html" target="_blank"
        class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold flex-shrink-0 transition-all hover:opacity-80"
        style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.25)">
       <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Abrir
@@ -2367,6 +2367,25 @@ tailwind.config = {
                   <i class="fa-solid fa-pen text-xs"></i>
                 </button>
               </div>
+            </div>
+
+            <!-- Tira de fotos (se houver) -->
+            <div x-show="(cap.midias||[]).length > 0" class="mt-2 flex gap-1.5 overflow-x-auto pb-1" style="scrollbar-width:none">
+              <template x-for="(m, idx) in (cap.midias||[]).slice(0,6)" :key="idx">
+                <div class="relative flex-shrink-0 rounded-lg overflow-hidden" style="width:56px;height:42px;background:#f3f4f6">
+                  <template x-if="!(m && m.startsWith('data:video/'))">
+                    <img :src="m" class="w-full h-full object-cover">
+                  </template>
+                  <template x-if="m && m.startsWith('data:video/')">
+                    <div class="w-full h-full flex items-center justify-center bg-gray-800">
+                      <i class="fa-solid fa-play text-white text-[10px]"></i>
+                    </div>
+                  </template>
+                </div>
+              </template>
+              <div x-show="(cap.midias||[]).length > 6"
+                   class="flex-shrink-0 w-14 h-10.5 rounded-lg bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-400"
+                   x-text="'+' + ((cap.midias||[]).length - 6)"></div>
             </div>
 
             <!-- Progress bar etapas -->
@@ -4616,7 +4635,7 @@ function app() {
         valorPretendido: '', valorPretendidoTipo: 'venda',
         quartos: '', vagas: '', area: '',
         status: 'contato', etapasFeitas: [], acoesExtras: [],
-        notas: '', foto: '', dataCadastro: this.todayStr(),
+        notas: '', foto: '', midias: [], dataCadastro: this.todayStr(),
         proximoContato: this.todayStr(),
         // Portal fields
         publicarSite: false, tituloPortal: '', descricaoPortal: '',
@@ -7771,6 +7790,109 @@ function app() {
                   class="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 resize-none"></textarea>
       </div>
 
+      <!-- ═══ FOTOS E VÍDEOS ═══ -->
+      <div x-data="{
+        processando: 0,
+        dragOver: false,
+        comprimirImagem(file) {
+          return new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = ev => {
+              const img = new Image();
+              img.onload = () => {
+                const MAX = 1280;
+                let w = img.width, h = img.height;
+                if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+                const c = document.createElement('canvas');
+                c.width = w; c.height = h;
+                c.getContext('2d').drawImage(img, 0, 0, w, h);
+                resolve(c.toDataURL('image/jpeg', 0.80));
+              };
+              img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+          });
+        },
+        processarVideo(file) {
+          const MAX = 30 * 1024 * 1024;
+          if (file.size > MAX) {
+            alert('Vídeo muito grande (' + (file.size/1024/1024).toFixed(0) + ' MB). Máximo: 30 MB.');
+            return Promise.resolve(null);
+          }
+          return new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = ev => resolve(ev.target.result);
+            reader.readAsDataURL(file);
+          });
+        },
+        async processar(files) {
+          const lista = [...files];
+          this.processando += lista.length;
+          for (const f of lista) {
+            let res = null;
+            if (f.type.startsWith('image/')) res = await this.comprimirImagem(f);
+            else if (f.type.startsWith('video/')) res = await this.processarVideo(f);
+            if (res) {
+              if (!editingCaptacao.midias) editingCaptacao.midias = [];
+              editingCaptacao.midias.push(res);
+            }
+            this.processando--;
+          }
+        },
+        isVideo(src) { return src && src.startsWith('data:video/'); },
+        remover(idx) { editingCaptacao.midias = (editingCaptacao.midias||[]).filter((_,i)=>i!==idx); }
+      }">
+        <div class="flex items-center justify-between mb-2">
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Fotos e Vídeos do Imóvel</label>
+          <span class="text-[10px] text-gray-400" x-text="(editingCaptacao.midias||[]).length + ' arquivo(s)'"></span>
+        </div>
+
+        <!-- Área de drag & drop / clique -->
+        <div class="rounded-xl border-2 border-dashed transition-all cursor-pointer mb-2"
+             :class="dragOver ? 'border-purple-400 bg-purple-50' : 'border-gray-200 bg-gray-50'"
+             @dragover.prevent="dragOver=true"
+             @dragleave="dragOver=false"
+             @drop.prevent="dragOver=false; processar($event.dataTransfer.files)"
+             @click="$refs.midiasInput.click()">
+          <input x-ref="midiasInput" type="file" accept="image/*,video/*" multiple class="hidden"
+                 @change="processar($event.target.files); $event.target.value=''">
+          <div class="py-4 text-center" x-show="processando === 0">
+            <i class="fa-solid fa-camera-retro text-gray-300 text-2xl mb-1 block"></i>
+            <p class="text-xs text-gray-400 font-semibold">Clique ou arraste fotos e vídeos</p>
+            <p class="text-[10px] text-gray-300 mt-0.5">JPG, PNG, MP4, MOV · vídeos até 30 MB</p>
+          </div>
+          <div class="py-4 text-center" x-show="processando > 0">
+            <i class="fa-solid fa-spinner fa-spin text-purple-400 text-xl mb-1 block"></i>
+            <p class="text-xs text-purple-500 font-semibold">Processando <span x-text="processando"></span> arquivo(s)...</p>
+          </div>
+        </div>
+
+        <!-- Grade de miniaturas -->
+        <div x-show="(editingCaptacao.midias||[]).length > 0" class="grid grid-cols-3 gap-2">
+          <template x-for="(m, idx) in (editingCaptacao.midias||[])" :key="idx">
+            <div class="relative rounded-xl overflow-hidden group" style="aspect-ratio:4/3;background:#f3f4f6">
+              <template x-if="!isVideo(m)">
+                <img :src="m" class="w-full h-full object-cover">
+              </template>
+              <template x-if="isVideo(m)">
+                <video :src="m" class="w-full h-full object-cover" muted playsinline></video>
+              </template>
+              <!-- Badge vídeo -->
+              <span x-show="isVideo(m)" class="absolute bottom-1 left-1 bg-black bg-opacity-60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                <i class="fa-solid fa-play text-[8px] mr-0.5"></i>VÍD
+              </span>
+              <!-- Badge principal -->
+              <span x-show="idx===0" class="absolute top-1 left-1 bg-purple-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">CAPA</span>
+              <!-- Remover -->
+              <button @click.stop="remover(idx)"
+                      class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-[10px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          </template>
+        </div>
+      </div>
+
       <!-- ═══ PORTAL MODULE ═══ -->
       <div class="rounded-2xl overflow-hidden" style="border:2px solid #e8f0ec">
         <!-- Toggle header -->
@@ -8058,7 +8180,7 @@ function app() {
           </label>
 
           <!-- Link portal -->
-          <a href="/portal.html" target="_blank"
+          <a href="portal.html" target="_blank"
              class="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all hover:opacity-80"
              style="background:linear-gradient(135deg,#2d4a3e,#3d6354);color:#fff">
             <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
