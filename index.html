@@ -303,7 +303,7 @@ tailwind.config = {
 
       <!-- Footer do card -->
       <div class="px-8 py-4 text-center border-t border-gray-50" style="background:#fafafa">
-        <p class="text-gray-300 text-[10px]">André Fortunato Camargo · CRECI 328576-F</p>
+        <p class="text-gray-300 text-[10px]">AMiGO Corretor</p>
         <p class="text-gray-300 text-[10px] mt-0.5">AMiGO Corretor</p>
       </div>
 
@@ -4176,8 +4176,8 @@ function app() {
     globalSearchQuery: '',
     showContaPanel: false,
     contaFoto: localStorage.getItem('corretor_foto') || '',
-    contaNome: localStorage.getItem('corretor_nome') || 'André Fortunato Camargo',
-    contaCreci: localStorage.getItem('corretor_creci') || 'CRECI 328576-F',
+    contaNome: localStorage.getItem('corretor_nome') || '',
+    contaCreci: localStorage.getItem('corretor_creci') || '',
     contaSenhaAtual: '',
     contaSenhaNova: '',
     contaSenhaConfirm: '',
@@ -4389,6 +4389,10 @@ function app() {
             }
             this.currentUserProfile = profile;
             this.isAdmin = profile.role === 'admin' || isAdminEmail;
+            // Atualizar nome/creci/foto do usuário logado
+            if (profile.nome) this.contaNome = profile.nome;
+            if (profile.creci) this.contaCreci = 'CRECI ' + profile.creci;
+            if (profile.foto) this.contaFoto = profile.foto;
             // Primeiro acesso de corretor — pedir para completar perfil
             if (!this.isAdmin && profile.perfilCompleto === false) {
               this.perfilForm = {
@@ -6258,6 +6262,9 @@ function app() {
         };
         await window._fbSetUser(this.firebaseUID, dados);
         Object.assign(this.currentUserProfile, dados);
+        // Atualizar header com dados do perfil recém-salvo
+        if (dados.nome || this.currentUserProfile.nome) this.contaNome = dados.nome || this.currentUserProfile.nome;
+        if (dados.creci) this.contaCreci = 'CRECI ' + dados.creci;
         this.showCompletarPerfil = false;
       } catch(e) {
         alert('Erro ao salvar perfil. Tente novamente.');
@@ -6458,6 +6465,15 @@ function app() {
       localStorage.setItem('corretor_foto', this.contaFoto);
       localStorage.setItem('corretor_nome', this.contaNome);
       localStorage.setItem('corretor_creci', this.contaCreci);
+      // Salvar também no Firestore
+      if (this.firebaseUID) {
+        const creci = this.contaCreci.replace(/^CRECI\s*/i, '').trim();
+        window._fbSetUser(this.firebaseUID, {
+          nome: this.contaNome,
+          creci: creci,
+          foto: this.contaFoto,
+        }).catch(e => console.warn('Erro ao salvar perfil no Firestore:', e));
+      }
       this.contaSenhaAtual = ''; this.contaSenhaNova = ''; this.contaSenhaConfirm = '';
       this.contaSucesso = 'Dados salvos com sucesso!';
       setTimeout(() => { this.contaSucesso = ''; this.showContaPanel = false; }, 1500);
