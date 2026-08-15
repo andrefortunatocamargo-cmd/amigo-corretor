@@ -2491,6 +2491,9 @@ tailwind.config = {
             <button @click="abrirImovelModal(im)" class="flex-1 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
               <i class="fa-solid fa-pen mr-1"></i> Editar
             </button>
+            <button @click="compartilharImovelChat(im)" class="flex-1 py-1.5 rounded-lg text-xs font-semibold border border-green-200 text-green-700 hover:bg-green-50 transition-colors" title="Compartilhar no chat interno">
+              <i class="fa-solid fa-share-nodes mr-1"></i> Compartilhar
+            </button>
             <button @click="deleteImovel(im.id)" class="w-8 h-8 rounded-lg flex items-center justify-center text-red-400 hover:bg-red-50 border border-gray-100 transition-colors">
               <i class="fa-solid fa-trash text-xs"></i>
             </button>
@@ -3944,137 +3947,120 @@ tailwind.config = {
   </div>
 </div>
 
-<div x-show="showVersiculo" x-transition class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay" style="background:rgba(10,30,20,0.72)">
-  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden" @click.stop style="box-shadow: 0 25px 60px rgba(0,0,0,0.35), 0 0 0 1px rgba(180,136,96,0.2)">
+<div x-show="showVersiculo" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(10,25,18,0.78);backdrop-filter:blur(4px)">
+  <div class="w-full max-w-sm rounded-2xl overflow-hidden" @click.stop
+       style="box-shadow:0 20px 60px rgba(0,0,0,0.45),0 0 0 1px rgba(180,136,96,0.2)">
 
-    <!-- Cabeçalho Essense -->
-    <div class="versiculo-header px-6 pt-7 pb-8 text-center relative z-10">
-      <!-- Ícone decorativo -->
-      <div class="w-16 h-16 mx-auto mb-3 relative">
-        <div class="absolute inset-0 rounded-full" style="background:rgba(180,136,96,0.25)"></div>
-        <div class="absolute inset-1 rounded-full" style="background:rgba(255,255,255,0.12)"></div>
-        <div class="relative w-full h-full flex items-center justify-center">
-          <i class="fa-solid fa-dove text-white text-2xl" style="filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3))"></i>
+    <!-- Header compacto -->
+    <div class="px-5 pt-5 pb-4 text-center relative" style="background:linear-gradient(150deg,#1a3327 0%,#2d4a3c 50%,#3d5e50 100%)">
+      <div class="absolute top-0 right-0 w-24 h-24 rounded-full opacity-10" style="background:radial-gradient(circle,#b48860,transparent);transform:translate(30%,-30%)"></div>
+      <div class="flex items-center justify-center gap-2 mb-2">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background:rgba(180,136,96,0.25);border:1px solid rgba(180,136,96,0.4)">
+          <i class="fa-solid fa-dove text-white text-sm"></i>
         </div>
+        <p class="text-[10px] font-black tracking-[0.18em] uppercase" style="color:#c9a46e">✦ Palavra do Dia ✦</p>
       </div>
-      <!-- Label -->
-      <p class="text-xs font-bold tracking-widest uppercase mb-3" style="color:var(--essense-gold-l)">✦ &nbsp; Palavra do Dia &nbsp; ✦</p>
-      <!-- Referência bíblica em destaque -->
-      <div class="inline-block rounded-2xl px-6 py-3" style="background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.2)">
-        <p class="text-white font-black text-2xl tracking-wide" style="text-shadow:0 2px 8px rgba(0,0,0,0.25)" x-text="versiculo.ref"></p>
-        <p class="text-xs font-semibold mt-1 tracking-widest" style="color:var(--essense-gold-l)">BÍBLIA SAGRADA · NVI</p>
+      <div class="inline-block rounded-xl px-4 py-1.5" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.18)">
+        <p class="text-white font-black text-lg tracking-wide" x-text="versiculo.ref"></p>
+        <p class="text-[9px] font-semibold tracking-widest" style="color:#c9a46e">BÍBLIA SAGRADA · NVI</p>
       </div>
     </div>
 
-    <!-- Divisor dourado -->
-    <div class="gold-divider"></div>
-
-    <!-- Corpo — texto do versículo -->
-    <div class="versiculo-body px-8 py-7 text-center">
-      <!-- Aspas decorativas -->
-      <div class="flex justify-center mb-4">
-        <span style="font-size:3.5rem;line-height:1;color:var(--essense-gold);opacity:0.35;font-family:Georgia,serif">"</span>
-      </div>
-      <p class="text-gray-800 text-[22px] leading-10 font-semibold italic" x-text="versiculo.texto"></p>
-      <div class="flex justify-center mt-3">
-        <span style="font-size:3.5rem;line-height:1;color:var(--essense-gold);opacity:0.35;font-family:Georgia,serif">"</span>
-      </div>
-
-      <!-- Ornamento central -->
-      <div class="flex items-center gap-3 mt-5">
-        <div class="flex-1 h-px" style="background:linear-gradient(90deg,transparent,var(--essense-gold))"></div>
-        <i class="fa-solid fa-cross" style="color:var(--essense-gold);font-size:10px;opacity:0.7"></i>
-        <div class="flex-1 h-px" style="background:linear-gradient(90deg,var(--essense-gold),transparent)"></div>
+    <!-- Versículo -->
+    <div class="px-6 py-4 text-center" style="background:#fdfaf5">
+      <span style="font-size:2.5rem;line-height:1;color:#b48860;opacity:0.3;font-family:Georgia,serif">"</span>
+      <p class="text-gray-800 text-[15px] leading-7 font-semibold italic -mt-1" x-text="versiculo.texto"></p>
+      <span style="font-size:2.5rem;line-height:1;color:#b48860;opacity:0.3;font-family:Georgia,serif">"</span>
+      <div class="flex items-center gap-3 mt-2">
+        <div class="flex-1 h-px" style="background:linear-gradient(90deg,transparent,#b48860)"></div>
+        <i class="fa-solid fa-cross text-[9px]" style="color:#b48860;opacity:0.6"></i>
+        <div class="flex-1 h-px" style="background:linear-gradient(90deg,#b48860,transparent)"></div>
       </div>
     </div>
 
-    <!-- Divisor dourado -->
-    <div class="gold-divider"></div>
-
-    <!-- Botão -->
-    <div class="px-6 py-5 bg-white">
+    <!-- Botões -->
+    <div class="px-5 pb-5 pt-2" style="background:#fdfaf5">
       <button @click="showVersiculo = false"
-        class="w-full text-white font-bold py-3.5 rounded-2xl transition-all text-sm flex items-center justify-center gap-2"
-        style="background:linear-gradient(135deg, var(--essense-green-l), var(--essense-green-d));box-shadow:0 6px 20px rgba(52,84,72,0.35)"
-        onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
-        <i class="fa-solid fa-hands-praying text-lg"></i>
-        <span class="text-lg tracking-widest font-black">Amém</span>
+              class="w-full text-white font-black py-2.5 rounded-xl transition-all active:scale-95 text-sm flex items-center justify-center gap-2"
+              style="background:linear-gradient(135deg,#345448,#243c33);box-shadow:0 4px 14px rgba(52,84,72,0.35)">
+        <i class="fa-solid fa-hands-praying"></i>
+        <span class="tracking-widest">Amém</span>
       </button>
-      <!-- Botão secundário -->
-      <button @click="palavraAtual = palavrasOracao[Math.floor(Math.random()*palavrasOracao.length)]; showPalavraModal = true"
-              class="w-full mt-3 py-3 rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-2 border-2"
-              style="border-color:#345448; color:#345448; background:transparent"
+      <button @click="palavraAtual = palavrasOracao[Math.floor(Math.random()*palavrasOracao.length)]; showVersiculo=false; showPalavraModal=true"
+              class="w-full mt-2 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+              style="color:#345448;background:transparent;border:1.5px solid rgba(52,84,72,0.25)"
               onmouseover="this.style.background='#f0f5f2'" onmouseout="this.style.background='transparent'">
-        <i class="fa-solid fa-bible"></i>
-        Voz do Altíssimo
+        <i class="fa-solid fa-bible text-[10px]"></i> Voz do Altíssimo
       </button>
-
-      <p class="text-center text-xs mt-3" style="color:var(--essense-green);opacity:0.6">
-        <i class="fa-solid fa-seedling text-[10px]"></i> AMiGO Corretor
-      </p>
     </div>
 
   </div>
 </div>
 
-<!-- ===== MODAL: PRECISO OUVIR A PALAVRA DE DEUS ===== -->
-<div x-show="showPalavraModal" x-transition class="fixed inset-0 z-[60] flex items-center justify-center p-4" style="background:rgba(5,20,12,0.82)" @click="showPalavraModal=false">
-  <div class="w-full max-w-md rounded-3xl overflow-hidden" @click.stop
-       style="background:#fff; box-shadow:0 30px 80px rgba(0,0,0,0.4), 0 0 0 1px rgba(180,136,96,0.25)">
+<!-- ===== MODAL: VOZ DO ALTÍSSIMO ===== -->
+<div x-show="showPalavraModal"
+     x-transition:enter="transition ease-out duration-250" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+     x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+     class="fixed inset-0 z-[60] flex items-center justify-center p-4" style="background:rgba(5,18,12,0.80);backdrop-filter:blur(4px)" @click="showPalavraModal=false">
+  <div class="w-full max-w-sm rounded-2xl overflow-hidden" @click.stop
+       style="box-shadow:0 24px 64px rgba(0,0,0,0.45),0 0 0 1px rgba(180,136,96,0.2)">
 
     <!-- Header -->
-    <div class="px-6 pt-7 pb-6 text-center relative" style="background:linear-gradient(160deg,#1e3a2e 0%,#345448 60%,#4a7062 100%)">
-      <!-- Círculos decorativos -->
-      <div class="absolute top-0 right-0 w-32 h-32 rounded-full opacity-10" style="background:radial-gradient(circle,#b48860,transparent);transform:translate(30%,-30%)"></div>
-      <div class="absolute bottom-0 left-0 w-24 h-24 rounded-full opacity-10" style="background:radial-gradient(circle,#b48860,transparent);transform:translate(-30%,30%)"></div>
-
-      <div class="w-14 h-14 mx-auto mb-3 rounded-full flex items-center justify-center relative z-10" style="background:rgba(180,136,96,0.25); border:1.5px solid rgba(180,136,96,0.4)">
-        <i class="fa-solid fa-bible text-white text-2xl" style="filter:drop-shadow(0 2px 6px rgba(0,0,0,0.3))"></i>
+    <div class="px-5 pt-5 pb-4 text-center relative" style="background:linear-gradient(150deg,#1a3327 0%,#2d4a3c 55%,#3d5e50 100%)">
+      <div class="absolute top-0 right-0 w-20 h-20 rounded-full opacity-10" style="background:radial-gradient(circle,#b48860,transparent);transform:translate(30%,-30%)"></div>
+      <button @click="showPalavraModal=false" class="absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center" style="background:rgba(255,255,255,0.12)">
+        <i class="fa-solid fa-xmark text-white text-xs"></i>
+      </button>
+      <div class="w-10 h-10 mx-auto mb-2 rounded-full flex items-center justify-center" style="background:rgba(180,136,96,0.25);border:1.5px solid rgba(180,136,96,0.4)">
+        <i class="fa-solid fa-dove text-white text-base"></i>
       </div>
-      <p class="text-[10px] font-black tracking-[0.2em] uppercase mb-2 relative z-10" style="color:#c9a46e">✦ &nbsp; Palavra para Você &nbsp; ✦</p>
-      <div class="inline-block rounded-xl px-5 py-2.5 relative z-10" style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.18)">
-        <p class="text-white font-black text-xl tracking-wide" x-text="palavraAtual?.ref" style="text-shadow:0 2px 8px rgba(0,0,0,0.3)"></p>
-        <p class="text-[10px] font-semibold mt-0.5 tracking-widest" style="color:#c9a46e">BÍBLIA SAGRADA · NVT</p>
-      </div>
-    </div>
-
-    <!-- Versículo -->
-    <div class="px-7 pt-6 pb-2 text-center" style="background:#fdfaf5">
-      <span class="block text-5xl leading-none mb-3" style="color:#b48860; opacity:0.3; font-family:Georgia,serif">"</span>
-      <p class="text-gray-800 text-[20px] leading-9 font-semibold italic" x-text="palavraAtual?.texto"></p>
-      <span class="block text-5xl leading-none mt-2" style="color:#b48860; opacity:0.3; font-family:Georgia,serif">"</span>
-    </div>
-
-    <!-- Divisor -->
-    <div class="flex items-center gap-3 px-7 py-3" style="background:#fdfaf5">
-      <div class="flex-1 h-px" style="background:linear-gradient(90deg,transparent,#b48860)"></div>
-      <i class="fa-solid fa-cross text-[10px]" style="color:#b48860; opacity:0.6"></i>
-      <div class="flex-1 h-px" style="background:linear-gradient(90deg,#b48860,transparent)"></div>
-    </div>
-
-    <!-- Oração -->
-    <div class="px-7 pb-5" style="background:#fdfaf5">
-      <div class="rounded-2xl px-5 py-4 text-left" style="background:#fff; border:1px solid #e8dfd0">
-        <p class="text-[10px] font-black uppercase tracking-widest mb-2" style="color:#b48860">
-          <i class="fa-solid fa-hands-praying mr-1"></i> Oração
-        </p>
-        <p class="text-gray-700 text-[13px] leading-6" x-text="palavraAtual?.oracao"></p>
+      <p class="text-[9px] font-black tracking-[0.2em] uppercase mb-2" style="color:#c9a46e">✦ Voz do Altíssimo ✦</p>
+      <div class="inline-block rounded-xl px-4 py-1.5" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.18)">
+        <p class="text-white font-black text-base tracking-wide" x-text="palavraAtual?.ref"></p>
+        <p class="text-[9px] font-semibold tracking-widest mt-0.5" style="color:#c9a46e">BÍBLIA SAGRADA</p>
       </div>
     </div>
 
-    <!-- Botão Amém -->
-    <div class="px-6 pb-6" style="background:#fdfaf5">
+    <!-- Versículo + Oração num scroll se necessário -->
+    <div class="overflow-y-auto" style="background:#fdfaf5;max-height:55vh">
+      <!-- Versículo -->
+      <div class="px-5 pt-4 pb-2 text-center">
+        <span style="font-size:2rem;line-height:1;color:#b48860;opacity:0.3;font-family:Georgia,serif">"</span>
+        <p class="text-gray-800 text-[14px] leading-6 font-semibold italic -mt-1" x-text="palavraAtual?.texto"></p>
+        <span style="font-size:2rem;line-height:1;color:#b48860;opacity:0.3;font-family:Georgia,serif">"</span>
+      </div>
+
+      <!-- Divisor -->
+      <div class="flex items-center gap-3 px-5 py-2">
+        <div class="flex-1 h-px" style="background:linear-gradient(90deg,transparent,#b48860)"></div>
+        <i class="fa-solid fa-cross text-[9px]" style="color:#b48860;opacity:0.6"></i>
+        <div class="flex-1 h-px" style="background:linear-gradient(90deg,#b48860,transparent)"></div>
+      </div>
+
+      <!-- Oração -->
+      <div class="px-5 pb-4">
+        <div class="rounded-xl px-4 py-3 text-left" style="background:#fff;border:1px solid #e8dfd0">
+          <p class="text-[9px] font-black uppercase tracking-widest mb-1.5" style="color:#b48860">
+            <i class="fa-solid fa-hands-praying mr-1"></i> Oração
+          </p>
+          <p class="text-gray-600 text-[12px] leading-5" x-text="palavraAtual?.oracao"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botões -->
+    <div class="px-5 pb-5 pt-3" style="background:#fdfaf5;border-top:1px solid #ede8e0">
       <button @click="showPalavraModal = false"
-              class="w-full py-3.5 rounded-2xl text-white font-black text-lg tracking-widest transition-all active:scale-95"
-              style="background:linear-gradient(135deg,#345448,#243c33); box-shadow:0 6px 20px rgba(52,84,72,0.4)"
-              onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
-        <i class="fa-solid fa-hands-praying mr-2"></i> Amém
+              class="w-full py-2.5 rounded-xl text-white font-black tracking-widest text-sm transition-all active:scale-95 flex items-center justify-center gap-2"
+              style="background:linear-gradient(135deg,#345448,#243c33);box-shadow:0 4px 14px rgba(52,84,72,0.35)">
+        <i class="fa-solid fa-hands-praying"></i> Amém
       </button>
       <button @click="palavraAtual = palavrasOracao[Math.floor(Math.random()*palavrasOracao.length)]"
-              class="w-full mt-2.5 py-2.5 rounded-xl text-sm font-semibold transition-all"
-              style="color:#345448; background:transparent"
+              class="w-full mt-2 py-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
+              style="color:#345448;background:transparent"
               onmouseover="this.style.background='#f0f5f2'" onmouseout="this.style.background='transparent'">
-        <i class="fa-solid fa-rotate mr-1 text-xs"></i> Receber outro versículo
+        <i class="fa-solid fa-rotate text-[10px]"></i> Outro versículo
       </button>
     </div>
 
@@ -5766,6 +5752,33 @@ function app() {
       });
       localStorage.setItem('amigo_imoveis', JSON.stringify(this.imoveis));
       this.save();
+    },
+
+    compartilharImovelChat(im) {
+      const tipo = im.tipo ? im.tipo.charAt(0).toUpperCase() + im.tipo.slice(1) : 'Imóvel';
+      const icon = this.getImovelTipoIcon(im.tipo);
+      const valor = im.valor ? 'R$ ' + Number(im.valor).toLocaleString('pt-BR', {minimumFractionDigits: 0, maximumFractionDigits: 0}) : 'Valor a consultar';
+      const detalhes = [
+        im.quartos ? `${im.quartos} qtos` : null,
+        im.area ? `${im.area} m²` : null,
+        im.vagas ? `${im.vagas} vaga(s)` : null,
+      ].filter(Boolean).join(' · ');
+      const local = [im.bairro, im.endereco].filter(Boolean).join(' — ');
+      const texto = `${icon} *${tipo} disponível!*\n📍 ${local || 'Endereço a consultar'}\n💰 ${valor}${detalhes ? '\n🏗️ ' + detalhes : ''}${im.obs ? '\n📝 ' + im.obs : ''}\n\n_Compartilhado por ${this.contaNome}${this.contaImobiliaria ? ' · ' + this.contaImobiliaria : ''}_`;
+      const uid = window._firebaseUser?.uid || 'anon';
+      const nome = this.contaNome || 'Corretor';
+      const imobiliaria = this.contaImobiliaria || '';
+      const foto = this.contaFoto || '';
+      window._chatSend({ uid, nome, imobiliaria, foto, texto, tipo: 'imovel', imovelId: im.id })
+        .then(() => {
+          this.showChat = true;
+          this.$nextTick(() => {
+            const el = document.getElementById('chat-msgs');
+            if (el) el.scrollTop = el.scrollHeight;
+          });
+          this.showToast('Imóvel compartilhado no chat!');
+        })
+        .catch(() => this.showToast('Erro ao compartilhar no chat'));
     },
 
     vincularImovel(imovelId) {
@@ -8540,8 +8553,24 @@ function app() {
                style="max-height:240px;object-fit:cover"
                @click="openMediaViewer({url: msg.imagem, type: 'image/jpeg'}, [])">
 
-          <!-- Texto com links clicáveis -->
-          <p x-show="msg.texto"
+          <!-- Card especial de imóvel compartilhado -->
+          <div x-show="msg.tipo === 'imovel' && msg.texto"
+               class="rounded-xl overflow-hidden mb-1"
+               :class="msg.uid === firebaseUID ? 'border border-green-500' : 'border border-amber-200'">
+            <div class="px-2 py-1 flex items-center gap-1"
+                 :class="msg.uid === firebaseUID ? 'bg-green-600' : 'bg-amber-50'">
+              <i class="fa-solid fa-building text-xs" :class="msg.uid === firebaseUID ? 'text-green-200' : 'text-amber-600'"></i>
+              <span class="text-[10px] font-black uppercase tracking-wider" :class="msg.uid === firebaseUID ? 'text-green-100' : 'text-amber-700'">Imóvel Compartilhado</span>
+            </div>
+            <div class="px-3 py-2" :class="msg.uid === firebaseUID ? 'bg-green-600' : 'bg-amber-50'">
+              <p class="text-sm leading-relaxed break-words whitespace-pre-wrap"
+                 :class="msg.uid === firebaseUID ? 'text-white' : 'text-gray-800'"
+                 x-html="chatDetectarLink(msg.texto)"></p>
+            </div>
+          </div>
+
+          <!-- Texto normal (não-imóvel) com links clicáveis -->
+          <p x-show="msg.tipo !== 'imovel' && msg.texto"
              class="text-sm leading-snug break-words whitespace-pre-wrap"
              x-html="chatDetectarLink(msg.texto)"></p>
 
