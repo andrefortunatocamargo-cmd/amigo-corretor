@@ -304,7 +304,7 @@ tailwind.config = {
       <!-- Footer do card -->
       <div class="px-8 py-4 text-center border-t border-gray-50" style="background:#fafafa">
         <p class="text-gray-300 text-[10px]">André Fortunato Camargo · CRECI 328576-F</p>
-        <p class="text-gray-300 text-[10px] mt-0.5">AMiGO Corretor · Essense Negócios Imobiliários</p>
+        <p class="text-gray-300 text-[10px] mt-0.5">AMiGO Corretor</p>
       </div>
 
     </div>
@@ -3948,7 +3948,7 @@ tailwind.config = {
       </button>
 
       <p class="text-center text-xs mt-3" style="color:var(--essense-green);opacity:0.6">
-        <i class="fa-solid fa-seedling text-[10px]"></i> AMiGO Corretor · Essense Negócios Imobiliários
+        <i class="fa-solid fa-seedling text-[10px]"></i> AMiGO Corretor
       </p>
     </div>
 
@@ -4889,7 +4889,7 @@ function app() {
         }
       </style></head><body>
       <h1 class="titulo">Agenda de Visitas – ${periodoLabels[periodo] || 'Roteiro'}</h1>
-      <div class="subtitulo">André Fortunato Camargo · CRECI 328576-F · Essense Negócios Imobiliários · Emitido em ${hoje}</div>`;
+      <div class="subtitulo">André Fortunato Camargo · CRECI 328576-F · Emitido em ${hoje}</div>`;
 
       Object.entries(grupos).sort(([a],[b]) => a.localeCompare(b)).forEach(([dia, items]) => {
         html += `<div class="dia-header">${fmtDiaHeader(dia)}</div>`;
@@ -4924,7 +4924,7 @@ function app() {
         });
       });
 
-      html += `<div class="footer">AMiGO Corretor · Essense Negócios Imobiliários · ${visitas.length} visita${visitas.length !== 1 ? 's' : ''} no roteiro</div>
+      html += `<div class="footer">AMiGO Corretor · ${visitas.length} visita${visitas.length !== 1 ? 's' : ''} no roteiro</div>
       <script>window.onload = () => { window.print(); }<\/script>
       
 </body></html>`;
@@ -4952,7 +4952,7 @@ function app() {
       });
 
       let msg = '📋 *ROTEIRO DE VISITAS*\n';
-      msg += '_Essense Negócios Imobiliários_\n\n';
+      msg += '_AMiGO Corretor_\n\n';
 
       Object.entries(grupos).forEach(([dia, items]) => {
         msg += dia !== 'sem-data'
