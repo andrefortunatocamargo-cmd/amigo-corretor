@@ -4198,7 +4198,7 @@ function app() {
     adminUsers: [],
     adminLoading: false,
     adminMsg: { text: '', tipo: '' },
-    novoCorretor: { nome: '', email: '' },
+    novoCorretor: { nome: '', email: '', telefone: '', creci: '', imobiliaria: '' },
     adminBloqueioLoading: null,
     get _keyClientes() { return 'amigo_clientes_' + (this.firebaseUID || 'local'); },
     get _keyCaptacoes() { return 'amigo_captacoes_' + (this.firebaseUID || 'local'); },
@@ -6264,6 +6264,9 @@ function app() {
         const profile = {
           nome: this.novoCorretor.nome.trim(),
           email: this.novoCorretor.email.trim(),
+          telefone: this.novoCorretor.telefone.trim(),
+          creci: this.novoCorretor.creci.trim(),
+          imobiliaria: this.novoCorretor.imobiliaria.trim(),
           role: 'corretor',
           ativo: true,
           criadoEm: new Date().toISOString(),
@@ -6273,10 +6276,13 @@ function app() {
         await this.enviarEmailBoasVindas(
           this.novoCorretor.nome.trim(),
           this.novoCorretor.email.trim(),
-          senhaTemp
+          senhaTemp,
+          this.novoCorretor.telefone.trim(),
+          this.novoCorretor.creci.trim(),
+          this.novoCorretor.imobiliaria.trim()
         );
         this.adminMsg = { text: `✅ Corretor ${this.novoCorretor.nome} criado e convite enviado!`, tipo: 'ok' };
-        this.novoCorretor = { nome: '', email: '' };
+        this.novoCorretor = { nome: '', email: '', telefone: '', creci: '', imobiliaria: '' };
         await this.carregarUsuarios();
       } catch(e) {
         const msgs = {
@@ -6324,18 +6330,21 @@ function app() {
       setTimeout(() => this.adminMsg = { text:'', tipo:'' }, 3000);
     },
 
-    async enviarEmailBoasVindas(nome, email, senha) {
+    async enviarEmailBoasVindas(nome, email, senha, telefone = '', creci = '', imobiliaria = '') {
       if (typeof emailjs === 'undefined') {
         console.warn('EmailJS não configurado — e-mail não enviado.');
         return;
       }
       const sysUrl = window.location.origin + window.location.pathname;
       await emailjs.send('service_c02ra3o', 'template_018xrpq', {
-        to_name:   nome,
-        to_email:  email,
-        senha:     senha,
-        link:      sysUrl,
-        de_nome:   this.currentUserProfile?.nome || 'Administrador',
+        to_name:     nome,
+        to_email:    email,
+        senha:       senha,
+        link:        sysUrl,
+        de_nome:     this.currentUserProfile?.nome || 'Administrador',
+        telefone:    telefone,
+        creci:       creci,
+        imobiliaria: imobiliaria,
       });
     },
 
@@ -7897,16 +7906,29 @@ function app() {
         </h3>
         <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 space-y-3">
           <div>
-            <label class="block text-xs font-bold text-gray-600 mb-1">Nome completo</label>
+            <label class="block text-xs font-bold text-gray-600 mb-1">Nome completo *</label>
             <input x-model="novoCorretor.nome" type="text" placeholder="Ex: João Silva"
-                   class="w-full px-3 py-2.5 rounded-xl border border-amber-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-                   @keydown.enter="criarCorretor()">
+                   class="w-full px-3 py-2.5 rounded-xl border border-amber-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400">
           </div>
           <div>
-            <label class="block text-xs font-bold text-gray-600 mb-1">E-mail</label>
+            <label class="block text-xs font-bold text-gray-600 mb-1">E-mail *</label>
             <input x-model="novoCorretor.email" type="email" placeholder="joao@email.com"
-                   class="w-full px-3 py-2.5 rounded-xl border border-amber-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-                   @keydown.enter="criarCorretor()">
+                   class="w-full px-3 py-2.5 rounded-xl border border-amber-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-600 mb-1">WhatsApp</label>
+            <input x-model="novoCorretor.telefone" type="text" placeholder="Ex: 11999998888"
+                   class="w-full px-3 py-2.5 rounded-xl border border-amber-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-600 mb-1">CRECI</label>
+            <input x-model="novoCorretor.creci" type="text" placeholder="Ex: CRECI 123456-F"
+                   class="w-full px-3 py-2.5 rounded-xl border border-amber-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-600 mb-1">Imobiliária</label>
+            <input x-model="novoCorretor.imobiliaria" type="text" placeholder="Ex: Essense Negócios Imobiliários"
+                   class="w-full px-3 py-2.5 rounded-xl border border-amber-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400">
           </div>
           <div class="bg-white border border-amber-100 rounded-xl px-3 py-2 text-[11px] text-amber-700 flex items-start gap-2">
             <i class="fa-solid fa-circle-info mt-0.5 flex-shrink-0"></i>
@@ -7962,7 +7984,7 @@ function app() {
 
               <!-- Info -->
               <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
                   <p class="text-sm font-black text-gray-800 truncate" x-text="u.nome || u.email"></p>
                   <span x-show="u.role==='admin'"
                         class="text-[9px] font-black px-1.5 py-0.5 rounded-full"
@@ -7972,6 +7994,9 @@ function app() {
                         style="background:#dbeafe; color:#1e40af">VOCÊ</span>
                 </div>
                 <p class="text-[10px] text-gray-400 truncate" x-text="u.email"></p>
+                <p class="text-[10px] text-gray-400 truncate" x-show="u.telefone" x-text="'📱 ' + u.telefone"></p>
+                <p class="text-[10px] text-gray-400 truncate" x-show="u.creci" x-text="'🪪 ' + u.creci"></p>
+                <p class="text-[10px] text-gray-400 truncate" x-show="u.imobiliaria" x-text="'🏢 ' + u.imobiliaria"></p>
                 <p class="text-[10px] mt-0.5"
                    :class="u.ativo ? 'text-green-600' : 'text-red-500'"
                    x-text="u.ativo ? '✅ Acesso ativo' : '🚫 Acesso bloqueado'">
