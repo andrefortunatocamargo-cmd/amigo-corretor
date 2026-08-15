@@ -4644,7 +4644,7 @@ function app() {
         });
       const payload = {
         imoveis: publicados,
-        config: { whatsapp: this.contaTelefone || '5511943560902', corretorNome: this.contaNome || 'Corretor' },
+        config: { whatsapp: this.isAdmin ? '5511943560902' : (this.contaTelefone || ''), corretorNome: this.isAdmin ? 'André Camargo' : (this.contaNome || 'Corretor') },
         updatedAt: new Date().toISOString(),
       };
       try {
@@ -5027,7 +5027,9 @@ function app() {
       });
 
       msg += '━━━━━━━━━━━━━━━━━━━━\n';
-      msg += `_AMiGO Corretor · ${this.contaNome || 'Corretor'}${this.contaCreci ? ' · ' + this.contaCreci : ''}_`;
+      msg += this.isAdmin
+        ? `_AMiGO Corretor · André Camargo · CRECI 328576-F_`
+        : `_AMiGO Corretor · ${this.contaNome || 'Corretor'}${this.contaCreci ? ' · ' + this.contaCreci : ''}_`;
 
       const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
       window.open(url, '_blank');
@@ -5817,9 +5819,15 @@ function app() {
       const dias = this.getTemperatura(cliente)?.dias || 0;
       if (contexto === 'reativacao') {
         const msgs = [
-          `Olá, ${nome}! Tudo bem? Aqui é ${this.contaNome || 'seu corretor'}${this.contaImobiliaria ? ', da ' + this.contaImobiliaria : ''}. Faz um tempinho que não nos falamos — queria saber como você está e se ainda está em busca do imóvel ideal. Tenho novidades que podem te interessar! 🏡`,
-          `Oi, ${nome}! ${this.contaNome ? this.contaNome.split(' ')[0] : 'Eu'}${this.contaImobiliaria ? ', da ' + this.contaImobiliaria : ''}. Estava revisando minha agenda e vi que faz ${dias} dias sem nos falarmos. Surgiu uma oportunidade nova que combina bastante com o que você procura. Podemos conversar?`,
-          `${nome}, bom dia! Sou ${this.contaNome || 'seu corretor'}${this.contaImobiliaria ? ', da ' + this.contaImobiliaria : ''}. Sei que a busca pelo imóvel ideal leva tempo — queria apenas reforçar que estou à disposição. Alguma novidade no seu cenário? Posso te ajudar! 😊`,
+          this.isAdmin
+            ? `Olá, ${nome}! Tudo bem? Aqui é o André, da Essense Imóveis. Faz um tempinho que não nos falamos — queria saber como você está e se ainda está em busca do imóvel ideal. Tenho novidades que podem te interessar! 🏡`
+            : `Olá, ${nome}! Tudo bem? Aqui é ${this.contaNome || 'seu corretor'}${this.contaImobiliaria ? ', da ' + this.contaImobiliaria : ''}. Faz um tempinho que não nos falamos — queria saber como você está e se ainda está em busca do imóvel ideal. Tenho novidades que podem te interessar! 🏡`,
+          this.isAdmin
+            ? `Oi, ${nome}! André, da Essense. Estava revisando minha agenda e vi que faz ${dias} dias sem nos falarmos. Surgiu uma oportunidade nova que combina bastante com o que você procura. Podemos conversar?`
+            : `Oi, ${nome}! ${this.contaNome ? this.contaNome.split(' ')[0] : 'Eu'}${this.contaImobiliaria ? ', da ' + this.contaImobiliaria : ''}. Estava revisando minha agenda e vi que faz ${dias} dias sem nos falarmos. Surgiu uma oportunidade nova que combina bastante com o que você procura. Podemos conversar?`,
+          this.isAdmin
+            ? `${nome}, bom dia! Sou o André, da Essense Imóveis. Sei que a busca pelo imóvel ideal leva tempo — queria apenas reforçar que estou à disposição. Alguma novidade no seu cenário? Posso te ajudar! 😊`
+            : `${nome}, bom dia! Sou ${this.contaNome || 'seu corretor'}${this.contaImobiliaria ? ', da ' + this.contaImobiliaria : ''}. Sei que a busca pelo imóvel ideal leva tempo — queria apenas reforçar que estou à disposição. Alguma novidade no seu cenário? Posso te ajudar! 😊`,
         ];
         this.waMensagem = msgs[0];
         this.waTemplatesReativacao = msgs;
