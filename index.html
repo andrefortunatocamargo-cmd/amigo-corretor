@@ -89,15 +89,22 @@
 </script>
 <style>
   :root {
-    --essense-green:   #345448;
-    --essense-green-d: #243c33;
-    --essense-green-l: #4a7062;
-    --essense-gold:    #b48860;
-    --essense-gold-l:  #d4a87a;
-    --essense-gold-d:  #8a6440;
+    --p:     #345448;
+    --p-d:   #243c33;
+    --p-l:   #4a7062;
+    --s:     #b48860;
+    --s-l:   #d4a87a;
+    --s-d:   #8a6440;
+    /* legacy aliases */
+    --essense-green:   var(--p);
+    --essense-green-d: var(--p-d);
+    --essense-green-l: var(--p-l);
+    --essense-gold:    var(--s);
+    --essense-gold-l:  var(--s-l);
+    --essense-gold-d:  var(--s-d);
   }
   [x-cloak] { display: none !important; }
-  .gradient-header { background: linear-gradient(135deg, var(--essense-green-l) 0%, var(--essense-green) 50%, var(--essense-green-d) 100%); }
+  .gradient-header { background: linear-gradient(135deg, var(--p-l) 0%, var(--p) 50%, var(--p-d) 100%); }
   .card-hover { transition: all 0.2s ease; }
   .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.12); }
   .pulse-alert { animation: pulseAlert 2s infinite; }
@@ -2721,6 +2728,45 @@ tailwind.config = {
       </div>
     </div>
 
+    <!-- === PALETA DE CORES === -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-50 flex items-center gap-3">
+        <div class="w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs"
+             :style="'background:' + paletas[paletaAtual].p">
+          <i class="fa-solid fa-palette"></i>
+        </div>
+        <div class="flex-1">
+          <h2 class="font-black text-gray-800 text-sm">Tema Visual</h2>
+          <p class="text-[10px] text-gray-400">Cor principal do sistema · ativo: <span class="font-bold" x-text="paletas[paletaAtual].nome"></span></p>
+        </div>
+      </div>
+      <div class="p-5">
+        <div class="grid grid-cols-1 gap-2.5">
+          <template x-for="(pal, key) in paletas" :key="key">
+            <button @click="aplicarPaleta(key)"
+                    class="flex items-center gap-3 rounded-xl px-3 py-2.5 border-2 transition-all text-left"
+                    :class="paletaAtual === key ? 'border-gray-800 bg-gray-50' : 'border-gray-100 hover:border-gray-200 bg-white'">
+              <!-- Preview das cores -->
+              <div class="flex gap-1 flex-shrink-0">
+                <div class="w-7 h-7 rounded-lg shadow-sm" :style="'background:' + pal.p"></div>
+                <div class="w-4 h-7 rounded-lg shadow-sm" :style="'background:' + pal.pd"></div>
+                <div class="w-4 h-7 rounded-lg shadow-sm" :style="'background:' + pal.s"></div>
+              </div>
+              <!-- Nome -->
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold text-gray-800" x-text="pal.nome"></p>
+                <p class="text-[10px] text-gray-400" x-text="pal.p + ' · ' + pal.s"></p>
+              </div>
+              <!-- Check ativo -->
+              <div x-show="paletaAtual === key" class="w-5 h-5 rounded-full flex items-center justify-center text-white flex-shrink-0" :style="'background:' + pal.p">
+                <i class="fa-solid fa-check text-[10px]"></i>
+              </div>
+            </button>
+          </template>
+        </div>
+      </div>
+    </div>
+
     <!-- === GOOGLE DRIVE === -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <div class="px-5 py-4 border-b border-gray-50 flex items-center gap-3">
@@ -4147,6 +4193,16 @@ tailwind.config = {
 function app() {
   return {
     darkMode: localStorage.getItem('darkMode') === 'true',
+    paletaAtual: localStorage.getItem('amigo_paleta') || 'verde',
+    paletas: {
+      verde:    { nome:'Verde Essense', p:'#345448', pd:'#243c33', pl:'#4a7062', s:'#b48860', sl:'#d4a87a', sd:'#8a6440' },
+      azul:     { nome:'Azul Profissional', p:'#1e4d8c', pd:'#142f57', pl:'#2d6cbf', s:'#e08030', sl:'#f0a050', sd:'#c06010' },
+      roxo:     { nome:'Roxo Premium', p:'#5b21b6', pd:'#3b0f7a', pl:'#7c3aed', s:'#d4a87a', sl:'#e8c89a', sd:'#a07840' },
+      grafite:  { nome:'Grafite & Ouro', p:'#2c2c2c', pd:'#1a1a1a', pl:'#3d3d3d', s:'#c9a84c', sl:'#e0c060', sd:'#a07830' },
+      terracota:{ nome:'Terracota Elegante', p:'#8b3a2a', pd:'#6b2c1e', pl:'#a44f3b', s:'#c4975a', sl:'#dab478', sd:'#a07840' },
+      marinho:  { nome:'Azul Marinho', p:'#1a3a5c', pd:'#0e2440', pl:'#24527a', s:'#d4a040', sl:'#eab850', sd:'#b07820' },
+      esmeralda:{ nome:'Esmeralda Moderno', p:'#065f46', pd:'#03362a', pl:'#0a7a5a', s:'#d97706', sl:'#f59e0b', sd:'#b45309' },
+    },
     activityFeed: [],  // carregado após login Firebase
     page: 'dashboard',
     menuOpen: false,
@@ -4435,8 +4491,70 @@ function app() {
       ],
     },
 
+    aplicarPaleta(key) {
+      const p = this.paletas[key];
+      if (!p) return;
+      const r = document.documentElement.style;
+      r.setProperty('--p',   p.p);
+      r.setProperty('--p-d', p.pd);
+      r.setProperty('--p-l', p.pl);
+      r.setProperty('--s',   p.s);
+      r.setProperty('--s-l', p.sl);
+      r.setProperty('--s-d', p.sd);
+      // Inline hardcoded colors override via dynamic <style>
+      let tag = document.getElementById('paleta-dyn');
+      if (!tag) { tag = document.createElement('style'); tag.id = 'paleta-dyn'; document.head.appendChild(tag); }
+      const old = { p: '#345448', pd: '#243c33', pl: '#4a7062', s: '#b48860', sl: '#d4a87a', sd: '#8a6440' };
+      const mkRgb = hex => { const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16); return `${r},${g},${b}`; };
+      // Build CSS that replaces common inline color patterns
+      tag.textContent = `
+        :root { --p:${p.p};--p-d:${p.pd};--p-l:${p.pl};--s:${p.s};--s-l:${p.sl};--s-d:${p.sd}; }
+        [style*="${old.p}"]  { --_p:${p.p}  !important }
+        [style*="${old.pd}"] { --_pd:${p.pd} !important }
+        /* Targeted overrides for primary color in inline styles */
+        [style*="background:${old.p}"]          { background:${p.p} !important }
+        [style*="background:${old.pd}"]         { background:${p.pd} !important }
+        [style*="background:${old.pl}"]         { background:${p.pl} !important }
+        [style*="color:${old.p}"]               { color:${p.p} !important }
+        [style*="color:${old.pd}"]              { color:${p.pd} !important }
+        [style*="border-color:${old.p}"]        { border-color:${p.p} !important }
+        [style*="background:${old.s}"]          { background:${p.s} !important }
+        [style*="color:${old.s}"]               { color:${p.s} !important }
+        [style*="border-color:${old.s}"]        { border-color:${p.s} !important }
+        [style*="rgba(52,84,72"]                { --_x:1 }
+        .gradient-header { background:linear-gradient(135deg,${p.pl} 0%,${p.p} 50%,${p.pd} 100%) !important }
+        /* Sidebar gradient override */
+        nav[style*="${old.pd}"], aside[style*="${old.pd}"] { background:linear-gradient(180deg,${p.pl},${p.p} 40%,${p.pd}) !important }
+        /* Gradient header override for all inline gradients with primary */
+        [style*="linear-gradient(135deg,${old.pd}"] { background:linear-gradient(135deg,${p.pd},${p.p},${p.pl}) !important }
+        [style*="linear-gradient(135deg,${old.p}"]  { background:linear-gradient(135deg,${p.p},${p.pl}) !important }
+        [style*="linear-gradient(150deg,${old.p}"]  { background:linear-gradient(150deg,${p.pd} 0%,${p.p} 55%,${p.pl} 100%) !important }
+        [style*="linear-gradient(160deg,${old.p}"]  { background:linear-gradient(160deg,${p.pd} 0%,${p.p} 60%,${p.pl} 100%) !important }
+        [style*="linear-gradient(135deg,${old.pl}"]  { background:linear-gradient(135deg,${p.pl} 0%,${p.p} 50%,${p.pd} 100%) !important }
+        /* ring and focus colors */
+        [style*="ring-color:${old.p}"]  { --tw-ring-color:${p.p} !important }
+        /* Gold/secondary overrides */
+        [style*="linear-gradient(135deg,${old.sd},${old.s}"] { background:linear-gradient(135deg,${p.sd},${p.s}) !important }
+        [style*="box-shadow:0 4px 14px rgba(52,84,72"] { box-shadow:0 4px 14px ${p.p}55 !important }
+        [style*="box-shadow:0 6px 20px rgba(52,84,72"] { box-shadow:0 6px 20px ${p.p}66 !important }
+        /* focus-visible ring */
+        .focus\\:ring-green-400:focus { --tw-ring-color:${p.pl} !important }
+        .focus\\:ring-green-300:focus { --tw-ring-color:${p.pl}aa !important }
+        /* Sidebar / nav 145deg */
+        [style*="linear-gradient(145deg, #1e302a"]  { background:linear-gradient(145deg,${p.pd}cc 0%,${p.pd} 40%,${p.p} 100%) !important }
+        [style*="linear-gradient(145deg,${old.p}"]  { background:linear-gradient(145deg,${p.p},${p.pd}) !important }
+        /* 4a7a66 variant (lighter) */
+        [style*="linear-gradient(135deg,${old.p},#4a7a66"] { background:linear-gradient(135deg,${p.p},${p.pl}) !important }
+        [style*="linear-gradient(135deg,${old.p},#4a7c62"] { background:linear-gradient(135deg,${p.p},${p.pl}) !important }
+        [style*="linear-gradient(135deg,${old.p},#4a7062"] { background:linear-gradient(135deg,${p.p},${p.pl}) !important }
+      `;
+      this.paletaAtual = key;
+      localStorage.setItem('amigo_paleta', key);
+    },
+
     init() {
       if (this.darkMode) document.documentElement.classList.add('dark');
+      this.aplicarPaleta(this.paletaAtual);
 
       // ── Firebase Auth: escuta mudanças de estado ──────────────────────
       document.addEventListener('fb-auth-change', async (e) => {
