@@ -80,11 +80,24 @@
 <script>
   (function(){ emailjs.init({ publicKey: 'yoQ4HetdhYiz7cS7M' }); })();
 </script>
-<link rel="manifest" href="/manifest.json">
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#345448">
 <script>
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+    window.addEventListener('load', async () => {
+      // Remove o service worker antigo (escopo "/" com cache-first) que travava atualizações
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for (const r of regs) {
+        if (!r.scope.includes('/amigo-corretor/')) await r.unregister();
+      }
+      const reg = await navigator.serviceWorker.register('sw.js');
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        nw && nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) window.location.reload();
+        });
+      });
+    });
   }
 </script>
 <style>
