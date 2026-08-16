@@ -2419,12 +2419,12 @@ tailwind.config = {
 
             <!-- Tira de fotos (se houver) -->
             <div x-show="(cap.midias||[]).length > 0" class="mt-2 flex gap-1.5 overflow-x-auto pb-1" style="scrollbar-width:none">
-              <template x-for="(m, idx) in (cap.midias||[]).slice(0,6)" :key="idx">
+              <template x-for="m in (cap.midias||[]).slice(0,6)" :key="m">
                 <div class="relative flex-shrink-0 rounded-lg overflow-hidden" style="width:56px;height:42px;background:#f3f4f6">
-                  <template x-if="!(m && m.startsWith('data:video/'))">
-                    <img :src="m" class="w-full h-full object-cover">
+                  <template x-if="!midiaEhVideo(m)">
+                    <img :src="midiaSrc(m)" class="w-full h-full object-cover" loading="lazy">
                   </template>
-                  <template x-if="m && m.startsWith('data:video/')">
+                  <template x-if="midiaEhVideo(m)">
                     <div class="w-full h-full flex items-center justify-center bg-gray-800">
                       <i class="fa-solid fa-play text-white text-[10px]"></i>
                     </div>
@@ -2432,7 +2432,8 @@ tailwind.config = {
                 </div>
               </template>
               <div x-show="(cap.midias||[]).length > 6"
-                   class="flex-shrink-0 w-14 h-10.5 rounded-lg bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-400"
+                   class="flex-shrink-0 rounded-lg bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-400"
+                   style="width:56px;height:42px"
                    x-text="'+' + ((cap.midias||[]).length - 6)"></div>
             </div>
 
@@ -4243,6 +4244,125 @@ tailwind.config = {
   </div>
 </div>
 
+<!-- ═══ MediaStore: fotos e vídeos em IndexedDB (fora do localStorage) ═══ -->
+<script>
+window.MediaStore = (function () {
+  const DB = 'amigoMedia', STORE = 'blobs', VER = 1;
+  let dbp = null;
+
+  function open() {
+    if (dbp) return dbp;
+    dbp = new Promise((res, rej) => {
+      const r = indexedDB.open(DB, VER);
+      r.onupgradeneeded = () => {
+        const d = r.result;
+        if (!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE);
+      };
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    });
+    return dbp;
+  }
+
+  function tx(mode, fn) {
+    return open().then(d => new Promise((res, rej) => {
+      const t = d.transaction(STORE, mode);
+      const req = fn(t.objectStore(STORE));
+      t.oncomplete = () => res(req ? req.result : undefined);
+      t.onerror = () => rej(t.error);
+      t.onabort = () => rej(t.error);
+    }));
+  }
+
+  const novoId = kind =>
+    `idb:${kind || 'i'}:${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+
+  return {
+    /* Guarda um Blob e devolve a referência (idb:i:… ou idb:v:…) */
+    async put(blob, kind) {
+      const id = novoId(kind);
+      await tx('readwrite', s => s.put(blob, id));
+      return id;
+    },
+    async get(ref) { return tx('readonly', s => s.get(ref)); },
+    async del(ref) { return tx('readwrite', s => s.delete(ref)); },
+
+    ehRef:   r => typeof r === 'string' && r.startsWith('idb:'),
+    ehVideo: r => typeof r === 'string' &&
+                  (r.startsWith('idb:v:') || r.startsWith('data:video/') || /\.(mp4|mov|webm|ogg)$/i.test(r)),
+
+    /* Converte um data: URL antigo em Blob, para migração */
+    dataUrlParaBlob(url) {
+      const [head, b64] = url.split(',');
+      const mime = (head.match(/:(.*?);/) || [, 'image/jpeg'])[1];
+      const bin = atob(b64);
+      const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      return new Blob([arr], { type: mime });
+    },
+
+    /* Reduz e recomprime mantendo qualidade alta; devolve Blob */
+    comprimir(file, maxDim = 2560, q = 0.92) {
+      return new Promise(resolve => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          let w = img.naturalWidth, h = img.naturalHeight;
+          const escala = Math.min(1, maxDim / Math.max(w, h));
+          w = Math.max(1, Math.round(w * escala));
+          h = Math.max(1, Math.round(h * escala));
+          const c = document.createElement('canvas');
+          c.width = w; c.height = h;
+          const ctx = c.getContext('2d');
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, w, h);
+          URL.revokeObjectURL(url);
+          c.toBlob(b => {
+            /* Se recomprimir não ajudou, fica com o arquivo original */
+            resolve(b && b.size < file.size ? b : file);
+          }, 'image/jpeg', q);
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+        img.src = url;
+      });
+    },
+
+    /* Recorta em 16:9 para os anúncios do portal */
+    comprimirWide(file, W = 1920, q = 0.90) {
+      return new Promise(resolve => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          const H = Math.round(W * 9 / 16), alvo = 16 / 9;
+          const orig = img.naturalWidth / img.naturalHeight;
+          let sx, sy, sw, sh;
+          if (orig > alvo) { sh = img.naturalHeight; sw = sh * alvo; sx = (img.naturalWidth - sw) / 2; sy = 0; }
+          else             { sw = img.naturalWidth;  sh = sw / alvo; sx = 0; sy = (img.naturalHeight - sh) / 2; }
+          const c = document.createElement('canvas');
+          c.width = W; c.height = H;
+          const ctx = c.getContext('2d');
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+          URL.revokeObjectURL(url);
+          c.toBlob(b => resolve(b), 'image/jpeg', q);
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+        img.src = url;
+      });
+    },
+
+    async espaco() {
+      try {
+        const e = await navigator.storage.estimate();
+        return { usado: e.usage || 0, total: e.quota || 0 };
+      } catch { return null; }
+    },
+  };
+})();
+</script>
+
 <script>
 function app() {
   return {
@@ -4573,6 +4693,71 @@ function app() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
+    /* ── Mídias: resolve referências do IndexedDB em URLs exibíveis ───── */
+    blobUrls: {},
+    _midiasCarregando: null,
+
+    midiaSrc(ref) {
+      if (!ref) return '';
+      if (!ref.startsWith('idb:')) return ref;          // data: URL antigo, usa direto
+      if (this.blobUrls[ref]) return this.blobUrls[ref];
+      this._carregarMidia(ref);
+      return '';
+    },
+
+    async _carregarMidia(ref) {
+      this._midiasCarregando ||= new Set();
+      if (this._midiasCarregando.has(ref)) return;
+      this._midiasCarregando.add(ref);
+      try {
+        const blob = await window.MediaStore.get(ref);
+        if (blob) this.blobUrls[ref] = URL.createObjectURL(blob);
+      } catch (e) {
+        console.warn('Falha ao carregar mídia', ref, e);
+      } finally {
+        this._midiasCarregando.delete(ref);
+      }
+    },
+
+    midiaEhVideo(ref) { return window.MediaStore.ehVideo(ref); },
+
+    /* Remove do IndexedDB as mídias de uma captação excluída */
+    async limparMidias(refs) {
+      for (const r of (refs || [])) {
+        if (!window.MediaStore.ehRef(r)) continue;
+        try { await window.MediaStore.del(r); } catch {}
+        if (this.blobUrls[r]) { URL.revokeObjectURL(this.blobUrls[r]); delete this.blobUrls[r]; }
+      }
+    },
+
+    /* Migra fotos base64 antigas para o IndexedDB, liberando o localStorage */
+    async migrarMidiasAntigas() {
+      if (localStorage.getItem('amigo_midias_migradas') === '1') return;
+      let mexeu = false;
+      for (const cap of this.captacoes) {
+        for (const campo of ['midias', 'fotos']) {
+          const lista = cap[campo];
+          if (!Array.isArray(lista) || !lista.length) continue;
+          const novos = [];
+          for (const item of lista) {
+            if (typeof item === 'string' && item.startsWith('data:')) {
+              try {
+                const blob = window.MediaStore.dataUrlParaBlob(item);
+                novos.push(await window.MediaStore.put(blob, blob.type.startsWith('video/') ? 'v' : 'i'));
+                mexeu = true;
+              } catch { novos.push(item); }
+            } else novos.push(item);
+          }
+          cap[campo] = novos;
+        }
+      }
+      localStorage.setItem('amigo_midias_migradas', '1');
+      if (mexeu) {
+        this.captacoes = [...this.captacoes];
+        this.showToast('📦 Fotos movidas para o armazenamento ampliado');
+      }
+    },
+
     corPal(token) {
       return getComputedStyle(document.documentElement).getPropertyValue(token).trim() || '#345448';
     },
@@ -4684,6 +4869,7 @@ function app() {
           this.captacoes = savedCap ? JSON.parse(savedCap) : [];
           const savedFeed = localStorage.getItem(this._keyFeed);
           this.activityFeed = savedFeed ? JSON.parse(savedFeed) : [];
+          this.migrarMidiasAntigas();
         } else {
           this.firebaseUser = null;
           this.firebaseUID = null;
@@ -4830,7 +5016,9 @@ function app() {
     },
     excluirCaptacao(id) {
       if (!confirm('Excluir esta captação?')) return;
+      const cap = this.captacoes.find(c => c.id === id);
       this.captacoes = this.captacoes.filter(c => c.id !== id);
+      if (cap) this.limparMidias([...(cap.midias || []), ...(cap.fotos || [])]);
       this.syncPortal();
       this.showToast('Captação removida');
     },
@@ -4838,9 +5026,12 @@ function app() {
       const publicados = this.captacoes
         .filter(c => c.publicarSite)
         .map(c => {
-          // Fotos: exclui data:video/ (muito grandes para localStorage)
-          const fotosArr = (Array.isArray(c.fotos) ? c.fotos.filter(Boolean) : [])
-            .filter(f => !f.startsWith('data:video/'));
+          // Fotos: aceita refs do IndexedDB e data: URLs antigos; vídeos ficam de fora
+          const origem = [
+            ...(Array.isArray(c.fotos)  ? c.fotos  : []),
+            ...(Array.isArray(c.midias) ? c.midias : []),
+          ].filter(Boolean);
+          const fotosArr = origem.filter(f => !window.MediaStore.ehVideo(f));
           if (!fotosArr.length && c.foto) fotosArr.push(c.foto);
 
           // Mídias do portal: videoUrl (YouTube/Vimeo) primeiro, depois fotos
@@ -7958,65 +8149,60 @@ function app() {
       <!-- ═══ FOTOS E VÍDEOS ═══ -->
       <div x-data="{
         processando: 0,
+        totalLote: 0,
         dragOver: false,
-        comprimirImagem(file) {
-          return new Promise(resolve => {
-            const reader = new FileReader();
-            reader.onload = ev => {
-              const img = new Image();
-              img.onload = () => {
-                const MAX = 1280;
-                let w = img.width, h = img.height;
-                if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
-                const c = document.createElement('canvas');
-                c.width = w; c.height = h;
-                c.getContext('2d').drawImage(img, 0, 0, w, h);
-                resolve(c.toDataURL('image/jpeg', 0.80));
-              };
-              img.src = ev.target.result;
-            };
-            reader.readAsDataURL(file);
-          });
-        },
-        processarVideo(file) {
-          const MAX = 30 * 1024 * 1024;
-          if (file.size > MAX) {
-            alert('Vídeo muito grande (' + (file.size/1024/1024).toFixed(0) + ' MB). Máximo: 30 MB.');
-            return Promise.resolve(null);
-          }
-          return new Promise(resolve => {
-            const reader = new FileReader();
-            reader.onload = ev => resolve(ev.target.result);
-            reader.readAsDataURL(file);
-          });
-        },
+        erroMidia: '',
+
         async processar(files) {
-          const lista = [...files];
-          this.processando += lista.length;
+          const lista = [...files].filter(f => f.type.startsWith('image/') || f.type.startsWith('video/'));
+          if (!lista.length) return;
+          this.erroMidia = '';
+          this.totalLote = lista.length;
+          this.processando = lista.length;
+          if (!editingCaptacao.midias) editingCaptacao.midias = [];
+
           for (const f of lista) {
-            let res = null;
-            if (f.type.startsWith('image/')) res = await this.comprimirImagem(f);
-            else if (f.type.startsWith('video/')) res = await this.processarVideo(f);
-            if (res) {
-              if (!editingCaptacao.midias) editingCaptacao.midias = [];
-              editingCaptacao.midias.push(res);
+            try {
+              if (f.type.startsWith('image/')) {
+                const blob = await window.MediaStore.comprimir(f, 2560, 0.92);
+                if (!blob) { this.erroMidia = 'Não foi possível ler ' + f.name + ' (formato não suportado pelo navegador).'; continue; }
+                editingCaptacao.midias.push(await window.MediaStore.put(blob, 'i'));
+              } else {
+                const LIM = 150 * 1024 * 1024;
+                if (f.size > LIM) { this.erroMidia = 'Vídeo ' + f.name + ' tem ' + (f.size/1048576).toFixed(0) + ' MB. O limite é 150 MB.'; continue; }
+                editingCaptacao.midias.push(await window.MediaStore.put(f, 'v'));
+              }
+            } catch (e) {
+              this.erroMidia = 'Erro ao processar ' + f.name + '.';
+              console.error(e);
+            } finally {
+              this.processando--;
             }
-            this.processando--;
           }
+          editingCaptacao.midias = [...editingCaptacao.midias];
         },
-        isVideo(src) { return src && src.startsWith('data:video/'); },
-        remover(idx) { editingCaptacao.midias = (editingCaptacao.midias||[]).filter((_,i)=>i!==idx); }
+
+        async remover(idx) {
+          const ref = (editingCaptacao.midias || [])[idx];
+          editingCaptacao.midias = (editingCaptacao.midias || []).filter((_, i) => i !== idx);
+          if (window.MediaStore.ehRef(ref)) { try { await window.MediaStore.del(ref); } catch {} }
+        },
+
+        definirCapa(idx) {
+          const l = editingCaptacao.midias || [];
+          editingCaptacao.midias = [l[idx], ...l.filter((_, i) => i !== idx)];
+        },
       }">
         <div class="flex items-center justify-between mb-2">
           <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Fotos e Vídeos do Imóvel</label>
           <span class="text-[10px] text-gray-400" x-text="(editingCaptacao.midias||[]).length + ' arquivo(s)'"></span>
         </div>
 
-        <!-- Área de drag & drop / clique -->
+        <!-- Área de upload -->
         <div class="rounded-xl border-2 border-dashed transition-all cursor-pointer mb-2"
-             :class="dragOver ? 'border-purple-400 bg-purple-50' : 'border-gray-200 bg-gray-50'"
+             :class="dragOver ? 'border-purple-400 bg-purple-50' : 'border-gray-200 bg-gray-50 hover:border-gray-300'"
              @dragover.prevent="dragOver=true"
-             @dragleave="dragOver=false"
+             @dragleave.self="dragOver=false"
              @drop.prevent="dragOver=false; processar($event.dataTransfer.files)"
              @click="$refs.midiasInput.click()">
           <input x-ref="midiasInput" type="file" accept="image/*,video/*" multiple class="hidden"
@@ -8024,33 +8210,61 @@ function app() {
           <div class="py-4 text-center" x-show="processando === 0">
             <i class="fa-solid fa-camera-retro text-gray-300 text-2xl mb-1 block"></i>
             <p class="text-xs text-gray-400 font-semibold">Clique ou arraste fotos e vídeos</p>
-            <p class="text-[10px] text-gray-300 mt-0.5">JPG, PNG, MP4, MOV · vídeos até 30 MB</p>
+            <p class="text-[10px] text-gray-300 mt-0.5">Alta resolução até 2560px · vídeos até 150 MB</p>
           </div>
-          <div class="py-4 text-center" x-show="processando > 0">
-            <i class="fa-solid fa-spinner fa-spin text-purple-400 text-xl mb-1 block"></i>
-            <p class="text-xs text-purple-500 font-semibold">Processando <span x-text="processando"></span> arquivo(s)...</p>
+          <div class="py-4 px-6" x-show="processando > 0">
+            <div class="flex items-center gap-2 justify-center mb-2">
+              <i class="fa-solid fa-spinner fa-spin text-purple-500 text-sm"></i>
+              <p class="text-xs text-purple-600 font-bold"
+                 x-text="'Enviando ' + (totalLote - processando + 1) + ' de ' + totalLote + '...'"></p>
+            </div>
+            <div class="h-1.5 rounded-full bg-purple-100 overflow-hidden">
+              <div class="h-full rounded-full bg-purple-500 transition-all duration-300"
+                   :style="'width:' + Math.round((totalLote - processando) / totalLote * 100) + '%'"></div>
+            </div>
           </div>
+        </div>
+
+        <!-- Aviso de erro -->
+        <div x-show="erroMidia" x-transition
+             class="mb-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-2">
+          <i class="fa-solid fa-triangle-exclamation text-amber-500 text-xs mt-0.5"></i>
+          <p class="text-[11px] text-amber-700 font-semibold flex-1" x-text="erroMidia"></p>
+          <button @click="erroMidia=''" class="text-amber-400 hover:text-amber-600 text-xs">&times;</button>
         </div>
 
         <!-- Grade de miniaturas -->
         <div x-show="(editingCaptacao.midias||[]).length > 0" class="grid grid-cols-3 gap-2">
-          <template x-for="(m, idx) in (editingCaptacao.midias||[])" :key="idx">
-            <div class="relative rounded-xl overflow-hidden group" style="aspect-ratio:4/3;background:#f3f4f6">
-              <template x-if="!isVideo(m)">
-                <img :src="m" class="w-full h-full object-cover">
+          <template x-for="(m, idx) in (editingCaptacao.midias||[])" :key="m">
+            <div class="relative rounded-xl overflow-hidden group border-2"
+                 style="aspect-ratio:4/3;background:#f3f4f6"
+                 :style="idx===0 ? 'border-color:var(--p)' : 'border-color:transparent'">
+
+              <template x-if="!midiaEhVideo(m)">
+                <img :src="midiaSrc(m)" class="w-full h-full object-cover" loading="lazy">
               </template>
-              <template x-if="isVideo(m)">
-                <video :src="m" class="w-full h-full object-cover" muted playsinline></video>
+              <template x-if="midiaEhVideo(m)">
+                <video :src="midiaSrc(m)" class="w-full h-full object-cover" muted playsinline preload="metadata"></video>
               </template>
-              <!-- Badge vídeo -->
-              <span x-show="isVideo(m)" class="absolute bottom-1 left-1 bg-black bg-opacity-60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
-                <i class="fa-solid fa-play text-[8px] mr-0.5"></i>VÍD
+
+              <span x-show="midiaEhVideo(m)"
+                    class="absolute bottom-1 left-1 bg-black bg-opacity-65 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                <i class="fa-solid fa-play text-[8px] mr-0.5"></i>VÍDEO
               </span>
-              <!-- Badge principal -->
-              <span x-show="idx===0" class="absolute top-1 left-1 bg-purple-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">CAPA</span>
-              <!-- Remover -->
-              <button @click.stop="remover(idx)"
-                      class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-[10px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+
+              <span x-show="idx===0"
+                    class="absolute top-1 left-1 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full"
+                    style="background:var(--p)">CAPA</span>
+
+              <!-- Ações -->
+              <div class="absolute inset-x-0 bottom-0 flex opacity-0 group-hover:opacity-100 transition-opacity">
+                <button x-show="idx!==0" @click.stop="definirCapa(idx)" type="button"
+                        class="flex-1 bg-black bg-opacity-70 text-white text-[9px] font-bold py-1 hover:bg-opacity-85">
+                  Definir capa
+                </button>
+              </div>
+              <button @click.stop="remover(idx)" type="button"
+                      class="absolute top-1 right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full text-[10px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <i class="fa-solid fa-xmark"></i>
               </button>
             </div>
@@ -8148,83 +8362,82 @@ function app() {
           <!-- Fotos do Imóvel — grade 16:9 com drag & drop -->
           <div x-data="{
             processando: 0,
+            totalLote: 0,
             gridDragOver: false,
-
-            /* Recorta e comprime para 16:9 · 1280×720 · JPEG 82% */
-            comprimirParaWide(file) {
-              return new Promise(resolve => {
-                const reader = new FileReader();
-                reader.onload = ev => {
-                  const img = new Image();
-                  img.onload = () => {
-                    const W = 1280, H = 720, ratio = 16/9;
-                    const src = img.width / img.height;
-                    let sx, sy, sw, sh;
-                    if (src > ratio) {
-                      sh = img.height; sw = sh * ratio;
-                      sx = (img.width - sw) / 2; sy = 0;
-                    } else {
-                      sw = img.width; sh = sw / ratio;
-                      sx = 0; sy = (img.height - sh) / 2;
-                    }
-                    const c = document.createElement('canvas');
-                    c.width = W; c.height = H;
-                    c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
-                    resolve(c.toDataURL('image/jpeg', 0.82));
-                  };
-                  img.src = ev.target.result;
-                };
-                reader.readAsDataURL(file);
-              });
-            },
-
-            /* Processa vídeo como data URL (mantém original, sem canvas) */
-            processarVideo(file) {
-              const MAX = 30 * 1024 * 1024; // 30 MB
-              if (file.size > MAX) {
-                alert('Vídeo ' + file.name + ' é muito grande (' + (file.size/1024/1024).toFixed(0) + ' MB).\nUse vídeos de até 30 MB, ou cole o link do YouTube no campo abaixo.');
-                return Promise.resolve(null);
-              }
-              return new Promise(resolve => {
-                const reader = new FileReader();
-                reader.onload = ev => resolve(ev.target.result);
-                reader.readAsDataURL(file);
-              });
-            },
+            erroFoto: '',
 
             async processarArquivos(files) {
-              const imgs = [...files].filter(f => f.type.startsWith('image/'));
-              const vids = [...files].filter(f => f.type.startsWith('video/'));
-              const total = imgs.length + vids.length;
-              if (!total) return;
-              this.processando += total;
-              const imgRes = await Promise.all(imgs.map(f => this.comprimirParaWide(f)));
-              const vidRes = await Promise.all(vids.map(f => this.processarVideo(f)));
+              const lista = [...files].filter(f => f.type.startsWith('image/') || f.type.startsWith('video/'));
+              if (!lista.length) return;
+              this.erroFoto = '';
+              this.totalLote = lista.length;
+              this.processando = lista.length;
               if (!editingCaptacao.fotos) editingCaptacao.fotos = [];
-              editingCaptacao.fotos = [...editingCaptacao.fotos, ...imgRes, ...vidRes.filter(Boolean)];
-              this.processando -= total;
+
+              for (const f of lista) {
+                try {
+                  if (f.type.startsWith('image/')) {
+                    const blob = await window.MediaStore.comprimirWide(f, 1920, 0.90);
+                    if (!blob) { this.erroFoto = 'Não foi possível ler ' + f.name + '.'; continue; }
+                    editingCaptacao.fotos.push(await window.MediaStore.put(blob, 'i'));
+                  } else {
+                    const LIM = 150 * 1024 * 1024;
+                    if (f.size > LIM) { this.erroFoto = 'Vídeo ' + f.name + ' tem ' + (f.size/1048576).toFixed(0) + ' MB (limite 150 MB). Use o link do YouTube abaixo.'; continue; }
+                    editingCaptacao.fotos.push(await window.MediaStore.put(f, 'v'));
+                  }
+                } catch (e) {
+                  this.erroFoto = 'Erro ao processar ' + f.name + '.';
+                  console.error(e);
+                } finally {
+                  this.processando--;
+                }
+              }
+              editingCaptacao.fotos = [...editingCaptacao.fotos];
             },
 
-            isVideo(src) {
-              return src && (src.startsWith('data:video/') || /\.(mp4|mov|webm|ogg)$/i.test(src));
-            },
+            isVideo(src) { return window.MediaStore.ehVideo(src); },
 
-            remover(idx) {
+            async remover(idx) {
+              const ref = (editingCaptacao.fotos || [])[idx];
               editingCaptacao.fotos = (editingCaptacao.fotos||[]).filter((_,i) => i !== idx);
+              if (window.MediaStore.ehRef(ref)) { try { await window.MediaStore.del(ref); } catch {} }
             }
           }">
 
             <!-- Cabeçalho -->
             <div class="flex items-center mb-2">
-              <label class="text-[10px] font-black uppercase tracking-wider text-gray-400">Fotos do Imóvel</label>
-              <span class="ml-2 text-[9px] text-gray-300">— formato 16:9, recorte automático</span>
+              <label class="text-[10px] font-black uppercase tracking-wider text-gray-400">Fotos do Anúncio</label>
+              <span class="ml-2 text-[9px] text-gray-300">— 16:9 em Full HD</span>
               <span class="ml-auto text-[9px] font-bold text-gray-400" x-text="(() => {
                 const mids = (editingCaptacao.fotos||[]);
-                const v = mids.filter(s => s && (s.startsWith('data:video/') || /\.(mp4|mov|webm|ogg)$/i.test(s))).length;
+                const v = mids.filter(s => window.MediaStore.ehVideo(s)).length;
                 const p = mids.length - v;
                 return (p ? p + ' foto(s)' : '') + (p && v ? ' · ' : '') + (v ? v + ' vídeo(s)' : '') || '0 mídia(s)';
               })()"></span>
             </div>
+
+            <!-- Aviso -->
+            <div x-show="erroFoto" x-transition
+                 class="mb-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-2">
+              <i class="fa-solid fa-triangle-exclamation text-amber-500 text-xs mt-0.5"></i>
+              <p class="text-[11px] text-amber-700 font-semibold flex-1" x-text="erroFoto"></p>
+              <button type="button" @click="erroFoto=''" class="text-amber-400 hover:text-amber-600 text-xs">&times;</button>
+            </div>
+
+            <!-- Progresso -->
+            <div x-show="processando > 0" class="mb-2">
+              <div class="flex items-center gap-2 mb-1">
+                <i class="fa-solid fa-spinner fa-spin text-xs" style="color:var(--p)"></i>
+                <p class="text-[11px] font-bold" style="color:var(--p)"
+                   x-text="'Enviando ' + (totalLote - processando + 1) + ' de ' + totalLote + '...'"></p>
+              </div>
+              <div class="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                <div class="h-full rounded-full transition-all duration-300"
+                     style="background:var(--p)"
+                     :style="'background:var(--p);width:' + Math.round((totalLote - processando) / totalLote * 100) + '%'"></div>
+              </div>
+            </div>
+
 
             <!-- GRADE de fotos + slot de adicionar -->
             <div class="grid grid-cols-2 gap-2"
@@ -8234,20 +8447,20 @@ function app() {
                  @drop.prevent="gridDragOver=false; processarArquivos($event.dataTransfer.files)">
 
               <!-- Fotos existentes -->
-              <template x-for="(f, idx) in (editingCaptacao.fotos||[])" :key="idx">
+              <template x-for="(f, idx) in (editingCaptacao.fotos||[])" :key="f">
                 <div class="relative rounded-xl overflow-hidden border-2 group transition-all"
                      style="aspect-ratio:16/9"
                      :style="idx===0 ? 'border-color:var(--p)' : 'border-color:#e5e7eb'">
 
                   <!-- Foto -->
                   <template x-if="!isVideo(f)">
-                    <img :src="f" class="w-full h-full object-cover select-none" draggable="false">
+                    <img :src="midiaSrc(f)" class="w-full h-full object-cover select-none" draggable="false" loading="lazy">
                   </template>
 
                   <!-- Vídeo -->
                   <template x-if="isVideo(f)">
                     <div class="relative w-full h-full bg-gray-900">
-                      <video :src="f" class="w-full h-full object-cover" muted playsinline preload="metadata"></video>
+                      <video :src="midiaSrc(f)" class="w-full h-full object-cover" muted playsinline preload="metadata"></video>
                       <!-- Ícone play -->
                       <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background:rgba(255,255,255,0.85)">
@@ -8309,7 +8522,7 @@ function app() {
             </div>
 
             <p class="text-[9px] text-gray-400 mt-1.5">
-              Arraste fotos ou vídeos para a grade. ⭐ define a capa. Fotos recortadas para 16:9. Vídeos até 30 MB.
+              Arraste fotos ou vídeos para a grade. ⭐ define a capa. Fotos em Full HD 16:9. Vídeos até 150 MB.
             </p>
           </div>
 

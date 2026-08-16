@@ -893,6 +893,45 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch {}
   if (!todos.length) todos = demoData();
 
+  /* Resolve referências idb:… (fotos guardadas no IndexedDB pelo sistema) */
+  function lerMidiasIDB(refs) {
+    return new Promise(resolve => {
+      if (!refs.length || !window.indexedDB) return resolve({});
+      const req = indexedDB.open('amigoMedia', 1);
+      req.onupgradeneeded = () => { try { req.result.createObjectStore('blobs'); } catch {} };
+      req.onerror = () => resolve({});
+      req.onsuccess = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains('blobs')) return resolve({});
+        const mapa = {}, store = db.transaction('blobs', 'readonly').objectStore('blobs');
+        let restantes = refs.length;
+        refs.forEach(ref => {
+          const g = store.get(ref);
+          g.onsuccess = () => {
+            if (g.result) mapa[ref] = URL.createObjectURL(g.result);
+            if (--restantes === 0) resolve(mapa);
+          };
+          g.onerror = () => { if (--restantes === 0) resolve(mapa); };
+        });
+      };
+    });
+  }
+
+  (async () => {
+    const refs = new Set();
+    todos.forEach(im => [...(im.medias || []), ...(im.fotos || []), im.foto]
+      .forEach(f => { if (typeof f === 'string' && f.startsWith('idb:')) refs.add(f); }));
+    if (!refs.size) return;
+    const mapa = await lerMidiasIDB([...refs]);
+    const troca = f => (typeof f === 'string' && mapa[f]) ? mapa[f] : f;
+    todos.forEach(im => {
+      if (Array.isArray(im.medias)) im.medias = im.medias.map(troca);
+      if (Array.isArray(im.fotos))  im.fotos  = im.fotos.map(troca);
+      if (im.foto) im.foto = troca(im.foto);
+    });
+    filtrar();
+  })();
+
   document.getElementById('stat-imoveis').textContent = todos.length;
   applyWALinks();
   filtrar();
