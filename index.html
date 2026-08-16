@@ -2322,15 +2322,14 @@ tailwind.config = {
     </a>
   </div>
 
-  <!-- Portal Stats Banner -->
-  <div class="mb-4 rounded-2xl p-4 flex items-center gap-4"
-       style="background:linear-gradient(135deg,var(--p) 0%,var(--p-l) 100%)"
-       x-show="captacoes.length > 0">
+  <!-- Portal Stats Banner — contas com o módulo ativo -->
+  <div x-show="isAdmin && captacoes.length > 0" class="mb-4 rounded-2xl p-4 flex items-center gap-4"
+       style="background:linear-gradient(135deg,var(--p) 0%,var(--p-l) 100%)">
     <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(255,255,255,0.15)">
       <i class="fa-solid fa-globe text-white text-base"></i>
     </div>
     <div class="flex-1 min-w-0">
-      <p class="text-xs font-black uppercase tracking-wider" style="color:rgba(255,255,255,0.6)">Portal Essense Imóveis</p>
+      <p class="text-xs font-black uppercase tracking-wider" style="color:rgba(255,255,255,0.6)">Seu Site de Imóveis</p>
       <p class="text-white font-bold text-sm mt-0.5">
         <span x-text="portalPublicados()"></span> publicado(s) no site
         <span x-show="portalDestaques() > 0" class="ml-2 text-[11px] font-bold px-2 py-0.5 rounded-full" style="background:var(--s)">
@@ -2346,6 +2345,28 @@ tailwind.config = {
        style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.25)">
       <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Abrir
     </a>
+  </div>
+
+  <!-- Convite ao módulo Site Personalizado — demais contas -->
+  <div x-show="!isAdmin && captacoes.length > 0"
+       @click="showUpsellSite = true"
+       class="mb-4 rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition-all hover:shadow-md"
+       style="background:linear-gradient(135deg,var(--p-d) 0%,var(--p) 100%)">
+    <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(255,255,255,0.12)">
+      <i class="fa-solid fa-globe text-white text-base"></i>
+    </div>
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2">
+        <p class="text-xs font-black uppercase tracking-wider" style="color:rgba(255,255,255,0.6)">Site Personalizado</p>
+        <span class="text-[8px] font-black px-1.5 py-0.5 rounded-full tracking-wider" style="background:var(--s);color:#fff">PREMIUM</span>
+      </div>
+      <p class="text-white font-bold text-sm mt-0.5">Publique seus imóveis em um site próprio</p>
+      <p class="text-[11px] mt-0.5" style="color:rgba(255,255,255,0.6)">Vitrine profissional com seu nome, sua marca e seu WhatsApp</p>
+    </div>
+    <span class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold flex-shrink-0"
+          style="background:var(--s);color:#fff">
+      Conhecer <i class="fa-solid fa-chevron-right text-[9px]"></i>
+    </span>
   </div>
 
   <!-- Lista de Captações -->
@@ -2415,10 +2436,14 @@ tailwind.config = {
                 </button>
                 <button @click="alternarPublicacao(cap.id)"
                         class="w-8 h-8 rounded-xl flex items-center justify-center transition-colors relative"
-                        :class="cap.publicarSite ? 'text-white' : 'text-gray-400 bg-gray-50 hover:bg-gray-100'"
-                        :style="cap.publicarSite ? 'background:var(--p)' : ''"
-                        :title="cap.publicarSite ? 'Publicado no portal — clique para despublicar' : 'Publicar no portal'">
+                        :class="(isAdmin && cap.publicarSite) ? 'text-white' : 'text-gray-400 bg-gray-50 hover:bg-gray-100'"
+                        :style="(isAdmin && cap.publicarSite) ? 'background:var(--p)' : ''"
+                        :title="!isAdmin ? 'Site Personalizado — módulo premium' : (cap.publicarSite ? 'Publicado no site — clique para remover' : 'Publicar no site')">
                   <i class="fa-solid fa-globe text-xs"></i>
+                  <span x-show="!isAdmin" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full flex items-center justify-center"
+                        style="background:var(--s)">
+                    <i class="fa-solid fa-lock text-white" style="font-size:6px"></i>
+                  </span>
                 </button>
                 <button @click="editarCaptacao(cap)"
                         class="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 bg-gray-50 hover:bg-gray-100 transition-colors" title="Editar">
@@ -4246,6 +4271,118 @@ tailwind.config = {
   </div>
 </footer>
 
+<!-- ═══ MODAL: MÓDULO SITE PERSONALIZADO ═══ -->
+<div x-show="showUpsellSite" x-cloak
+     x-transition:enter="transition ease-out duration-250"
+     x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+     class="fixed inset-0 z-[70] flex items-end sm:items-center justify-center sm:p-4"
+     style="background:rgba(8,12,10,0.80);backdrop-filter:blur(5px)"
+     @click.self="showUpsellSite=false">
+
+  <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl overflow-hidden max-h-[92dvh] overflow-y-auto"
+       style="box-shadow:0 24px 70px rgba(0,0,0,0.4)"
+       x-transition:enter="transition ease-out duration-300"
+       x-transition:enter-start="translate-y-8 sm:scale-95 opacity-0"
+       x-transition:enter-end="translate-y-0 sm:scale-100 opacity-100"
+       @click.stop>
+
+    <!-- Cabeçalho -->
+    <div class="relative px-6 pt-7 pb-6 text-center"
+         style="background:linear-gradient(150deg,var(--p-dd) 0%,var(--p-d) 45%,var(--p) 100%)">
+      <div class="absolute top-0 right-0 w-40 h-40 rounded-full opacity-[0.12]"
+           style="background:radial-gradient(circle,var(--s),transparent);transform:translate(35%,-35%)"></div>
+
+      <button @click="showUpsellSite=false"
+              class="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:bg-white/20"
+              style="background:rgba(255,255,255,0.12)">
+        <i class="fa-solid fa-xmark text-white text-sm"></i>
+      </button>
+
+      <div class="relative w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center"
+           style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2)">
+        <i class="fa-solid fa-globe text-white text-xl"></i>
+        <span class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center"
+              style="background:var(--s);border:2.5px solid var(--p-d)">
+          <i class="fa-solid fa-star text-white" style="font-size:9px"></i>
+        </span>
+      </div>
+
+      <p class="text-[9px] font-black tracking-[0.22em] uppercase mb-1.5" style="color:var(--s-l)">Módulo Premium</p>
+      <h2 class="text-white font-black text-2xl leading-tight">Seu próprio site<br>de imóveis</h2>
+      <p class="text-[13px] mt-2 leading-relaxed px-2" style="color:rgba(255,255,255,0.72)">
+        Uma vitrine profissional no ar com o seu nome, para você parar de depender só do WhatsApp e do Instagram.
+      </p>
+    </div>
+
+    <!-- O que está incluso -->
+    <div class="px-6 pt-5 pb-1">
+      <p class="text-[10px] font-black uppercase tracking-widest mb-3" style="color:var(--p)">O que você recebe</p>
+
+      <div class="space-y-3">
+        <template x-for="b in [
+          {i:'fa-mobile-screen', t:'Site pronto para o celular', d:'Seus imóveis com fotos em alta resolução, abrindo rápido em qualquer aparelho.'},
+          {i:'fa-arrows-rotate',  t:'Publica em um clique',       d:'Cadastrou a captação aqui, apareceu no site. Sem depender de ninguém.'},
+          {i:'fa-id-badge',       t:'Sua marca, não a nossa',     d:'Seu logo, suas cores, seu CRECI e seu WhatsApp em cada anúncio.'},
+          {i:'fa-magnifying-glass', t:'Encontrável no Google',    d:'Endereço próprio e busca por bairro, tipo e faixa de preço.'},
+          {i:'fa-headset',        t:'Instalação e suporte',       d:'A gente configura tudo e continua acompanhando depois no ar.'},
+        ]" :key="b.t">
+          <div class="flex items-start gap-3">
+            <div class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+                 style="background:color-mix(in srgb, var(--p) 10%, #fff)">
+              <i class="fa-solid text-xs" :class="b.i" style="color:var(--p)"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-[13px] font-bold text-gray-800 leading-snug" x-text="b.t"></p>
+              <p class="text-[11px] text-gray-500 leading-relaxed mt-0.5" x-text="b.d"></p>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- Investimento -->
+    <div class="mx-6 my-5 rounded-2xl p-5 text-center"
+         style="background:color-mix(in srgb, var(--p) 5%, #fff); border:1.5px solid color-mix(in srgb, var(--p) 18%, #fff)">
+      <p class="text-[10px] font-black uppercase tracking-widest mb-2" style="color:var(--p)">Investimento</p>
+      <div class="flex items-end justify-center gap-1.5">
+        <span class="text-sm font-bold text-gray-400 mb-1.5">12x</span>
+        <span class="text-[22px] font-black text-gray-500 mb-1">R$</span>
+        <span class="text-5xl font-black leading-none" style="color:var(--p)">59</span>
+        <span class="text-2xl font-black mb-1" style="color:var(--p)">,90</span>
+      </div>
+      <p class="text-[11px] text-gray-500 mt-2">Setup, hospedagem e suporte já inclusos</p>
+      <div class="flex items-center justify-center gap-1.5 mt-3 pt-3" style="border-top:1px dashed color-mix(in srgb, var(--p) 20%, #fff)">
+        <i class="fa-solid fa-shield-halved text-[10px]" style="color:var(--s)"></i>
+        <p class="text-[10px] font-semibold text-gray-500">Sem fidelidade — cancele quando quiser</p>
+      </div>
+    </div>
+
+    <!-- Ações -->
+    <div class="px-6 pb-6">
+      <a :href="'https://wa.me/5511943560902?text=' + encodeURIComponent(
+           'Olá, André! Sou ' + (contaNome || 'corretor') + (contaImobiliaria ? ' da ' + contaImobiliaria : '') +
+           ' e uso o AMiGO Corretor. Quero contratar o módulo Site Personalizado (12x R$ 59,90). Pode me explicar como funciona?')"
+         target="_blank" @click="showUpsellSite=false"
+         class="w-full py-3.5 rounded-2xl font-black text-[15px] flex items-center justify-center gap-2.5 transition-all active:scale-[0.98] text-white"
+         style="background:linear-gradient(135deg,#25D366,#128C7E); box-shadow:0 6px 18px rgba(37,211,102,0.32)">
+        <i class="fa-brands fa-whatsapp text-lg"></i> Falar com o André
+      </a>
+
+      <button @click="showUpsellSite=false"
+              class="w-full mt-2.5 py-2.5 rounded-xl text-[13px] font-semibold text-gray-400 hover:text-gray-600 transition-colors">
+        Agora não
+      </button>
+
+      <p class="text-[10px] text-gray-400 text-center mt-2 leading-relaxed">
+        Suas captações continuam funcionando normalmente.<br>
+        O módulo libera apenas a publicação no site.
+      </p>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div x-show="toast.show" x-transition class="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 max-w-[calc(100vw-2rem)] sm:max-w-none">
   <div class="bg-gray-800 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 text-sm font-semibold">
@@ -4549,6 +4686,7 @@ function app() {
     loginRemember: false,
     showVersiculo: true,
     showPalavraModal: false,
+    showUpsellSite: false,
     palavraAtual: null,
     palavrasOracao: [
       { ref: 'Salmos 23:1', texto: 'O Senhor é o meu pastor; nada me faltará.', oracao: 'Senhor, hoje reconheço que o meu sustento vem de Ti. Não preciso me angustiar com o amanhã, porque Tu és fiel e cuidas de cada detalhe da minha vida. Que eu trabalhe com excelência, mas que toda a minha confiança repouse em Tuas mãos. Amém.' },
@@ -5033,6 +5171,7 @@ function app() {
       this.showToast('Captação removida');
     },
     alternarPublicacao(id) {
+      if (!this.isAdmin) { this.showUpsellSite = true; return; }
       const idx = this.captacoes.findIndex(c => c.id === id);
       if (idx === -1) return;
       const cap = { ...this.captacoes[idx] };
@@ -5048,6 +5187,8 @@ function app() {
     },
 
     syncPortal() {
+      // Módulo Site Personalizado: exclusivo de contas com o pacote ativo
+      if (!this.isAdmin) { localStorage.removeItem('amigo_portal_listings'); return; }
       const publicados = this.captacoes
         .filter(c => c.publicarSite)
         .map(c => {
@@ -8301,28 +8442,39 @@ function app() {
       <div class="rounded-2xl overflow-hidden" style="border:2px solid #e8f0ec">
         <!-- Toggle header -->
         <div class="flex items-center justify-between px-4 py-3 cursor-pointer select-none"
-             :style="editingCaptacao.publicarSite ? 'background:linear-gradient(135deg,var(--p),var(--p-l))' : 'background:#f8faf8'"
-             @click="editingCaptacao.publicarSite = !editingCaptacao.publicarSite">
+             :style="(isAdmin && editingCaptacao.publicarSite) ? 'background:linear-gradient(135deg,var(--p),var(--p-l))' : 'background:#f8faf8'"
+             @click="isAdmin ? (editingCaptacao.publicarSite = !editingCaptacao.publicarSite) : (showUpsellSite = true)">
           <div class="flex items-center gap-2.5">
             <div class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                 :style="editingCaptacao.publicarSite ? 'background:rgba(255,255,255,0.2)' : 'background:#e8f0ec'">
-              <i class="fa-solid fa-globe text-sm" :style="editingCaptacao.publicarSite ? 'color:#fff' : 'color:var(--p)'"></i>
+                 :style="(isAdmin && editingCaptacao.publicarSite) ? 'background:rgba(255,255,255,0.2)' : 'background:#e8f0ec'">
+              <i class="fa-solid text-sm" :class="isAdmin ? 'fa-globe' : 'fa-lock'"
+                 :style="(isAdmin && editingCaptacao.publicarSite) ? 'color:#fff' : 'color:var(--p)'"></i>
             </div>
             <div>
-              <p class="text-sm font-black leading-none" :style="editingCaptacao.publicarSite ? 'color:#fff' : 'color:var(--p)'">Publicar no Portal</p>
-              <p class="text-[10px] mt-0.5 leading-none" :style="editingCaptacao.publicarSite ? 'color:rgba(255,255,255,0.65)' : 'color:#7a9e8a'">Aparece no site público da Essense</p>
+              <p class="text-sm font-black leading-none flex items-center gap-1.5"
+                 :style="(isAdmin && editingCaptacao.publicarSite) ? 'color:#fff' : 'color:var(--p)'">
+                Publicar no Site
+                <span x-show="!isAdmin" class="text-[8px] font-black px-1.5 py-0.5 rounded-full tracking-wider"
+                      style="background:var(--s);color:#fff">PREMIUM</span>
+              </p>
+              <p class="text-[10px] mt-0.5 leading-none"
+                 :style="(isAdmin && editingCaptacao.publicarSite) ? 'color:rgba(255,255,255,0.65)' : 'color:#7a9e8a'"
+                 x-text="isAdmin ? 'Publica este imóvel no seu site público' : 'Disponível no módulo Site Personalizado'"></p>
             </div>
           </div>
-          <!-- Toggle pill -->
-          <div class="w-11 h-6 rounded-full relative flex-shrink-0 transition-all"
+          <!-- Toggle pill (admin) / cadeado (demais) -->
+          <div x-show="isAdmin" class="w-11 h-6 rounded-full relative flex-shrink-0 transition-all"
                :style="editingCaptacao.publicarSite ? 'background:var(--s)' : 'background:#d1d5db'">
             <div class="w-4 h-4 bg-white rounded-full absolute top-1 transition-all shadow"
                  :style="editingCaptacao.publicarSite ? 'left:calc(100% - 20px)' : 'left:4px'"></div>
           </div>
+          <span x-show="!isAdmin" class="text-[10px] font-bold flex items-center gap-1 flex-shrink-0" style="color:var(--s)">
+            Conhecer <i class="fa-solid fa-chevron-right text-[8px]"></i>
+          </span>
         </div>
 
         <!-- Portal form (quando ativo) -->
-        <div x-show="editingCaptacao.publicarSite" x-collapse class="px-4 pb-4 space-y-3" style="border-top:1px solid #e8f0ec; padding-top:14px">
+        <div x-show="isAdmin && editingCaptacao.publicarSite" x-collapse class="px-4 pb-4 space-y-3" style="border-top:1px solid #e8f0ec; padding-top:14px">
 
           <!-- Título do anúncio -->
           <div>
