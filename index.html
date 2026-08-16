@@ -2337,6 +2337,9 @@ tailwind.config = {
           ⭐ <span x-text="portalDestaques()"></span> destaque(s)
         </span>
       </p>
+      <p x-show="portalPublicados() === 0" class="text-[11px] mt-0.5" style="color:rgba(255,255,255,0.65)">
+        Clique no <i class="fa-solid fa-globe mx-0.5"></i> do imóvel para publicá-lo.
+      </p>
     </div>
     <a href="portal.html" target="_blank"
        class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold flex-shrink-0 transition-all hover:opacity-80"
@@ -2409,6 +2412,13 @@ tailwind.config = {
                         title="Agendar visita de captação">
                   <i class="fa-solid fa-calendar-plus text-xs"></i>
                   <span x-show="cap.visita?.dia" class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-400"></span>
+                </button>
+                <button @click="alternarPublicacao(cap.id)"
+                        class="w-8 h-8 rounded-xl flex items-center justify-center transition-colors relative"
+                        :class="cap.publicarSite ? 'text-white' : 'text-gray-400 bg-gray-50 hover:bg-gray-100'"
+                        :style="cap.publicarSite ? 'background:var(--p)' : ''"
+                        :title="cap.publicarSite ? 'Publicado no portal — clique para despublicar' : 'Publicar no portal'">
+                  <i class="fa-solid fa-globe text-xs"></i>
                 </button>
                 <button @click="editarCaptacao(cap)"
                         class="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 bg-gray-50 hover:bg-gray-100 transition-colors" title="Editar">
@@ -4869,7 +4879,7 @@ function app() {
           this.captacoes = savedCap ? JSON.parse(savedCap) : [];
           const savedFeed = localStorage.getItem(this._keyFeed);
           this.activityFeed = savedFeed ? JSON.parse(savedFeed) : [];
-          this.migrarMidiasAntigas();
+          this.migrarMidiasAntigas().then(() => this.syncPortal());
         } else {
           this.firebaseUser = null;
           this.firebaseUID = null;
@@ -5022,6 +5032,21 @@ function app() {
       this.syncPortal();
       this.showToast('Captação removida');
     },
+    alternarPublicacao(id) {
+      const idx = this.captacoes.findIndex(c => c.id === id);
+      if (idx === -1) return;
+      const cap = { ...this.captacoes[idx] };
+      cap.publicarSite = !cap.publicarSite;
+      if (cap.publicarSite && !cap.tituloPortal) {
+        cap.tituloPortal = [cap.tipo, cap.bairro].filter(Boolean).join(' · ') || cap.endereco;
+      }
+      if (cap.publicarSite && !cap.tipoOferta) cap.tipoOferta = 'venda';
+      this.captacoes[idx] = cap;
+      this.captacoes = [...this.captacoes];
+      this.syncPortal();
+      this.showToast(cap.publicarSite ? '🌐 Publicado no portal!' : 'Removido do portal');
+    },
+
     syncPortal() {
       const publicados = this.captacoes
         .filter(c => c.publicarSite)
