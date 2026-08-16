@@ -5027,10 +5027,10 @@ function app() {
         .filter(c => c.publicarSite)
         .map(c => {
           // Fotos: aceita refs do IndexedDB e data: URLs antigos; vídeos ficam de fora
-          const origem = [
+          const origem = [...new Set([
             ...(Array.isArray(c.fotos)  ? c.fotos  : []),
             ...(Array.isArray(c.midias) ? c.midias : []),
-          ].filter(Boolean);
+          ].filter(Boolean))];
           const fotosArr = origem.filter(f => !window.MediaStore.ehVideo(f));
           if (!fotosArr.length && c.foto) fotosArr.push(c.foto);
 
@@ -5039,28 +5039,28 @@ function app() {
           if (c.videoUrl) medias.push(c.videoUrl);
           medias.push(...fotosArr);
 
-          // Whitelist: apenas campos seguros para o portal público
+          // Whitelist: apenas campos seguros, com os nomes que o portal.html lê
           return {
+            publicarSite: true,          // o portal filtra por este campo
             id: c.id,
             tipo: c.tipo,
-            subtipo: c.subtipo,
-            titulo: c.titulo,
-            descricao: c.descricao,
+            tipoOferta: c.tipoOferta || 'venda',
+            tituloPortal: c.tituloPortal || [c.tipo, c.bairro].filter(Boolean).join(' · ') || c.endereco,
+            descricaoPortal: c.descricaoPortal || '',
             cidade: c.cidade,
             bairro: c.bairro,
-            endereco: c.enderecoPublico || c.bairro || c.cidade,
-            valor: c.valor,
-            valorCondominio: c.valorCondominio,
-            valorIPTU: c.valorIPTU,
+            endereco: c.enderecoPublico || c.bairro || c.cidade || '',
+            valorVenda: c.valorVenda || (c.valorPretendidoTipo !== 'locacao' ? c.valorPretendido : ''),
+            valorLocacao: c.valorLocacao || (c.valorPretendidoTipo === 'locacao' ? c.valorPretendido : ''),
+            condominio: c.condominio,
             area: c.area,
             quartos: c.quartos,
             banheiros: c.banheiros,
             vagas: c.vagas,
             suites: c.suites,
-            mobiliado: c.mobiliado,
-            caracteristicas: c.caracteristicas,
-            destaque: c.destaque,
-            exclusivo: c.exclusivo,
+            diferenciais: c.diferenciais || '',
+            destaque: !!c.destaque,
+            exclusivo: !!c.exclusivo,
             videoUrl: c.videoUrl,
             fotos: fotosArr,
             medias: medias,
