@@ -2732,20 +2732,20 @@ tailwind.config = {
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <div class="px-5 py-4 border-b border-gray-50 flex items-center gap-3">
         <div class="w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs"
-             :style="'background:' + paletas[paletaAtual].p">
+             :style="'background:' + (paletas.find(x=>x.id===paletaAtual)||paletas[0]).p">
           <i class="fa-solid fa-palette"></i>
         </div>
         <div class="flex-1">
           <h2 class="font-black text-gray-800 text-sm">Tema Visual</h2>
-          <p class="text-[10px] text-gray-400">Cor principal do sistema · ativo: <span class="font-bold" x-text="paletas[paletaAtual].nome"></span></p>
+          <p class="text-[10px] text-gray-400">Cor principal do sistema · ativo: <span class="font-bold" x-text="(paletas.find(x=>x.id===paletaAtual)||paletas[0]).nome"></span></p>
         </div>
       </div>
       <div class="p-5">
         <div class="grid grid-cols-1 gap-2.5">
-          <template x-for="(pal, key) in paletas" :key="key">
-            <button @click="aplicarPaleta(key)"
+          <template x-for="pal in paletas" :key="pal.id">
+            <button @click="aplicarPaleta(pal.id)"
                     class="flex items-center gap-3 rounded-xl px-3 py-2.5 border-2 transition-all text-left"
-                    :class="paletaAtual === key ? 'border-gray-800 bg-gray-50' : 'border-gray-100 hover:border-gray-200 bg-white'">
+                    :class="paletaAtual === pal.id ? 'border-gray-800 bg-gray-50' : 'border-gray-100 hover:border-gray-200 bg-white'">
               <!-- Preview das cores -->
               <div class="flex gap-1 flex-shrink-0">
                 <div class="w-7 h-7 rounded-lg shadow-sm" :style="'background:' + pal.p"></div>
@@ -2758,7 +2758,7 @@ tailwind.config = {
                 <p class="text-[10px] text-gray-400" x-text="pal.p + ' · ' + pal.s"></p>
               </div>
               <!-- Check ativo -->
-              <div x-show="paletaAtual === key" class="w-5 h-5 rounded-full flex items-center justify-center text-white flex-shrink-0" :style="'background:' + pal.p">
+              <div x-show="paletaAtual === pal.id" class="w-5 h-5 rounded-full flex items-center justify-center text-white flex-shrink-0" :style="'background:' + pal.p">
                 <i class="fa-solid fa-check text-[10px]"></i>
               </div>
             </button>
@@ -4194,15 +4194,15 @@ function app() {
   return {
     darkMode: localStorage.getItem('darkMode') === 'true',
     paletaAtual: localStorage.getItem('amigo_paleta') || 'verde',
-    paletas: {
-      verde:    { nome:'Verde Essense', p:'#345448', pd:'#243c33', pl:'#4a7062', s:'#b48860', sl:'#d4a87a', sd:'#8a6440' },
-      azul:     { nome:'Azul Profissional', p:'#1e4d8c', pd:'#142f57', pl:'#2d6cbf', s:'#e08030', sl:'#f0a050', sd:'#c06010' },
-      roxo:     { nome:'Roxo Premium', p:'#5b21b6', pd:'#3b0f7a', pl:'#7c3aed', s:'#d4a87a', sl:'#e8c89a', sd:'#a07840' },
-      grafite:  { nome:'Grafite & Ouro', p:'#2c2c2c', pd:'#1a1a1a', pl:'#3d3d3d', s:'#c9a84c', sl:'#e0c060', sd:'#a07830' },
-      terracota:{ nome:'Terracota Elegante', p:'#8b3a2a', pd:'#6b2c1e', pl:'#a44f3b', s:'#c4975a', sl:'#dab478', sd:'#a07840' },
-      marinho:  { nome:'Azul Marinho', p:'#1a3a5c', pd:'#0e2440', pl:'#24527a', s:'#d4a040', sl:'#eab850', sd:'#b07820' },
-      esmeralda:{ nome:'Esmeralda Moderno', p:'#065f46', pd:'#03362a', pl:'#0a7a5a', s:'#d97706', sl:'#f59e0b', sd:'#b45309' },
-    },
+    paletas: [
+      { id:'verde',     nome:'Verde Essense',      p:'#345448', pd:'#243c33', pl:'#4a7062', s:'#b48860', sl:'#d4a87a', sd:'#8a6440' },
+      { id:'azul',      nome:'Azul Profissional',  p:'#1e4d8c', pd:'#142f57', pl:'#2d6cbf', s:'#e08030', sl:'#f0a050', sd:'#c06010' },
+      { id:'roxo',      nome:'Roxo Premium',        p:'#5b21b6', pd:'#3b0f7a', pl:'#7c3aed', s:'#d4a87a', sl:'#e8c89a', sd:'#a07840' },
+      { id:'grafite',   nome:'Grafite & Ouro',      p:'#2c2c2c', pd:'#1a1a1a', pl:'#3d3d3d', s:'#c9a84c', sl:'#e0c060', sd:'#a07830' },
+      { id:'terracota', nome:'Terracota Elegante',  p:'#8b3a2a', pd:'#6b2c1e', pl:'#a44f3b', s:'#c4975a', sl:'#dab478', sd:'#a07840' },
+      { id:'marinho',   nome:'Azul Marinho',        p:'#1a3a5c', pd:'#0e2440', pl:'#24527a', s:'#d4a040', sl:'#eab850', sd:'#b07820' },
+      { id:'esmeralda', nome:'Esmeralda Moderno',   p:'#065f46', pd:'#03362a', pl:'#0a7a5a', s:'#d97706', sl:'#f59e0b', sd:'#b45309' },
+    ],
     activityFeed: [],  // carregado após login Firebase
     page: 'dashboard',
     menuOpen: false,
@@ -4492,7 +4492,7 @@ function app() {
     },
 
     aplicarPaleta(key) {
-      const p = this.paletas[key];
+      const p = this.paletas.find(x => x.id === key);
       if (!p) return;
       const r = document.documentElement.style;
       r.setProperty('--p',   p.p);
