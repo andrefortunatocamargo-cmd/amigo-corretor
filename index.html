@@ -119,25 +119,103 @@
     --essense-gold-d:  var(--s-d);
   }
 
-  /* ── Cromo do sistema (header + menu lateral) segue a paleta ───────── */
-  #app-header, #app-drawer { --tw-bg-opacity: 1; }
-  #app-header .bg-green-950, #app-drawer .bg-green-950 { background-color: var(--p-dd) !important; }
-  #app-header .bg-green-900, #app-drawer .bg-green-900 { background-color: var(--p-d) !important; }
-  #app-header .bg-green-800, #app-drawer .bg-green-800 { background-color: var(--p-d) !important; }
-  #app-header .bg-green-700, #app-drawer .bg-green-700 { background-color: var(--p) !important; }
-  #app-header .bg-green-600, #app-drawer .bg-green-600 { background-color: var(--p-l) !important; }
-  #app-header .hover\:bg-green-700:hover, #app-drawer .hover\:bg-green-700:hover { background-color: var(--p-l) !important; }
-  #app-header .border-green-800, #app-drawer .border-green-800 { border-color: rgba(var(--p-l-rgb),0.45) !important; }
-  #app-header .border-green-600, #app-drawer .border-green-600 { border-color: var(--p-l) !important; }
+  /* ── Cromo do sistema segue a paleta ───────────────────────────────────
+     Alcança header, barra de alerta e menu lateral: as três áreas usam as
+     utilities green-* do Tailwind, que aqui são remapeadas para os tokens. */
+  #app-header, #app-drawer, #app-alertbar { --tw-bg-opacity: 1; }
+
+  #app-header.bg-green-950,
+  #app-header .bg-green-950,
+  #app-drawer.bg-green-950,
+  #app-drawer .bg-green-950,
+  #app-alertbar.bg-green-950,
+  #app-alertbar .bg-green-950 { background-color: var(--p-dd) !important; }
+  #app-header.bg-green-900,
+  #app-header .bg-green-900,
+  #app-drawer.bg-green-900,
+  #app-drawer .bg-green-900,
+  #app-alertbar.bg-green-900,
+  #app-alertbar .bg-green-900 { background-color: var(--p-dd) !important; }
+  #app-header.bg-green-800,
+  #app-header .bg-green-800,
+  #app-drawer.bg-green-800,
+  #app-drawer .bg-green-800,
+  #app-alertbar.bg-green-800,
+  #app-alertbar .bg-green-800 { background-color: var(--p-d) !important; }
+  #app-header.bg-green-700,
+  #app-header .bg-green-700,
+  #app-drawer.bg-green-700,
+  #app-drawer .bg-green-700,
+  #app-alertbar.bg-green-700,
+  #app-alertbar .bg-green-700 { background-color: var(--p) !important; }
+  #app-header.bg-green-600,
+  #app-header .bg-green-600,
+  #app-drawer.bg-green-600,
+  #app-drawer .bg-green-600,
+  #app-alertbar.bg-green-600,
+  #app-alertbar .bg-green-600 { background-color: var(--p-l) !important; }
+  #app-header.border-green-900,
+  #app-header .border-green-900,
+  #app-drawer.border-green-900,
+  #app-drawer .border-green-900,
+  #app-alertbar.border-green-900,
+  #app-alertbar .border-green-900 { border-color: var(--p-dd) !important; }
+  #app-header.border-green-800,
+  #app-header .border-green-800,
+  #app-drawer.border-green-800,
+  #app-drawer .border-green-800,
+  #app-alertbar.border-green-800,
+  #app-alertbar .border-green-800 { border-color: rgba(var(--p-l-rgb),0.45) !important; }
+  #app-header.border-green-600,
+  #app-header .border-green-600,
+  #app-drawer.border-green-600,
+  #app-drawer .border-green-600,
+  #app-alertbar.border-green-600,
+  #app-alertbar .border-green-600 { border-color: var(--p-l) !important; }
+  #app-header.text-green-100,
+  #app-header .text-green-100,
+  #app-drawer.text-green-100,
+  #app-drawer .text-green-100,
+  #app-alertbar.text-green-100,
+  #app-alertbar .text-green-100 { color: #fff !important; }
+  #app-header.text-green-200,
+  #app-header .text-green-200,
+  #app-drawer.text-green-200,
+  #app-drawer .text-green-200,
+  #app-alertbar.text-green-200,
+  #app-alertbar .text-green-200 { color: rgba(255,255,255,0.80) !important; }
+  #app-header.text-green-300,
+  #app-header .text-green-300,
+  #app-drawer.text-green-300,
+  #app-drawer .text-green-300,
+  #app-alertbar.text-green-300,
+  #app-alertbar .text-green-300 { color: var(--s-l) !important; }
+  #app-header.text-green-400,
+  #app-header .text-green-400,
+  #app-drawer.text-green-400,
+  #app-drawer .text-green-400,
+  #app-alertbar.text-green-400,
+  #app-alertbar .text-green-400 { color: rgba(255,255,255,0.62) !important; }
+  #app-header.text-green-600,
+  #app-header .text-green-600,
+  #app-drawer.text-green-600,
+  #app-drawer .text-green-600,
+  #app-alertbar.text-green-600,
+  #app-alertbar .text-green-600 { color: rgba(255,255,255,0.30) !important; }
+  #app-header .hover\:bg-green-700:hover,
+  #app-drawer .hover\:bg-green-700:hover,
+  #app-alertbar .hover\:bg-green-700:hover { background-color: var(--p-l) !important; }
+  #app-header .hover\:text-green-200:hover,
+  #app-drawer .hover\:text-green-200:hover,
+  #app-alertbar .hover\:text-green-200:hover { color: #fff !important; }
   #app-header .group:hover .group-hover\:border-green-400 { border-color: var(--s-l) !important; }
-  #app-header .text-green-100, #app-drawer .text-green-100 { color: #fff !important; }
-  #app-header .text-green-200, #app-drawer .text-green-200 { color: rgba(255,255,255,0.78) !important; }
-  #app-header .text-green-300, #app-drawer .text-green-300 { color: var(--s-l) !important; }
-  #app-header .text-green-400, #app-drawer .text-green-400 { color: rgba(255,255,255,0.62) !important; }
-  #app-header .text-green-700 { color: var(--p) !important; }
-  #app-drawer .text-green-400 { color: var(--s-l) !important; }
-  #app-drawer .text-green-700 { color: var(--p) !important; }
-  /* Botões de navegação ativos no header */
+
+  /* Ícone e rótulo de destaque na barra de alerta usam a cor secundária */
+  #app-alertbar .text-green-300, #app-alertbar .text-green-300 i { color: var(--s-l) !important; }
+  #app-alertbar .text-green-400 { color: rgba(255,255,255,0.65) !important; }
+
+  /* "Corretor" no título e chips claros do header */
+  #app-header .text-green-700, #app-drawer .text-green-700 { color: var(--p) !important; }
   #app-header nav .bg-white.text-green-700 { color: var(--p) !important; }
   [x-cloak] { display: none !important; }
   .gradient-header { background: linear-gradient(135deg, var(--p-l) 0%, var(--p) 50%, var(--p-d) 100%); }
@@ -636,7 +714,7 @@ tailwind.config = {
 </header>
 
 <!-- ALERT BAR -->
-<div class="bg-green-800 border-b border-green-900">
+<div id="app-alertbar" class="bg-green-800 border-b border-green-900">
   <div class="max-w-7xl mx-auto px-4 py-1.5 flex items-center gap-3">
     <span class="text-green-300 text-xs font-black tracking-widest uppercase hidden sm:flex items-center gap-1.5">
       <i class="fa-solid fa-house-chimney text-green-400"></i> AMiGO Corretor
@@ -657,7 +735,7 @@ tailwind.config = {
     <div class="ml-auto flex items-center gap-2">
       <button @click="palavraAtual = palavrasOracao[Math.floor(Math.random()*palavrasOracao.length)]; showPalavraModal = true"
               class="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all active:scale-95"
-              style="background:rgba(var(--s-rgb),0.25); color:#d4a96a; border:1px solid rgba(var(--s-rgb),0.35)"
+              style="background:rgba(var(--s-rgb),0.25); color:var(--s-l); border:1px solid rgba(var(--s-rgb),0.35)"
               onmouseover="this.style.background='rgba(var(--s-rgb),0.4)'" onmouseout="this.style.background='rgba(var(--s-rgb),0.25)'">
         <i class="fa-solid fa-dove text-[10px]"></i>
         <span>Voz do Altíssimo</span>
@@ -673,18 +751,21 @@ tailwind.config = {
   <!-- Sub-nav mobile (Dashboard/Clientes/Agenda — só aparece em mobile dentro do section vendas) -->
   <div class="sm:hidden flex items-center gap-2 mb-4 overflow-x-auto pb-1">
     <button @click="page='dashboard'" class="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all"
-      :class="page==='dashboard' ? 'bg-green-700 text-white shadow' : 'bg-white text-gray-500 border border-gray-200'">
+      :class="page==='dashboard' ? 'text-white shadow' : 'bg-white text-gray-500 border border-gray-200'"
+      :style="page==='dashboard' ? 'background:var(--p)' : ''">
       <i class="fa-solid fa-gauge-high text-xs"></i> Dashboard
     </button>
     <button @click="page='clientes'" class="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all"
-      :class="page==='clientes' ? 'bg-green-700 text-white shadow' : 'bg-white text-gray-500 border border-gray-200'">
+      :class="page==='clientes' ? 'text-white shadow' : 'bg-white text-gray-500 border border-gray-200'"
+      :style="page==='clientes' ? 'background:var(--p)' : ''">
       <i class="fa-solid fa-users text-xs"></i> Clientes
     </button>
     <button @click="page='agenda'" class="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all"
-      :class="page==='agenda' ? 'bg-green-700 text-white shadow' : 'bg-white text-gray-500 border border-gray-200'">
+      :class="page==='agenda' ? 'text-white shadow' : 'bg-white text-gray-500 border border-gray-200'"
+      :style="page==='agenda' ? 'background:var(--p)' : ''">
       <i class="fa-solid fa-calendar-days text-xs"></i> Agenda
     </button>
-    <button @click="openClientModal()" class="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold bg-green-600 text-white shadow">
+    <button @click="openClientModal()" style="background:var(--p-l)" class="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold text-white shadow">
       <i class="fa-solid fa-plus text-xs"></i> Novo
     </button>
   </div>
