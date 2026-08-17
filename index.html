@@ -2888,6 +2888,123 @@ tailwind.config = {
       </div>
     </div>
 
+    <!-- === RÉGUA DE ATENDIMENTO === -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-50 flex items-center gap-3">
+        <div class="w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs" style="background:var(--p)">
+          <i class="fa-solid fa-list-check"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h2 class="font-black text-gray-800 text-sm">Régua de Atendimento</h2>
+          <p class="text-[10px] text-gray-400">Quantas tentativas, quando e por qual canal</p>
+        </div>
+        <span class="text-[10px] font-bold px-2 py-1 rounded-full flex-shrink-0"
+              :style="'background:color-mix(in srgb, var(--p) 10%, #fff); color:var(--p)'"
+              x-text="reguaAtual.length + ' tentativas'"></span>
+      </div>
+
+      <div class="p-5">
+        <!-- Seletor de tipo -->
+        <label class="text-[10px] font-black uppercase tracking-wider text-gray-400">Tipo de cliente</label>
+        <div class="flex gap-1.5 mt-1.5 mb-4 overflow-x-auto pb-1">
+          <template x-for="t in tipos" :key="t.value">
+            <button @click="reguaTipoEdit = t.value" type="button"
+                    class="flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold border-2 transition-all relative"
+                    :class="reguaTipoEdit === t.value ? 'text-white' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'"
+                    :style="reguaTipoEdit === t.value ? 'background:var(--p);border-color:var(--p)' : ''">
+              <span x-text="t.icon + ' ' + t.label"></span>
+              <span x-show="reguaPersonalizada(t.value)"
+                    class="absolute -top-1 -right-1 w-2 h-2 rounded-full" style="background:var(--s)"
+                    title="Régua personalizada"></span>
+            </button>
+          </template>
+        </div>
+
+        <!-- Etapas -->
+        <div class="space-y-2">
+          <template x-for="(et, idx) in reguaAtual" :key="idx">
+            <div class="rounded-xl border border-gray-200 overflow-hidden">
+              <!-- Cabeçalho da etapa -->
+              <div class="flex items-center gap-2 px-3 py-2" style="background:#fafafa">
+                <span class="w-6 h-6 rounded-lg flex items-center justify-center text-white text-[10px] font-black flex-shrink-0"
+                      :style="'background:' + canalInfo(et.canal).cor" x-text="idx + 1"></span>
+
+                <!-- Prazo -->
+                <div class="flex items-center gap-1 flex-shrink-0">
+                  <input type="number" min="0" :value="et.dias"
+                         @change="reguaAtualizarCampo(idx, 'dias', $event.target.value)"
+                         class="w-14 px-2 py-1 rounded-lg border border-gray-200 text-xs text-center font-bold focus:outline-none focus:ring-2"
+                         style="--tw-ring-color:var(--p)">
+                  <span class="text-[10px] text-gray-400 font-semibold">dias</span>
+                </div>
+
+                <!-- Canal -->
+                <select :value="et.canal" @change="reguaAtualizarCampo(idx, 'canal', $event.target.value)"
+                        class="flex-1 min-w-0 px-2 py-1 rounded-lg border border-gray-200 text-xs font-semibold bg-white focus:outline-none focus:ring-2"
+                        style="--tw-ring-color:var(--p)">
+                  <template x-for="c in canais" :key="c.v">
+                    <option :value="c.v" x-text="c.l"></option>
+                  </template>
+                </select>
+
+                <!-- Reordenar / remover -->
+                <div class="flex items-center gap-0.5 flex-shrink-0">
+                  <button @click="reguaMover(idx,-1)" type="button" :disabled="idx===0"
+                          class="w-6 h-6 rounded-lg text-gray-400 hover:bg-gray-100 disabled:opacity-25 flex items-center justify-center">
+                    <i class="fa-solid fa-chevron-up text-[9px]"></i>
+                  </button>
+                  <button @click="reguaMover(idx,1)" type="button" :disabled="idx===reguaAtual.length-1"
+                          class="w-6 h-6 rounded-lg text-gray-400 hover:bg-gray-100 disabled:opacity-25 flex items-center justify-center">
+                    <i class="fa-solid fa-chevron-down text-[9px]"></i>
+                  </button>
+                  <button @click="reguaRemoverEtapa(idx)" type="button"
+                          class="w-6 h-6 rounded-lg text-red-400 hover:bg-red-50 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-[10px]"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Descrição -->
+              <div class="px-3 py-2 flex items-center gap-2">
+                <i class="fa-solid text-[10px] flex-shrink-0" :class="canalInfo(et.canal).icon"
+                   :style="'color:' + canalInfo(et.canal).cor"></i>
+                <input type="text" :value="et.descricao"
+                       @change="reguaAtualizarCampo(idx, 'descricao', $event.target.value)"
+                       placeholder="O que fazer nesta tentativa"
+                       class="flex-1 min-w-0 text-xs text-gray-600 bg-transparent border-none px-0 py-0.5 focus:outline-none">
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Ações -->
+        <button @click="reguaAdicionarEtapa()" type="button"
+                class="w-full mt-3 py-2.5 rounded-xl border-2 border-dashed text-xs font-bold transition-all hover:bg-gray-50"
+                style="border-color:color-mix(in srgb, var(--p) 30%, #fff); color:var(--p)">
+          <i class="fa-solid fa-plus mr-1.5"></i> Adicionar tentativa
+        </button>
+
+        <div class="flex gap-2 mt-2">
+          <button @click="reguaAplicarPadrao9()" type="button"
+                  class="flex-1 py-2 rounded-xl text-[11px] font-bold text-white transition-all active:scale-95"
+                  style="background:var(--p)">
+            Aplicar as 9 tentativas
+          </button>
+          <button @click="reguaRestaurarPadrao()" type="button"
+                  class="flex-1 py-2 rounded-xl text-[11px] font-bold border border-gray-200 text-gray-500 hover:bg-gray-50 transition-all">
+            Restaurar padrão
+          </button>
+        </div>
+
+        <p class="text-[10px] text-gray-400 mt-3 leading-relaxed">
+          <i class="fa-solid fa-circle-info mr-1"></i>
+          Os prazos são contados a partir do cadastro do cliente. Alternar o canal a cada
+          tentativa aumenta a chance de resposta — o cliente não se acostuma a ignorar sempre o mesmo meio.
+          Vale para os próximos cadastros; quem já está na esteira mantém a régua atual.
+        </p>
+      </div>
+    </div>
+
     <!-- === PALETA DE CORES === -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <div class="px-5 py-4 border-b border-gray-50 flex items-center gap-3">
@@ -3468,6 +3585,12 @@ tailwind.config = {
                   </div>
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-1 flex-wrap">
+                      <!-- Canal da tentativa -->
+                      <span x-show="step.canal" class="text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1 flex-shrink-0"
+                            :style="'background:' + canalInfo(step.canal).cor + '1a; color:' + canalInfo(step.canal).cor">
+                        <i class="fa-solid text-[9px]" :class="canalInfo(step.canal).icon"></i>
+                        <span x-text="canalInfo(step.canal).curto"></span>
+                      </span>
                       <p class="font-semibold text-sm" :class="step.feito ? 'text-green-700 line-through' : 'text-gray-800'" x-text="step.descricao"></p>
                       <!-- Override badge -->
                       <span x-show="step.hasOverride && !step.feito" class="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-semibold">editado</span>
@@ -4847,61 +4970,148 @@ function app() {
       { value: 'amigo', label: 'Cliente Amigo/Indicação', color: '#ec4899', icon: '⭐' },
     ],
 
-    timelines: {
-      venda: [
-        { etapa: 1, dias: 1, descricao: 'Primeiro follow-up - confirmar interesse' },
-        { etapa: 2, dias: 3, descricao: 'Enviar opções de imóveis' },
-        { etapa: 3, dias: 7, descricao: 'Agendar visita' },
-        { etapa: 4, dias: 15, descricao: 'Follow-up pós-visita' },
-        { etapa: 5, dias: 30, descricao: 'Retomada de contato - verificar decisão' },
-        { etapa: 6, dias: 60, descricao: 'Follow-up de longo prazo' },
-        { etapa: 7, dias: 90, descricao: 'Manutenção do relacionamento' },
-      ],
-      locacao: [
-        { etapa: 1, dias: 1, descricao: 'Confirmar interesse em locação' },
-        { etapa: 2, dias: 3, descricao: 'Enviar opções disponíveis' },
-        { etapa: 3, dias: 7, descricao: 'Agendar visita' },
-        { etapa: 4, dias: 15, descricao: 'Follow-up pós-visita' },
-        { etapa: 5, dias: 30, descricao: 'Verificar se ainda precisa do imóvel' },
-      ],
-      captacao: [
-        { etapa: 1, dias: 1, descricao: 'Confirmar dados e documentação' },
-        { etapa: 2, dias: 3, descricao: 'Enviar proposta de captação' },
-        { etapa: 3, dias: 7, descricao: 'Acompanhar andamento' },
-        { etapa: 4, dias: 14, descricao: 'Verificar documentação pendente' },
-        { etapa: 5, dias: 30, descricao: 'Revisão de preço/condições' },
-        { etapa: 6, dias: 60, descricao: 'Reavaliação de estratégia' },
-      ],
-      buscar_locacao: [
-        { etapa: 1, dias: 1, descricao: 'Levantar perfil detalhado' },
-        { etapa: 2, dias: 3, descricao: 'Enviar opções compatíveis' },
-        { etapa: 3, dias: 7, descricao: 'Agendar visitas' },
-        { etapa: 4, dias: 15, descricao: 'Follow-up pós-visitas' },
-        { etapa: 5, dias: 30, descricao: 'Verificar se ainda busca' },
-      ],
-      buscar_venda: [
-        { etapa: 1, dias: 1, descricao: 'Levantar perfil e orçamento' },
-        { etapa: 2, dias: 3, descricao: 'Enviar opções selecionadas' },
-        { etapa: 3, dias: 7, descricao: 'Agendar visitas' },
-        { etapa: 4, dias: 15, descricao: 'Follow-up pós-visitas' },
-        { etapa: 5, dias: 30, descricao: 'Verificar decisão / novas opções' },
-        { etapa: 6, dias: 60, descricao: 'Follow-up de longo prazo' },
-        { etapa: 7, dias: 90, descricao: 'Manutenção do relacionamento' },
-      ],
-      parceiro: [
-        { etapa: 1, dias: 3, descricao: 'Proposta de parceria formal' },
-        { etapa: 2, dias: 7, descricao: 'Alinhar processos e comissões' },
-        { etapa: 3, dias: 30, descricao: 'Check-in mensal de negócios' },
-        { etapa: 4, dias: 90, descricao: 'Avaliação trimestral da parceria' },
-        { etapa: 5, dias: 180, descricao: 'Renovação / fortalecimento da parceria' },
-      ],
-      amigo: [
-        { etapa: 1, dias: 1, descricao: 'Agradecimento pela indicação' },
-        { etapa: 2, dias: 7, descricao: 'Atualização sobre atendimento' },
-        { etapa: 3, dias: 30, descricao: 'Follow-up de relacionamento' },
-        { etapa: 4, dias: 90, descricao: 'Manter contato ativo' },
-        { etapa: 5, dias: 180, descricao: 'Pedir nova indicação' },
-      ],
+    /* ── Canais de contato usados na régua ────────────────────────────── */
+    canais: [
+      { v:'ligacao',    l:'Ligação telefônica', curto:'Ligação',   icon:'fa-phone',        cor:'#2563eb' },
+      { v:'audio_wa',   l:'Áudio no WhatsApp',  curto:'Áudio WA',  icon:'fa-microphone',   cor:'#25D366' },
+      { v:'msg_wa',     l:'Mensagem WhatsApp',  curto:'Msg WA',    icon:'fa-comment-dots', cor:'#128C7E' },
+      { v:'call_wa',    l:'Chamada WhatsApp',   curto:'Call WA',   icon:'fa-phone-volume', cor:'#0f766e' },
+      { v:'video',      l:'Chamada de vídeo',   curto:'Vídeo',     icon:'fa-video',        cor:'#8b5cf6' },
+      { v:'email',      l:'E-mail',             curto:'E-mail',    icon:'fa-envelope',     cor:'#f59e0b' },
+      { v:'presencial', l:'Presencial',         curto:'Presencial',icon:'fa-handshake',    cor:'#a855f7' },
+    ],
+
+    canalInfo(v) {
+      return this.canais.find(c => c.v === v) || this.canais[0];
+    },
+
+    /* Régua padrão: 9 tentativas alternando o canal de contato.
+       Alternar o meio evita o cliente "acostumar" a ignorar sempre o mesmo. */
+    get regua9() {
+      return [
+        { etapa:1, dias:0,  canal:'ligacao',    descricao:'Primeiro contato — apresentar-se e entender a necessidade' },
+        { etapa:2, dias:1,  canal:'audio_wa',   descricao:'Áudio no WhatsApp retomando a conversa' },
+        { etapa:3, dias:3,  canal:'msg_wa',     descricao:'Enviar opções de imóveis que combinam com o perfil' },
+        { etapa:4, dias:5,  canal:'call_wa',    descricao:'Chamada no WhatsApp para agendar a visita' },
+        { etapa:5, dias:8,  canal:'ligacao',    descricao:'Nova tentativa por telefone, em outro horário' },
+        { etapa:6, dias:12, canal:'audio_wa',   descricao:'Áudio com uma novidade ou oportunidade do mercado' },
+        { etapa:7, dias:20, canal:'msg_wa',     descricao:'Mensagem de reaquecimento — sem cobrança' },
+        { etapa:8, dias:30, canal:'ligacao',    descricao:'Ligação de retomada — checar se o momento mudou' },
+        { etapa:9, dias:45, canal:'msg_wa',     descricao:'Última tentativa — deixar a porta aberta' },
+      ];
+    },
+
+    get timelinesPadrao() {
+      return {
+        venda:          this.regua9,
+        locacao:        this.regua9,
+        buscar_venda:   this.regua9,
+        buscar_locacao: this.regua9,
+        captacao: [
+          { etapa:1, dias:1,  canal:'ligacao',    descricao:'Confirmar dados e documentação' },
+          { etapa:2, dias:3,  canal:'msg_wa',     descricao:'Enviar proposta de captação' },
+          { etapa:3, dias:7,  canal:'call_wa',    descricao:'Acompanhar andamento' },
+          { etapa:4, dias:14, canal:'presencial', descricao:'Verificar documentação pendente' },
+          { etapa:5, dias:30, canal:'ligacao',    descricao:'Revisão de preço/condições' },
+          { etapa:6, dias:60, canal:'audio_wa',   descricao:'Reavaliação de estratégia' },
+        ],
+        parceiro: [
+          { etapa:1, dias:3,   canal:'ligacao',    descricao:'Proposta de parceria formal' },
+          { etapa:2, dias:7,   canal:'video',      descricao:'Alinhar processos e comissões' },
+          { etapa:3, dias:30,  canal:'msg_wa',     descricao:'Check-in mensal de negócios' },
+          { etapa:4, dias:90,  canal:'presencial', descricao:'Avaliação trimestral da parceria' },
+          { etapa:5, dias:180, canal:'ligacao',    descricao:'Renovação / fortalecimento da parceria' },
+        ],
+        amigo: [
+          { etapa:1, dias:1,   canal:'audio_wa', descricao:'Agradecimento pela indicação' },
+          { etapa:2, dias:7,   canal:'msg_wa',   descricao:'Atualização sobre o atendimento' },
+          { etapa:3, dias:30,  canal:'ligacao',  descricao:'Follow-up de relacionamento' },
+          { etapa:4, dias:90,  canal:'msg_wa',   descricao:'Manter contato ativo' },
+          { etapa:5, dias:180, canal:'ligacao',  descricao:'Pedir nova indicação' },
+        ],
+      };
+    },
+
+    /* Réguas personalizadas pelo usuário (sobrepõem o padrão, por tipo) */
+    reguas: JSON.parse(localStorage.getItem('amigo_reguas') || 'null'),
+
+    get timelines() {
+      return { ...this.timelinesPadrao, ...(this.reguas || {}) };
+    },
+
+    /* ── Edição da régua de atendimento ───────────────────────────────── */
+    reguaTipoEdit: 'venda',
+
+    get reguaAtual() {
+      return this.timelines[this.reguaTipoEdit] || [];
+    },
+
+    _gravarRegua(lista) {
+      const norm = lista.map((e, i) => ({
+        etapa: i + 1,
+        dias: Math.max(0, parseInt(e.dias) || 0),
+        canal: e.canal || 'ligacao',
+        descricao: (e.descricao || '').trim() || `Tentativa ${i + 1}`,
+      }));
+      this.reguas = { ...(this.reguas || {}), [this.reguaTipoEdit]: norm };
+      localStorage.setItem('amigo_reguas', JSON.stringify(this.reguas));
+    },
+
+    reguaAtualizarCampo(idx, campo, valor) {
+      const l = this.reguaAtual.map(e => ({ ...e }));
+      if (!l[idx]) return;
+      l[idx][campo] = valor;
+      this._gravarRegua(l);
+    },
+
+    reguaAdicionarEtapa() {
+      const l = this.reguaAtual.map(e => ({ ...e }));
+      const ultimo = l[l.length - 1];
+      l.push({
+        etapa: l.length + 1,
+        dias: ultimo ? ultimo.dias + 15 : 1,
+        canal: 'ligacao',
+        descricao: 'Nova tentativa de contato',
+      });
+      this._gravarRegua(l);
+      this.showToast('Etapa adicionada');
+    },
+
+    reguaRemoverEtapa(idx) {
+      const l = this.reguaAtual.map(e => ({ ...e }));
+      if (l.length <= 1) { this.showToast('A régua precisa de ao menos 1 etapa'); return; }
+      l.splice(idx, 1);
+      this._gravarRegua(l);
+    },
+
+    reguaMover(idx, dir) {
+      const l = this.reguaAtual.map(e => ({ ...e }));
+      const alvo = idx + dir;
+      if (alvo < 0 || alvo >= l.length) return;
+      [l[idx], l[alvo]] = [l[alvo], l[idx]];
+      // mantém os prazos em ordem crescente após a troca
+      l.sort((a, b) => a.dias - b.dias);
+      this._gravarRegua(l);
+    },
+
+    reguaRestaurarPadrao() {
+      if (!confirm(`Restaurar a régua padrão de ${this.getTipoLabel(this.reguaTipoEdit)}?`)) return;
+      const r = { ...(this.reguas || {}) };
+      delete r[this.reguaTipoEdit];
+      this.reguas = Object.keys(r).length ? r : null;
+      if (this.reguas) localStorage.setItem('amigo_reguas', JSON.stringify(this.reguas));
+      else localStorage.removeItem('amigo_reguas');
+      this.showToast('Régua padrão restaurada');
+    },
+
+    reguaAplicarPadrao9() {
+      if (!confirm(`Aplicar as 9 tentativas em ${this.getTipoLabel(this.reguaTipoEdit)}?`)) return;
+      this._gravarRegua(this.regua9.map(e => ({ ...e })));
+      this.showToast('Régua de 9 tentativas aplicada');
+    },
+
+    reguaPersonalizada(tipo) {
+      return !!(this.reguas && this.reguas[tipo]);
     },
 
     irParaDashboard() {
