@@ -923,11 +923,21 @@ document.addEventListener('DOMContentLoaded', () => {
       .forEach(f => { if (typeof f === 'string' && f.startsWith('idb:')) refs.add(f); }));
     if (!refs.size) return;
     const mapa = await lerMidiasIDB([...refs]);
-    const troca = f => (typeof f === 'string' && mapa[f]) ? mapa[f] : f;
+
+    // Resolve o que existe e DESCARTA referências órfãs: um src "idb:..." não
+    // carrega e viraria imagem quebrada. Sem ela, o card cai no placeholder.
+    const resolver = lista => (Array.isArray(lista) ? lista : [])
+      .map(f => (typeof f === 'string' && f.startsWith('idb:')) ? (mapa[f] || null) : f)
+      .filter(Boolean);
+
+    let orfas = 0;
+    refs.forEach(r => { if (!mapa[r]) orfas++; });
+    if (orfas) console.warn(`Portal: ${orfas} de ${refs.size} foto(s) não encontradas no armazenamento local.`);
+
     todos.forEach(im => {
-      if (Array.isArray(im.medias)) im.medias = im.medias.map(troca);
-      if (Array.isArray(im.fotos))  im.fotos  = im.fotos.map(troca);
-      if (im.foto) im.foto = troca(im.foto);
+      im.medias = resolver(im.medias);
+      im.fotos  = resolver(im.fotos);
+      if (im.foto && String(im.foto).startsWith('idb:')) im.foto = mapa[im.foto] || '';
     });
     filtrar();
   })();

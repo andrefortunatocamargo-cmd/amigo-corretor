@@ -1,4 +1,4 @@
-const CACHE_NAME = 'amigo-corretor-v2';
+const CACHE_NAME = 'amigo-corretor-v3';
 const URLS = [
   './',
   './index.html',
@@ -23,7 +23,10 @@ self.addEventListener('fetch', e => {
 
   if (url.includes('googleapis.com') || url.includes('accounts.google.com') || url.includes('firestore')) return;
 
-  const isDocument = e.request.mode === 'navigate' || url.endsWith('.html') || url.endsWith('/');
+  // portal.html carrega fotos do IndexedDB: precisa ser sempre a versão atual
+  const isDocument = e.request.mode === 'navigate'
+    || url.includes('.html')          // cobre portal.html?v=…
+    || url.endsWith('/');
 
   if (isDocument) {
     // Network-first: o HTML sempre vem atualizado; cache só serve offline.

@@ -2396,7 +2396,7 @@ tailwind.config = {
     <button @click="novaCaptacao()" class="px-5 py-2.5 rounded-xl text-white font-bold text-sm" style="background:#7c3aed">
       + Nova Captação
     </button>
-    <a href="portal.html" target="_blank"
+    <a :href="'portal.html?v=' + portalCacheBust" target="_blank"
        class="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90 active:scale-95"
        style="background:linear-gradient(135deg,var(--p),var(--p-l));color:#fff">
       <i class="fa-solid fa-globe text-xs"></i> Ver Portal
@@ -2421,7 +2421,7 @@ tailwind.config = {
         Clique no <i class="fa-solid fa-globe mx-0.5"></i> do imóvel para publicá-lo.
       </p>
     </div>
-    <a href="portal.html" target="_blank"
+    <a :href="'portal.html?v=' + portalCacheBust" target="_blank"
        class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold flex-shrink-0 transition-all hover:opacity-80"
        style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.25)">
       <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Abrir
@@ -4768,6 +4768,7 @@ function app() {
     showVersiculo: true,
     showPalavraModal: false,
     showUpsellSite: false,
+    portalCacheBust: Date.now(),   // evita abrir uma versão do site em cache
     palavraAtual: null,
     palavrasOracao: [
       { ref: 'Salmos 23:1', texto: 'O Senhor é o meu pastor; nada me faltará.', oracao: 'Senhor, hoje reconheço que o meu sustento vem de Ti. Não preciso me angustiar com o amanhã, porque Tu és fiel e cuidas de cada detalhe da minha vida. Que eu trabalhe com excelência, mas que toda a minha confiança repouse em Tuas mãos. Amém.' },
@@ -5267,9 +5268,31 @@ function app() {
       this.showToast(cap.publicarSite ? '🌐 Publicado no portal!' : 'Removido do portal');
     },
 
-    syncPortal() {
+    async syncPortal() {
       // Módulo Site Personalizado: exclusivo de contas com o pacote ativo
       if (!this.isAdmin) { localStorage.removeItem('amigo_portal_listings'); return; }
+
+      // Blindagem: nenhuma foto base64 pode entrar no payload — estoura a cota
+      // do localStorage e faria a gravação inteira falhar. Converte para
+      // referência do IndexedDB antes de montar o pacote.
+      for (const cap of this.captacoes) {
+        if (!cap.publicarSite) continue;
+        for (const campo of ['fotos', 'midias']) {
+          const lista = cap[campo];
+          if (!Array.isArray(lista) || !lista.some(x => typeof x === 'string' && x.startsWith('data:'))) continue;
+          const convertidos = [];
+          for (const item of lista) {
+            if (typeof item === 'string' && item.startsWith('data:')) {
+              try {
+                const blob = window.MediaStore.dataUrlParaBlob(item);
+                convertidos.push(await window.MediaStore.put(blob, blob.type.startsWith('video/') ? 'v' : 'i'));
+              } catch { /* item corrompido: descarta em vez de quebrar o sync */ }
+            } else convertidos.push(item);
+          }
+          cap[campo] = convertidos;
+        }
+      }
+
       const publicados = this.captacoes
         .filter(c => c.publicarSite)
         .map(c => {
@@ -5321,7 +5344,16 @@ function app() {
       try {
         localStorage.setItem('amigo_portal_listings', JSON.stringify(payload));
       } catch (e) {
-        alert('Aviso: não foi possível sincronizar com o portal. As fotos podem estar muito grandes. Tente remover algumas fotos ou reduza a qualidade.');
+        // Cota estourada: publica sem as fotos para o anúncio não sumir do site
+        console.warn('syncPortal: cota excedida, republicando sem fotos', e);
+        try {
+          payload.imoveis = payload.imoveis.map(i => ({ ...i, fotos: [], medias: i.videoUrl ? [i.videoUrl] : [] }));
+          localStorage.setItem('amigo_portal_listings', JSON.stringify(payload));
+          this.showToast('⚠️ Site publicado sem as fotos — armazenamento cheio');
+        } catch (e2) {
+          console.error('syncPortal: falha ao gravar mesmo sem fotos', e2);
+          this.showToast('⚠️ Não foi possível atualizar o site');
+        }
       }
     },
     portalPublicados() { return this.captacoes.filter(c => c.publicarSite).length; },
@@ -8816,7 +8848,7 @@ function app() {
           </label>
 
           <!-- Link portal -->
-          <a href="portal.html" target="_blank"
+          <a :href="'portal.html?v=' + portalCacheBust" target="_blank"
              class="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all hover:opacity-80"
              style="background:linear-gradient(135deg,var(--p),var(--p-l));color:#fff">
             <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
