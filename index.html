@@ -3036,6 +3036,49 @@ tailwind.config = {
       </div>
     </div>
 
+    <!-- === PONTE COM O JARVIS === -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-50 flex items-center gap-3">
+        <div class="w-8 h-8 rounded-xl bg-gray-900 flex items-center justify-center text-white text-xs">
+          <i class="fa-solid fa-robot"></i>
+        </div>
+        <div class="flex-1">
+          <h3 class="font-black text-sm text-gray-800">Jarvis — entrada automática de leads</h3>
+          <p class="text-[10px] text-gray-400">O lead que chega no Kenlo entra aqui na esteira, já com a régua rodando</p>
+        </div>
+        <span x-show="jarvisOnline" class="flex items-center gap-1.5 bg-green-50 text-green-700 text-[10px] font-bold px-2 py-1 rounded-lg">
+          <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> Conectado
+        </span>
+        <span x-show="!jarvisOnline" class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded-lg">Desconectado</span>
+      </div>
+
+      <div class="px-5 py-4">
+        <template x-if="!jarvisOnline">
+          <div>
+            <p class="text-[11px] text-gray-500 leading-relaxed mb-3">
+              O Jarvis entrega os leads por dentro deste Mac. Na primeira vez o navegador pede
+              autorização para esta página falar com ele — clique abaixo e responda
+              <span class="font-bold">Permitir</span>. É uma vez só, neste navegador.
+            </p>
+            <button @click="conectarJarvis()"
+                    class="w-full py-2.5 rounded-xl bg-gray-900 hover:bg-black text-white font-bold text-xs transition-colors flex items-center justify-center gap-2">
+              <i class="fa-solid fa-plug"></i> Conectar ao Jarvis
+            </button>
+            <p x-show="jarvisAviso" x-transition class="text-[11px] mt-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 font-semibold leading-snug" x-text="jarvisAviso"></p>
+          </div>
+        </template>
+
+        <template x-if="jarvisOnline">
+          <div class="flex items-center justify-between">
+            <p class="text-[11px] text-gray-500">
+              Leads recebidos nesta sessão: <span class="font-bold text-gray-700" x-text="leadsImportadosSessao"></span>
+            </p>
+            <button @click="consultarPonteJarvis()" class="text-[11px] font-bold text-gray-500 hover:text-gray-800">Verificar agora</button>
+          </div>
+        </template>
+      </div>
+    </div>
+
     <!-- === PALETA DE CORES === -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <div class="px-5 py-4 border-b border-gray-50 flex items-center gap-3">
@@ -5201,6 +5244,29 @@ function app() {
       } catch (e) {
         this.jarvisOnline = false;
       }
+    },
+
+    jarvisAviso: '',
+    /* O Chrome 138+ exige permissão para uma página pública falar com
+       127.0.0.1, e só concede a partir de um clique do usuário. Sem este
+       botão a primeira tentativa é recusada em silêncio. */
+    async conectarJarvis() {
+      this.jarvisAviso = '';
+      await this.consultarPonteJarvis();
+      if (this.jarvisOnline) {
+        this.showToast('🤖 Jarvis conectado! Os leads entram sozinhos na esteira.');
+        return;
+      }
+      let estado = '';
+      try {
+        const st = await navigator.permissions.query({ name: 'local-network-access' });
+        estado = st.state;
+      } catch (e) { /* navegador sem essa permissão: o motivo é outro */ }
+      this.jarvisAviso = estado === 'denied'
+        ? 'O navegador está bloqueando o acesso à rede local. Clique no ícone de cadeado na barra de endereço, '
+          + 'habilite "Rede local" para este site e tente de novo.'
+        : 'Não encontrei o Jarvis na porta ' + this.jarvisPorta + '. Confirme que ele está rodando neste Mac '
+          + '(o painel do Jarvis aberto) e clique novamente.';
     },
 
     async confirmarPonteJarvis(ids) {
