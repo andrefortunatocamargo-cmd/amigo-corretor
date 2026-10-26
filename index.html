@@ -16,7 +16,7 @@
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
     from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
   import { getFirestore, doc, getDoc, setDoc, updateDoc, getDocs, collection,
-           addDoc, onSnapshot, query, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove }
+           addDoc, onSnapshot, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove }
     from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
   const firebaseConfig = {
@@ -39,6 +39,15 @@
   window._fbSetUser = (uid, data) => setDoc(doc(db, 'usuarios', uid), data, { merge: true });
   window._fbUpdateUser = (uid, data) => updateDoc(doc(db, 'usuarios', uid), data);
   window._fbAllUsers = () => getDocs(collection(db, 'usuarios'));
+
+  // ── Leads vindos do Jarvis ────────────────────────────────────────────────
+  window._leadsListen = (uid, cb) => onSnapshot(
+    query(collection(db, 'leads_entrada'), where('destinatarioUid', '==', uid), where('importado', '==', false)),
+    (snap) => { const l = []; snap.forEach(d => l.push({ id: d.id, ...d.data() })); cb(l); },
+    (err) => console.warn('leads_entrada:', err.message)
+  );
+  window._leadMarcarImportado = (id) =>
+    updateDoc(doc(db, 'leads_entrada', id), { importado: true, importadoEm: serverTimestamp() });
 
   // ── Chat ──────────────────────────────────────────────────────────────────
   window._chatSend = (msg) => addDoc(collection(db, 'chat_mensagens'), {
@@ -5114,6 +5123,69 @@ function app() {
       return !!(this.reguas && this.reguas[tipo]);
     },
 
+    /* ── Leads recebidos do Jarvis ─────────────────────────────────────────
+       O Jarvis grava em `leads_entrada`; aqui cada um vira cliente na esteira,
+       com a régua do tipo correspondente já rodando. */
+    leadsListener: null,
+    leadsImportadosSessao: 0,
+
+    iniciarLeadsJarvis() {
+      if (this.leadsListener || !this.firebaseUID || !window._leadsListen) return;
+      this.leadsListener = window._leadsListen(this.firebaseUID, (leads) => {
+        if (leads && leads.length) this.importarLeadsJarvis(leads);
+      });
+    },
+
+    pararLeadsJarvis() {
+      if (this.leadsListener) { this.leadsListener(); this.leadsListener = null; }
+    },
+
+    async importarLeadsJarvis(leads) {
+      let novos = 0;
+      for (const ld of leads) {
+        // Telefone é a chave anti-duplicata: o mesmo lead pode chegar por
+        // Venda e Locação no Kenlo, e não pode virar dois clientes aqui.
+        const tel = (ld.telefone || '').replace(/\D/g, '');
+        const jaExiste = this.clientes.some(c =>
+          (c.jarvisLeadId && c.jarvisLeadId === ld.jarvisLeadId) ||
+          (tel && (c.telefone || '').replace(/\D/g, '') === tel)
+        );
+
+        if (!jaExiste) {
+          this.clientes.unshift({
+            id: Date.now().toString() + Math.random().toString(36).slice(2, 6),
+            nome: ld.nome || 'Lead sem nome',
+            telefone: ld.telefone || '',
+            tipo: ld.tipo || 'buscar_venda',
+            imovel: ld.codigoImovel || '',
+            valorInteresse: '',
+            dataInicio: this.todayStr(),
+            origem: ld.origemLead || 'Jarvis',
+            status: 'ativo',
+            pipeline: 'atendimento',
+            observacao: ld.observacoes || '',
+            ativo: true,
+            etapasFeitas: [],
+            mediaCount: 0,
+            jarvisLeadId: ld.jarvisLeadId || null,
+            kenloId: ld.kenloId || '',
+          });
+          novos++;
+        }
+
+        // Marca como importado mesmo quando era duplicata, senão volta sempre.
+        try { await window._leadMarcarImportado(ld.id); } catch (e) { console.warn('marcar lead:', e); }
+      }
+
+      if (novos) {
+        this.clientes = [...this.clientes];
+        this.leadsImportadosSessao += novos;
+        this.addFeedItem('🤖', `${novos} lead(s) recebido(s) do Jarvis`);
+        this.showToast(`🤖 ${novos} novo(s) lead(s) do Jarvis na esteira!`);
+        this.save();
+      }
+    },
+
     irParaDashboard() {
       this.page = 'dashboard';
       this.section = 'vendas';
@@ -5302,7 +5374,7 @@ function app() {
           this.firebaseUser = user;
           this.firebaseUID = user.uid;
           this.loggedIn = true;
-          this.$nextTick(() => this.initChat());
+          this.$nextTick(() => { this.initChat(); this.iniciarLeadsJarvis(); });
           const savedC = localStorage.getItem(this._keyClientes);
           this.clientes = savedC ? JSON.parse(savedC) : [];
           const savedCap = localStorage.getItem(this._keyCaptacoes);
@@ -5320,6 +5392,7 @@ function app() {
           this.captacoes = [];
           this.activityFeed = [];
           if (this.chatListener) { this.chatListener(); this.chatListener = null; }
+          this.pararLeadsJarvis();
           this.chatMensagens = []; this.chatUnread = 0; this.showChat = false;
         }
       });

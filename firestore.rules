@@ -1,0 +1,42 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /usuarios/{uid} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    match /chat_mensagens/{msgId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    match /chat_configs/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Leads que o Jarvis entrega ao CRM.
+    // Cada corretor só enxerga e marca os que foram endereçados a ele.
+    match /leads_entrada/{leadId} {
+      allow read: if request.auth != null
+                  && resource.data.destinatarioUid == request.auth.uid;
+
+      // Quem cria precisa endereçar a si mesmo: ninguém injeta lead na
+      // esteira de outro corretor.
+      allow create: if request.auth != null
+                    && request.resource.data.destinatarioUid == request.auth.uid
+                    && request.resource.data.importado == false;
+
+      // A única alteração permitida é marcar como importado.
+      allow update: if request.auth != null
+                    && resource.data.destinatarioUid == request.auth.uid
+                    && request.resource.data.destinatarioUid == resource.data.destinatarioUid
+                    && request.resource.data.importado == true;
+
+      allow delete: if request.auth != null
+                    && resource.data.destinatarioUid == request.auth.uid;
+    }
+  }
+}
