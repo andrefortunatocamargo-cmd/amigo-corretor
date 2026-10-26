@@ -13,7 +13,7 @@
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail }
     from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
   import { getFirestore, doc, getDoc, setDoc, updateDoc, getDocs, collection,
            addDoc, onSnapshot, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove }
@@ -35,6 +35,9 @@
   // Expõe para o Alpine.js (acessado via window)
   window._fbSignIn = (email, password) => signInWithEmailAndPassword(auth, email, password);
   window._fbSignOut = () => signOut(auth);
+  // Senha perdida: o Firebase guarda só o hash, então não há como consultá-la —
+  // o caminho é receber o link de redefinição no próprio e-mail da conta.
+  window._fbResetSenha = (email) => sendPasswordResetEmail(auth, email);
   window._fbGetUser = (uid) => getDoc(doc(db, 'usuarios', uid));
   window._fbSetUser = (uid, data) => setDoc(doc(db, 'usuarios', uid), data, { merge: true });
   window._fbUpdateUser = (uid, data) => updateDoc(doc(db, 'usuarios', uid), data);
@@ -445,6 +448,18 @@ tailwind.config = {
           <i class="fa-solid fa-right-to-bracket"></i>
           Entrar
         </button>
+
+        <!-- Senha perdida: só redefinição, pois nem o sistema consegue ler a senha -->
+        <button @click="recuperarSenha()" type="button"
+                class="w-full mt-3 text-[11px] font-semibold text-gray-400 hover:text-gray-600 transition-colors">
+          Esqueci minha senha
+        </button>
+
+        <div x-show="resetAviso" x-transition
+             class="mt-3 px-4 py-2.5 rounded-xl bg-blue-50 border border-blue-200 flex items-start gap-2">
+          <i class="fa-solid fa-envelope-circle-check text-blue-400 text-xs mt-0.5"></i>
+          <span class="text-blue-700 text-[11px] font-semibold leading-snug" x-text="resetAviso"></span>
+        </div>
       </div>
 
       <!-- Footer do card -->
@@ -492,6 +507,13 @@ tailwind.config = {
 
       <!-- Botões de acesso rápido -->
       <div class="flex items-center gap-1.5">
+        <!-- Ponte com o Jarvis: aparece só quando o assistente está de pé -->
+        <div x-show="jarvisOnline" x-transition
+             class="flex items-center gap-1.5 bg-gray-900 text-white text-[11px] font-bold px-2 py-1.5 rounded-lg shadow-sm"
+             :title="'Jarvis conectado — ' + leadsImportadosSessao + ' lead(s) recebido(s) nesta sessão'">
+          <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+          <span class="hidden sm:inline">Jarvis</span>
+        </div>
         <!-- WhatsApp Suporte Dropdown — só para usuários Essense -->
         <div class="relative" x-show="contaImobiliaria.toLowerCase().includes('essense') || (!contaImobiliaria && isAdmin)" x-data="{ suporteAberto: false }" @click.outside="suporteAberto = false">
           <button @click="suporteAberto = !suporteAberto"
@@ -1600,7 +1622,7 @@ tailwind.config = {
               <p class="text-xs font-semibold text-green-700"><i class="fa-solid fa-circle-check mr-1"></i>Todos follow-ups concluídos</p>
             </div>
             <div x-show="c.observacao" class="mb-3">
-              <p class="text-xs text-gray-500 italic truncate" x-text="'"' + c.observacao + '"'"></p>
+              <p class="text-xs text-gray-500 italic truncate" x-text="'“' + c.observacao + '”'"></p>
             </div>
             <div class="flex gap-2">
               <button @click="openTimeline(c)" class="flex-1 bg-green-50 hover:bg-green-100 text-green-700 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1">
@@ -5129,19 +5151,70 @@ function app() {
     leadsListener: null,
     leadsImportadosSessao: 0,
 
+    /* Dois canais, e o CRM escuta os dois:
+       - Ponte local: o Jarvis roda neste Mac e serve a fila de leads em
+         127.0.0.1. É o canal que funciona sem nenhuma senha.
+       - Firestore: necessário quando o CRM está no celular ou em outro
+         computador, longe do Jarvis. Exige login configurado no Jarvis. */
+    pontePoll: null,
+    jarvisOnline: false,
+    jarvisUltimoContato: null,
+    get jarvisPorta() { return localStorage.getItem('amigo_jarvis_porta') || '8770'; },
+    get jarvisBase() { return 'http://127.0.0.1:' + this.jarvisPorta + '/api/amigo'; },
+
     iniciarLeadsJarvis() {
-      if (this.leadsListener || !this.firebaseUID || !window._leadsListen) return;
-      this.leadsListener = window._leadsListen(this.firebaseUID, (leads) => {
-        if (leads && leads.length) this.importarLeadsJarvis(leads);
-      });
+      // Canal Firestore (só se o Jarvis estiver publicando lá)
+      if (!this.leadsListener && this.firebaseUID && window._leadsListen) {
+        this.leadsListener = window._leadsListen(this.firebaseUID, (leads) => {
+          if (leads && leads.length) this.importarLeadsJarvis(leads);
+        });
+      }
+      // Canal ponte local
+      if (!this.pontePoll) this.agendarPonteJarvis(0);
+    },
+
+    agendarPonteJarvis(atraso) {
+      this.pontePoll = setTimeout(async () => {
+        await this.consultarPonteJarvis();
+        // Com o Jarvis desligado, espaça as tentativas: o navegador registra
+        // cada conexão recusada, e de 15 em 15 s isso viraria ruído no console.
+        this.agendarPonteJarvis(this.jarvisOnline ? 15000 : 60000);
+      }, atraso);
     },
 
     pararLeadsJarvis() {
       if (this.leadsListener) { this.leadsListener(); this.leadsListener = null; }
+      if (this.pontePoll) { clearTimeout(this.pontePoll); this.pontePoll = null; }
+      this.jarvisOnline = false;
+    },
+
+    async consultarPonteJarvis() {
+      // Jarvis desligado é situação normal: falha silenciosa, sem poluir o console.
+      try {
+        const r = await fetch(this.jarvisBase + '/leads', { cache: 'no-store' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const d = await r.json();
+        if (!this.jarvisOnline) this.addFeedItem('🤖', 'Jarvis conectado — leads chegam direto na esteira');
+        this.jarvisOnline = true;
+        this.jarvisUltimoContato = Date.now();
+        if (d.leads && d.leads.length) await this.importarLeadsJarvis(d.leads);
+      } catch (e) {
+        this.jarvisOnline = false;
+      }
+    },
+
+    async confirmarPonteJarvis(ids) {
+      try {
+        await fetch(this.jarvisBase + '/ack', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids }),
+        });
+      } catch (e) { console.warn('ack ponte:', e.message); }
     },
 
     async importarLeadsJarvis(leads) {
       let novos = 0;
+      const ackPonte = [];
       for (const ld of leads) {
         // Telefone é a chave anti-duplicata: o mesmo lead pode chegar por
         // Venda e Locação no Kenlo, e não pode virar dois clientes aqui.
@@ -5173,9 +5246,12 @@ function app() {
           novos++;
         }
 
-        // Marca como importado mesmo quando era duplicata, senão volta sempre.
-        try { await window._leadMarcarImportado(ld.id); } catch (e) { console.warn('marcar lead:', e); }
+        // Confirma mesmo quando era duplicata, senão o lead volta sempre.
+        if (ld.ponteId) ackPonte.push(ld.ponteId);
+        else if (ld.id) { try { await window._leadMarcarImportado(ld.id); } catch (e) { console.warn('marcar lead:', e); } }
       }
+
+      if (ackPonte.length) await this.confirmarPonteJarvis(ackPonte);
 
       if (novos) {
         this.clientes = [...this.clientes];
@@ -7145,6 +7221,30 @@ function app() {
         };
         this.loginError = msgs[err.code] || 'Erro ao entrar. Tente novamente.';
         setTimeout(() => this.loginError = '', 4000);
+      }
+    },
+
+    resetAviso: '',
+    async recuperarSenha() {
+      // A senha em si não existe em lugar nenhum: o Firebase guarda apenas um
+      // hash. O único caminho é o link de redefinição no e-mail da conta.
+      const alvo = (this.loginUser || '').trim();
+      if (!alvo) { this.loginError = 'Digite primeiro seu usuário ou e-mail.'; setTimeout(() => this.loginError = '', 4000); return; }
+      const email = alvo.includes('@') ? alvo : alvo + '@amigocorretor.app';
+      if (email.endsWith('@amigocorretor.app')) {
+        this.loginError = 'Esse usuário não tem e-mail real. Peça a redefinição ao administrador.';
+        setTimeout(() => this.loginError = '', 6000);
+        return;
+      }
+      try {
+        await window._fbResetSenha(email);
+        this.resetAviso = 'Link enviado para ' + email + '. Verifique a caixa de entrada e o spam.';
+        setTimeout(() => this.resetAviso = '', 12000);
+      } catch (err) {
+        this.loginError = err.code === 'auth/user-not-found'
+          ? 'Não existe conta com esse e-mail.'
+          : 'Não foi possível enviar o link. Tente em alguns minutos.';
+        setTimeout(() => this.loginError = '', 5000);
       }
     },
     // ========== GOOGLE DRIVE ==========

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'amigo-corretor-v3';
+const CACHE_NAME = 'amigo-corretor-v4';
 const URLS = [
   './',
   './index.html',
@@ -22,6 +22,10 @@ self.addEventListener('fetch', e => {
   const url = e.request.url;
 
   if (url.includes('googleapis.com') || url.includes('accounts.google.com') || url.includes('firestore')) return;
+
+  // Ponte com o Jarvis (127.0.0.1): nunca passa pelo cache. Se o service worker
+  // intercepta, a resposta não chega à página e o lead parece não ter chegado.
+  if (url.includes('/api/amigo/') || url.startsWith('http://127.0.0.1') || url.startsWith('http://localhost')) return;
 
   // portal.html carrega fotos do IndexedDB: precisa ser sempre a versão atual
   const isDocument = e.request.mode === 'navigate'
