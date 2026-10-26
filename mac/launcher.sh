@@ -5,6 +5,12 @@
 # local: funciona de qualquer rede, e os dados são os mesmos do celular.
 
 URL="https://andrefortunatocamargo-cmd.github.io/amigo-corretor/"
+
+# O GitHub Pages manda guardar a página por 10 minutos. Depois de uma
+# atualização, a janela abria a versão velha e a novidade "não existia".
+# Abrir com um carimbo de tempo força o Chrome a buscar a versão atual.
+# Mesma origem, então os dados salvos (clientes, fotos) continuam os mesmos.
+URL_ABERTURA="${URL}index.html?v=$(date +%s)"
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 PERFIL="$HOME/Library/Application Support/AMiGOCorretor"
 
@@ -24,7 +30,7 @@ if [ -x "$CHROME" ]; then
   # com as abas e contas do Chrome do dia a dia.
   mkdir -p "$PERFIL"
   exec "$CHROME" \
-    --app="$URL" \
+    --app="$URL_ABERTURA" \
     --user-data-dir="$PERFIL" \
     --no-first-run \
     --no-default-browser-check \
