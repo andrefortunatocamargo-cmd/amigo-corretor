@@ -514,6 +514,15 @@ tailwind.config = {
           <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
           <span class="hidden sm:inline">Jarvis</span>
         </div>
+
+        <!-- Leads novos ainda não vistos: fica piscando até o corretor abrir -->
+        <button x-show="leadsNovosCount > 0" x-transition @click="reabrirLeadsNovos()"
+                class="flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white text-[11px] font-black px-2.5 py-1.5 rounded-lg shadow-sm animate-pulse"
+                :title="leadsNovosCount + ' lead(s) novo(s) aguardando'">
+          <i class="fa-solid fa-bell text-[10px]"></i>
+          <span x-text="leadsNovosCount"></span>
+          <span class="hidden sm:inline">novo(s)</span>
+        </button>
         <!-- WhatsApp Suporte Dropdown — só para usuários Essense -->
         <div class="relative" x-show="contaImobiliaria.toLowerCase().includes('essense') || (!contaImobiliaria && isAdmin)" x-data="{ suporteAberto: false }" @click.outside="suporteAberto = false">
           <button @click="suporteAberto = !suporteAberto"
@@ -1589,7 +1598,10 @@ tailwind.config = {
                   <span x-text="c.nome.charAt(0).toUpperCase()"></span>
                 </div>
                 <div>
-                  <h3 class="font-bold text-gray-800 text-sm" x-text="c.nome"></h3>
+                  <div class="flex items-center gap-1.5">
+                    <h3 class="font-bold text-gray-800 text-sm" x-text="c.nome"></h3>
+                    <span x-show="c.novo" class="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-red-500 text-white animate-pulse">NOVO</span>
+                  </div>
                   <p class="text-xs text-gray-500" x-text="c.telefone || 'Sem telefone'"></p>
                 </div>
               </div>
@@ -4319,6 +4331,58 @@ tailwind.config = {
   </div>
 </div>
 
+<!-- Modal Leads Novos do Jarvis -->
+<div x-show="showLeadsNovos" x-cloak x-transition
+     class="fixed inset-0 flex items-end sm:items-center justify-center sm:p-4 z-50"
+     style="background:rgba(0,0,0,0.55)" @click.self="showLeadsNovos=false">
+  <div class="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl overflow-hidden max-h-[85vh] flex flex-col">
+
+    <div class="px-5 py-4 text-white flex items-center gap-3" style="background:linear-gradient(135deg,var(--p),var(--p-d))">
+      <div class="w-10 h-10 rounded-xl bg-white bg-opacity-20 flex items-center justify-center text-lg">🤖</div>
+      <div class="flex-1">
+        <h3 class="font-black text-base leading-tight"
+            x-text="leadsNovosLista.length === 1 ? 'Lead novo na esteira' : leadsNovosLista.length + ' leads novos na esteira'"></h3>
+        <p class="text-[11px] opacity-80">Chegaram do Jarvis agora · já com a régua rodando</p>
+      </div>
+    </div>
+
+    <div class="overflow-y-auto px-4 py-3 flex-1">
+      <template x-for="c in leadsNovosLista" :key="c.id">
+        <div class="border border-gray-100 rounded-xl p-3 mb-2 flex items-start gap-3">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+               :style="'background:' + getTipoColor(c.tipo)" x-text="c.nome.charAt(0).toUpperCase()"></div>
+          <div class="flex-1 min-w-0">
+            <p class="font-bold text-sm text-gray-800" x-text="c.nome"></p>
+            <p class="text-[11px] text-gray-500">
+              <span x-text="getTipoLabel(c.tipo)"></span>
+              <span x-show="c.imovel" x-text="' · ' + c.imovel"></span>
+              <span x-show="c.origem" x-text="' · ' + c.origem"></span>
+            </p>
+            <p x-show="c.telefone" class="text-[11px] text-gray-500 font-semibold" x-text="c.telefone"></p>
+            <p x-show="c.observacao" class="text-[11px] text-gray-400 italic mt-1 whitespace-pre-line" x-text="c.observacao"></p>
+          </div>
+          <button @click="abrirLeadNovo(c)"
+                  class="text-[11px] font-bold px-2.5 py-1.5 rounded-lg bg-gray-900 text-white hover:bg-black flex-shrink-0">
+            Abrir
+          </button>
+        </div>
+      </template>
+    </div>
+
+    <div class="px-4 py-3 border-t border-gray-100 flex items-center gap-2">
+      <button x-show="notifPermissao !== 'granted'" @click="pedirPermissaoNotif()"
+              class="flex-1 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 font-bold text-xs">
+        🔔 Avisar mesmo com a janela atrás
+      </button>
+      <button @click="marcarLeadsVistos()"
+              class="flex-1 py-2.5 rounded-xl text-white font-black text-xs"
+              style="background:linear-gradient(135deg,var(--p-l),var(--p-d))">
+        Entendi
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Pipeline Rápido (duplo clique no card) -->
 <div x-show="showPipelineQuick" x-transition class="fixed inset-0 flex items-end sm:items-center justify-center sm:p-4 z-50" style="background:rgba(0,0,0,0.45)" @click.self="showPipelineQuick=false">
   <div class="bg-white w-full sm:max-w-xs rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden" @click.stop>
@@ -5281,6 +5345,7 @@ function app() {
     async importarLeadsJarvis(leads) {
       let novos = 0;
       const ackPonte = [];
+      const criados = [];
       for (const ld of leads) {
         // Telefone é a chave anti-duplicata: o mesmo lead pode chegar por
         // Venda e Locação no Kenlo, e não pode virar dois clientes aqui.
@@ -5308,7 +5373,10 @@ function app() {
             mediaCount: 0,
             jarvisLeadId: ld.jarvisLeadId || null,
             kenloId: ld.kenloId || '',
+            novo: true,                      // selo "NOVO" até o corretor abrir
+            recebidoEm: Date.now(),
           });
+          criados.push(this.clientes[0]);
           novos++;
         }
 
@@ -5323,9 +5391,75 @@ function app() {
         this.clientes = [...this.clientes];
         this.leadsImportadosSessao += novos;
         this.addFeedItem('🤖', `${novos} lead(s) recebido(s) do Jarvis`);
-        this.showToast(`🤖 ${novos} novo(s) lead(s) do Jarvis na esteira!`);
         this.save();
+        this.avisarLeadsNovos(criados);
       }
+    },
+
+    /* ── Aviso de lead novo ────────────────────────────────────────────────
+       Um toast some sozinho e passa despercebido. Lead novo é a coisa mais
+       urgente do dia, então ele para a tela, toca um som e — se autorizado —
+       vira notificação do sistema, que aparece mesmo com a janela atrás. */
+    showLeadsNovos: false,
+    leadsNovosLista: [],
+
+    get leadsNovosCount() { return this.clientes.filter(c => c.novo).length; },
+
+    avisarLeadsNovos(criados) {
+      if (!criados || !criados.length) return;
+      this.leadsNovosLista = criados;
+      this.showLeadsNovos = true;
+      this.tocarAlertaLead();
+      try {
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+          const corpo = criados.length === 1
+            ? `${criados[0].nome} · ${this.getTipoLabel(criados[0].tipo)}${criados[0].origem ? ' · ' + criados[0].origem : ''}`
+            : criados.map(c => c.nome).join(', ');
+          new Notification(criados.length === 1 ? '🤖 Lead novo do Jarvis' : `🤖 ${criados.length} leads novos do Jarvis`,
+                           { body: corpo, icon: 'icon-192.png', tag: 'jarvis-lead', renotify: true });
+        }
+      } catch (e) { console.warn('notificacao:', e.message); }
+    },
+
+    tocarAlertaLead() {
+      // Dois toques curtos, gerados na hora: não depende de arquivo de áudio.
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [0, 0.18].forEach((atraso, i) => {
+          const osc = ctx.createOscillator(), vol = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = i === 0 ? 880 : 1175;
+          vol.gain.setValueAtTime(0.0001, ctx.currentTime + atraso);
+          vol.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + atraso + 0.02);
+          vol.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + atraso + 0.15);
+          osc.connect(vol); vol.connect(ctx.destination);
+          osc.start(ctx.currentTime + atraso); osc.stop(ctx.currentTime + atraso + 0.16);
+        });
+        setTimeout(() => ctx.close(), 800);
+      } catch (e) { /* navegador sem áudio liberado: o popup já avisa */ }
+    },
+
+    marcarLeadsVistos() {
+      this.clientes.forEach(c => { if (c.novo) c.novo = false; });
+      this.clientes = [...this.clientes];
+      this.showLeadsNovos = false;
+      this.save();
+    },
+
+    abrirLeadNovo(c) {
+      const alvo = this.clientes.find(x => x.id === c.id);
+      if (alvo) alvo.novo = false;
+      this.clientes = [...this.clientes];
+      this.showLeadsNovos = false;
+      this.save();
+      if (alvo) this.openTimeline(alvo);
+    },
+
+    reabrirLeadsNovos() {
+      const novos = this.clientes.filter(c => c.novo);
+      if (!novos.length) { this.showToast('Nenhum lead novo aguardando'); return; }
+      this.leadsNovosLista = novos;
+      this.showLeadsNovos = true;
     },
 
     irParaDashboard() {
@@ -7235,6 +7369,12 @@ function app() {
     openTimeline(cliente) {
       this.timelineMedia = [];
       this.timelineCliente = this.clientes.find(c => c.id === cliente.id);
+      // Abriu o lead: já viu. O selo "NOVO" sai daqui também, não só do aviso.
+      if (this.timelineCliente && this.timelineCliente.novo) {
+        this.timelineCliente.novo = false;
+        this.clientes = [...this.clientes];
+        this.save();
+      }
       this.showTimeline = true;
       this.timelineAba = 'timeline';
       this.novoContato = { canal: 'ligacao', nota: '' };
