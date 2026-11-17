@@ -369,6 +369,19 @@ tailwind.config = {
   atualizarBannerOffline();
 </script>
 
+
+<!-- Faixa: versão nova publicada -->
+<div x-show="versaoNova" x-cloak x-transition
+     style="position:fixed;top:0;left:0;right:0;z-index:9998;background:#0057A6;color:white;padding:9px 16px;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap">
+  <span>✨ Há uma versão nova do AMiGO Corretor.</span>
+  <button @click="atualizarAgora()"
+          style="background:white;color:#0057A6;font-weight:800;padding:4px 14px;border-radius:999px;font-size:13px">
+    Atualizar agora
+  </button>
+  <button @click="versaoNova=false" title="Depois"
+          style="color:rgba(255,255,255,0.7);font-size:13px">depois</button>
+</div>
+
 <!-- ========== TELA DE LOGIN ========== -->
 <div x-show="!loggedIn" class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
      style="background:linear-gradient(145deg, var(--p-dd) 0%, var(--p-d) 40%, var(--p) 100%)">
@@ -5938,6 +5951,7 @@ function app() {
     init() {
       if (this.darkMode) document.documentElement.classList.add('dark');
       this.aplicarPaleta(this.paletaAtual);
+      this.iniciarChecagemVersao();
 
       // ── Firebase Auth: escuta mudanças de estado ──────────────────────
       document.addEventListener('fb-auth-change', async (e) => {
@@ -9343,6 +9357,36 @@ function app() {
       const win = window.open('', '_blank');
       win.document.write(html);
       win.document.close();
+    },
+
+    /* ── Aviso de versão nova ─────────────────────────────────────────
+       Clicar no ícone nem sempre recarrega: se a janela já está aberta,
+       o macOS apenas a traz para a frente e o lançador não chega a
+       rodar. Então a própria página se vigia e avisa quando sai
+       atualização — comparando a etiqueta do arquivo no servidor. */
+    versaoNova: false,
+    _versaoMarca: null,
+
+    async checarVersao() {
+      if (!navigator.onLine) return;
+      try {
+        const r = await fetch('./index.html?v=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
+        if (!r.ok) return;
+        const marca = r.headers.get('etag') || r.headers.get('last-modified');
+        if (!marca) return;
+        if (!this._versaoMarca) { this._versaoMarca = marca; return; }
+        if (marca !== this._versaoMarca) this.versaoNova = true;
+      } catch (_) { /* sem rede: tenta de novo no próximo ciclo */ }
+    },
+
+    iniciarChecagemVersao() {
+      this.checarVersao();
+      setInterval(() => this.checarVersao(), 5 * 60 * 1000);
+      window.addEventListener('focus', () => this.checarVersao());
+    },
+
+    atualizarAgora() {
+      location.replace('./index.html?v=' + Date.now());
     },
 
     showToast(msg) {
