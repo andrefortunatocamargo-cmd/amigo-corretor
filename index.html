@@ -3477,8 +3477,34 @@ tailwind.config = {
         <!-- Encargos -->
         <details class="pt-1">
           <summary class="text-xs font-semibold text-gray-500 cursor-pointer select-none hover:text-gray-700">
-            Seguros e tarifa <span class="text-gray-300">(ajuste fino)</span>
+            Ajuste fino <span class="text-gray-300">— seguros, tarifa e cálculo dos juros</span>
           </summary>
+
+          <div class="mt-3 pb-3 border-b border-gray-100">
+            <label class="block text-[10px] font-semibold text-gray-500 mb-1.5">Como a taxa anual vira mensal</label>
+            <div class="grid grid-cols-2 gap-2">
+              <button @click="simCredito.convencao='equivalente'; simSalvar()"
+                      class="px-2.5 py-2 rounded-lg text-[11px] font-bold border transition-all text-left"
+                      :class="simCredito.convencao==='equivalente' ? 'text-white border-transparent' : 'bg-white text-gray-600 border-gray-200'"
+                      :style="simCredito.convencao==='equivalente' ? 'background:#0057A6' : ''">
+                Equivalente
+                <span class="block text-[9px] font-normal opacity-75">juro composto</span>
+              </button>
+              <button @click="simCredito.convencao='nominal'; simSalvar()"
+                      class="px-2.5 py-2 rounded-lg text-[11px] font-bold border transition-all text-left"
+                      :class="simCredito.convencao==='nominal' ? 'text-white border-transparent' : 'bg-white text-gray-600 border-gray-200'"
+                      :style="simCredito.convencao==='nominal' ? 'background:#0057A6' : ''">
+                Nominal
+                <span class="block text-[9px] font-normal opacity-75">taxa ÷ 12</span>
+              </button>
+            </div>
+            <p class="text-[10px] text-gray-400 mt-2 leading-relaxed">
+              As duas convenções existem no mercado e <b>não dão o mesmo número</b>: nesta simulação,
+              a diferença na parcela é de
+              <span class="font-bold" x-text="simDiferencaConvencao()"></span>.
+              Se a parcela daqui não bater com a da Caixa, experimente trocar aqui antes de mexer na taxa.
+            </p>
+          </div>
           <div class="grid grid-cols-3 gap-2 mt-3">
             <div>
               <label class="block text-[10px] font-semibold text-gray-500 mb-1">MIP % a.m.</label>
@@ -3624,6 +3650,34 @@ tailwind.config = {
               </template>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- Confirmar na Caixa -->
+      <div class="rounded-2xl shadow-sm border border-gray-100 bg-white p-4">
+        <div class="flex items-start gap-3">
+          <span class="w-9 h-9 rounded-xl flex items-center justify-center text-white flex-shrink-0" style="background:#0057A6">
+            <i class="fa-solid fa-building-columns text-sm"></i>
+          </span>
+          <div class="flex-1 min-w-0">
+            <h3 class="text-sm font-black text-gray-800">Confirmar na Caixa</h3>
+            <p class="text-[11px] text-gray-500 leading-relaxed mt-0.5">
+              O número oficial sai do simulador da Caixa. O botão copia os dados desta tela
+              e abre o site — é só colar.
+            </p>
+            <button @click="abrirSimuladorCaixa()"
+                    class="mt-3 w-full sm:w-auto flex items-center justify-center gap-2 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-opacity hover:opacity-90"
+                    style="background:#0057A6">
+              <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+              Copiar dados e abrir simulador oficial
+            </button>
+            <p class="text-[10px] text-gray-400 mt-2.5 leading-relaxed">
+              A <b>Simulação Completa</b> é a que gera o relatório oficial — ela pede CPF e manda um
+              código de verificação para o celular do cliente. Faça essa etapa com ele por perto.
+              Depois, traga a taxa que a Caixa ofereceu para o campo de juros aqui: a partir daí as
+              contas desta tela passam a usar o número real do cliente.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -8971,6 +9025,7 @@ function app() {
       linha: 'poupanca',
       taxaAnual: 10.49,
       sistema: 'SAC',
+      convencao: 'equivalente',  // como a taxa anual vira mensal
       mip: 0.025,        // % ao mês sobre o saldo devedor
       dfi: 0.0045,       // % ao mês sobre o valor do imóvel
       taxaAdm: 25,       // tarifa mensal de administração (R$)
@@ -9026,10 +9081,15 @@ function app() {
       return vi > 0 ? (this.simValorFinanciado / vi) * 100 : 0;
     },
 
-    /* Taxa anual efetiva → mensal equivalente. */
+    /* Taxa anual → mensal. Há duas convenções no mercado e elas não dão
+       o mesmo número: a equivalente (juro composto, (1+i)^(1/12)-1) e a
+       nominal (i/12). Em 10,49% a.a. a diferença passa de 3% na parcela,
+       então deixo a escolha visível em vez de esconder uma decisão. */
     get simTaxaMensal() {
       const a = Number(this.simCredito.taxaAnual) || 0;
-      return Math.pow(1 + a / 100, 1 / 12) - 1;
+      return this.simCredito.convencao === 'nominal'
+        ? (a / 100) / 12
+        : Math.pow(1 + a / 100, 1 / 12) - 1;
     },
 
     /* Caixa limita prazo + idade a 80 anos e 6 meses. */
@@ -9047,7 +9107,7 @@ function app() {
        reativo: 420 linhas × 2 sistemas a cada repintura seria caro. */
     simTabela(sistema) {
       const d = this.simCredito;
-      const chave = [this.simValorFinanciado, d.prazo, d.taxaAnual, d.mip, d.dfi, d.taxaAdm, d.valorImovel].join('|');
+      const chave = [this.simValorFinanciado, d.prazo, d.taxaAnual, d.mip, d.dfi, d.taxaAdm, d.valorImovel, d.convencao].join('|');
       if (_simCache.chave !== chave) {
         _simCache = { chave, SAC: this._simMontar('SAC'), PRICE: this._simMontar('PRICE') };
       }
@@ -9281,6 +9341,52 @@ function app() {
         ? `https://wa.me/55${tel.length > 11 ? tel.slice(-11) : tel}?text=`
         : 'https://wa.me/?text=';
       window.open(base + encodeURIComponent(texto), '_blank');
+    },
+
+    /* Quanto a escolha da convenção muda a 1ª parcela, nesta simulação. */
+    simDiferencaConvencao() {
+      const pv = this.simValorFinanciado;
+      const n = Math.floor(Number(this.simCredito.prazo) || 0);
+      const a = Number(this.simCredito.taxaAnual) || 0;
+      if (pv <= 0 || n <= 0 || a <= 0) return '—';
+      const primeira = (i) => this.simCredito.sistema === 'SAC'
+        ? pv / n + pv * i
+        : pv * i / (1 - Math.pow(1 + i, -n));
+      const pEquiv = primeira(Math.pow(1 + a / 100, 1 / 12) - 1);
+      const pNom = primeira((a / 100) / 12);
+      const dif = Math.abs(pNom - pEquiv);
+      const base = Math.min(pNom, pEquiv);
+      return this.simMoeda(dif) + ' por mês (' + this.simPct(dif / base * 100) + ')';
+    },
+
+    /* Leva o corretor ao simulador oficial com os dados já copiados.
+       O relatório oficial só sai de lá: a Simulação Completa exige CPF e
+       manda um código para o celular do cliente — é dele a autorização,
+       não dá (nem deve dar) para automatizar isso daqui. */
+    SIMULADOR_CAIXA: 'https://simuladorhabitacao.caixa.gov.br',
+
+    simDadosParaColar() {
+      const d = this.simCredito;
+      const l = [];
+      if (this.simCliente) l.push('Cliente: ' + this.simCliente.nome);
+      l.push('Valor do imóvel: ' + this.simMoedaCurta(this.simNum(d.valorImovel)));
+      if (this.simNum(d.entrada)) l.push('Entrada: ' + this.simMoedaCurta(this.simNum(d.entrada)));
+      if (this.simNum(d.fgts))    l.push('FGTS: ' + this.simMoedaCurta(this.simNum(d.fgts)));
+      if (this.simNum(d.renda))   l.push('Renda bruta familiar: ' + this.simMoedaCurta(this.simNum(d.renda)));
+      if (Number(d.idade))        l.push('Idade do proponente: ' + d.idade + ' anos');
+      l.push('Prazo pretendido: ' + d.prazo + ' meses');
+      return l.join('\n');
+    },
+
+    async abrirSimuladorCaixa() {
+      const dados = this.simDadosParaColar();
+      try {
+        await navigator.clipboard.writeText(dados);
+        this.showToast('Dados copiados — é só colar no simulador 📋');
+      } catch (_) {
+        this.showToast('Abrindo o simulador da Caixa');
+      }
+      window.open(this.SIMULADOR_CAIXA, '_blank', 'noopener');
     },
 
     simImprimir() {
