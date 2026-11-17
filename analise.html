@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#243c33">
+<title>Pré-análise de crédito · Essense Negócios Imobiliários</title>
+<link rel="icon" href="./logo-essense.png">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root{
+    --p:#345448; --p-d:#243c33; --p-l:#4a7062; --p-dd:#15231c;
+    --s:#b48860; --s-l:#d4a87a; --s-d:#8a6440;
+    --bg:#f6f5f1; --card:#ffffff; --ink:#1f2a25; --ink-soft:#6b7772; --linha:#e6e4dd;
+  }
+  *{-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg); color:var(--ink); font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+       -webkit-font-smoothing:antialiased}
+  [x-cloak]{display:none!important}
+  .fundo-topo{background:linear-gradient(150deg,var(--p-l) 0%,var(--p) 45%,var(--p-dd) 100%)}
+  .cartao{background:var(--card); border:1px solid var(--linha); border-radius:1.25rem;
+          box-shadow:0 1px 2px rgba(31,42,37,.04), 0 12px 32px -18px rgba(31,42,37,.25)}
+  .campo{width:100%; padding:.8rem .9rem; border:1.5px solid var(--linha); border-radius:.85rem;
+         font-size:1rem; background:#fff; color:var(--ink); transition:border-color .15s, box-shadow .15s}
+  .campo:focus{outline:none; border-color:var(--p-l); box-shadow:0 0 0 4px rgba(74,112,98,.12)}
+  .campo::placeholder{color:#b3bcb8}
+  .rotulo{display:block; font-size:.78rem; font-weight:700; letter-spacing:.02em;
+          text-transform:uppercase; color:var(--ink-soft); margin-bottom:.35rem}
+  .btn{display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+       font-weight:800; border-radius:.9rem; padding:.9rem 1.25rem; transition:transform .12s, filter .15s}
+  .btn:active{transform:scale(.985)}
+  .btn-p{background:var(--p); color:#fff}
+  .btn-p:hover{filter:brightness(1.12)}
+  .btn-p:disabled{background:#c9cfcc; color:#fff; cursor:not-allowed; filter:none}
+  .btn-ghost{background:#fff; border:1.5px solid var(--linha); color:var(--ink)}
+  .btn-ghost:hover{border-color:var(--p-l)}
+  .btn-wa{background:#1fa855; color:#fff}
+  .btn-wa:hover{filter:brightness(1.1)}
+  .opcao{display:flex; align-items:center; gap:.6rem; padding:.75rem .85rem; border:1.5px solid var(--linha);
+         border-radius:.85rem; cursor:pointer; background:#fff; font-size:.95rem; font-weight:600; flex:1}
+  .opcao.ativa{border-color:var(--p); background:rgba(52,84,72,.06); color:var(--p-d)}
+  .numero{font-variant-numeric:tabular-nums}
+  .selo{display:inline-flex; align-items:center; gap:.35rem; font-size:.7rem; font-weight:700;
+        letter-spacing:.03em; text-transform:uppercase}
+  .passo{height:3px; border-radius:99px; background:rgba(255,255,255,.22); flex:1; overflow:hidden}
+  .passo > span{display:block; height:100%; background:var(--s-l); width:0; transition:width .4s ease}
+  .surge{animation:surge .45s cubic-bezier(.2,.7,.3,1) both}
+  @keyframes surge{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
+  @media (prefers-reduced-motion:reduce){.surge{animation:none}}
+  @media print{
+    .nao-imprime{display:none!important}
+    body{background:#fff}
+    .cartao{box-shadow:none; break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+
+<div x-data="pagina()" x-init="carregar()" x-cloak>
+
+  <!-- ══════════ CABEÇALHO ══════════ -->
+  <header class="fundo-topo text-white">
+    <div class="max-w-2xl mx-auto px-5 pt-7 pb-6">
+
+      <div class="bg-white rounded-xl px-4 py-3 inline-flex shadow-sm">
+        <img src="./logo-essense.png" alt="Essense Negócios Imobiliários" class="h-9 w-auto">
+      </div>
+
+      <!-- Cartão do corretor -->
+      <div class="mt-5 flex items-center gap-3.5" x-show="corretor.nome">
+        <div class="w-16 h-16 rounded-full overflow-hidden border-2 flex-shrink-0 bg-white/10"
+             style="border-color:var(--s-l)">
+          <template x-if="corretor.foto">
+            <img :src="corretor.foto" alt="" class="w-full h-full object-cover">
+          </template>
+          <template x-if="!corretor.foto">
+            <div class="w-full h-full flex items-center justify-center text-xl font-black text-white/80"
+                 x-text="iniciais(corretor.nome)"></div>
+          </template>
+        </div>
+        <div class="min-w-0">
+          <div class="text-[11px] font-bold uppercase tracking-wider" style="color:var(--s-l)">Seu corretor</div>
+          <div class="text-lg font-black leading-tight truncate" x-text="corretor.nome"></div>
+          <div class="text-xs text-white/60" x-text="corretor.creci ? 'CRECI ' + corretor.creci : 'Essense Negócios Imobiliários'"></div>
+        </div>
+      </div>
+
+      <!-- Selos de confiança -->
+      <div class="mt-5 flex flex-wrap gap-x-4 gap-y-1.5 text-white/55">
+        <span class="selo"><i class="fa-solid fa-lock text-[11px]"></i> Conexão segura</span>
+        <span class="selo"><i class="fa-solid fa-fingerprint text-[11px]"></i> Link exclusivo e de uso único</span>
+        <span class="selo"><i class="fa-solid fa-shield-halved text-[11px]"></i> LGPD</span>
+      </div>
+
+      <!-- Barra de passos -->
+      <div class="mt-5 flex gap-1.5 nao-imprime" x-show="tela === 'form'">
+        <template x-for="n in 3" :key="n">
+          <div class="passo"><span :style="'width:' + (passo >= n ? '100%' : '0')"></span></div>
+        </template>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-2xl mx-auto px-5 py-7 pb-24">
+
+    <!-- ══════════ CARREGANDO ══════════ -->
+    <div x-show="tela === 'carregando'" class="cartao p-10 text-center">
+      <i class="fa-solid fa-circle-notch fa-spin text-2xl" style="color:var(--p-l)"></i>
+      <p class="mt-3 text-sm" style="color:var(--ink-soft)">Abrindo sua pré-análise…</p>
+    </div>
+
+    <!-- ══════════ LINK INVÁLIDO / EXPIRADO / JÁ USADO ══════════ -->
+    <div x-show="['invalido','expirado','usado','erro'].includes(tela)" class="cartao p-7 surge text-center">
+      <div class="w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-4"
+           :class="tela === 'usado' ? 'bg-green-50' : 'bg-amber-50'">
+        <i class="fa-solid text-xl"
+           :class="tela === 'usado' ? 'fa-circle-check text-green-600' : 'fa-triangle-exclamation text-amber-500'"></i>
+      </div>
+
+      <h1 class="text-xl font-black mb-2" x-text="{
+        invalido: 'Link não encontrado',
+        expirado: 'Este link expirou',
+        usado:    'Esta pré-análise já foi preenchida',
+        erro:     'Não consegui abrir esta pré-análise'
+      }[tela]"></h1>
+
+      <p class="text-sm leading-relaxed mb-6" style="color:var(--ink-soft)" x-text="{
+        invalido: 'O endereço pode ter sido copiado pela metade. Peça o link novamente ao seu corretor.',
+        expirado: 'Por segurança, cada link vale por tempo limitado. Seu corretor gera um novo em segundos.',
+        usado:    'Por segurança o formulário é de uso único e já foi respondido. Seu corretor recebeu o resultado — fale com ele para ver os números ou para refazer a simulação.',
+        erro:     'Pode ter sido uma falha momentânea de conexão. Tente de novo ou fale com seu corretor.'
+      }[tela]"></p>
+
+      <a x-show="corretor.whatsapp" :href="linkWhatsCorretor('Olá! Tentei abrir o link da pré-análise de crédito e preciso de um novo.')"
+         target="_blank" rel="noopener" class="btn btn-wa w-full">
+        <i class="fa-brands fa-whatsapp text-lg"></i>
+        <span x-text="'Falar com ' + primeiroNome(corretor.nome)"></span>
+      </a>
+      <button x-show="tela === 'erro'" @click="carregar()" class="btn btn-ghost w-full mt-2">
+        <i class="fa-solid fa-rotate-right"></i> Tentar de novo
+      </button>
+    </div>
+
+    <!-- ══════════ FORMULÁRIO ══════════ -->
+    <form x-show="tela === 'form'" @submit.prevent="avancar()" class="space-y-5">
+
+      <!-- ─── Passo 1: você ─── -->
+      <div x-show="passo === 1" class="cartao p-6 surge space-y-5">
+        <div>
+          <h1 class="text-xl font-black">Vamos conhecer você</h1>
+          <p class="text-sm mt-1" style="color:var(--ink-soft)">
+            São os mesmos dados que a Caixa pede na simulação oficial. Leva cerca de 2 minutos.
+          </p>
+        </div>
+
+        <div>
+          <label class="rotulo" for="f-nome">Nome completo</label>
+          <input id="f-nome" class="campo" x-model="d.nome" autocomplete="name" placeholder="Como está no documento">
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="rotulo" for="f-cpf">CPF</label>
+            <input id="f-cpf" class="campo numero" inputmode="numeric" autocomplete="off"
+                   :value="d.cpf" @input="d.cpf = fmtCpf($event.target.value)" placeholder="000.000.000-00">
+            <p class="text-xs mt-1.5 text-red-600" x-show="d.cpf.replace(/\D/g,'').length === 11 && !cpfValido">
+              <i class="fa-solid fa-circle-exclamation"></i> Confira os números — este CPF não é válido.
+            </p>
+          </div>
+          <div>
+            <label class="rotulo" for="f-nasc">Data de nascimento</label>
+            <input id="f-nasc" type="date" class="campo numero" x-model="d.nascimento" @change="aplicarIdade()">
+            <p class="text-xs mt-1.5" style="color:var(--ink-soft)" x-show="idade" x-text="idade + ' anos'"></p>
+          </div>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="rotulo" for="f-cel">Celular com WhatsApp</label>
+            <input id="f-cel" class="campo numero" inputmode="numeric" autocomplete="tel"
+                   :value="d.celular" @input="d.celular = fmtCelular($event.target.value)" placeholder="(11) 90000-0000">
+          </div>
+          <div>
+            <label class="rotulo" for="f-email">E-mail <span class="normal-case font-semibold">(opcional)</span></label>
+            <input id="f-email" type="email" class="campo" x-model="d.email" autocomplete="email" placeholder="voce@email.com">
+          </div>
+        </div>
+
+        <div>
+          <label class="rotulo" for="f-renda">Renda bruta mensal da família</label>
+          <input id="f-renda" class="campo numero" inputmode="numeric"
+                 :value="d.renda" @input="d.renda = fmtMoeda($event.target.value)" placeholder="R$ 0,00">
+          <p class="text-xs mt-1.5" style="color:var(--ink-soft)">
+            Some a renda de todos que vão entrar no financiamento, antes dos descontos.
+          </p>
+        </div>
+
+        <div>
+          <span class="rotulo">Você tem 3 anos ou mais de FGTS?</span>
+          <div class="flex gap-2.5">
+            <label class="opcao" :class="d.fgts3anos === 'sim' && 'ativa'">
+              <input type="radio" class="accent-current" value="sim" x-model="d.fgts3anos"> Sim
+            </label>
+            <label class="opcao" :class="d.fgts3anos === 'nao' && 'ativa'">
+              <input type="radio" class="accent-current" value="nao" x-model="d.fgts3anos"> Não
+            </label>
+          </div>
+          <p class="text-xs mt-1.5" style="color:var(--ink-soft)">
+            Contam todos os períodos trabalhados com carteira assinada, mesmo que não sejam seguidos.
+          </p>
+        </div>
+
+        <div>
+          <span class="rotulo">Vai comprar com mais alguém ou tem dependentes?</span>
+          <div class="flex gap-2.5">
+            <label class="opcao" :class="d.maisCompradores === 'sim' && 'ativa'">
+              <input type="radio" class="accent-current" value="sim" x-model="d.maisCompradores"> Sim
+            </label>
+            <label class="opcao" :class="d.maisCompradores === 'nao' && 'ativa'">
+              <input type="radio" class="accent-current" value="nao" x-model="d.maisCompradores"> Não
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Passo 2: o imóvel ─── -->
+      <div x-show="passo === 2" class="cartao p-6 surge space-y-5">
+        <div>
+          <h1 class="text-xl font-black">O imóvel</h1>
+          <p class="text-sm mt-1" style="color:var(--ink-soft)">Se ainda não escolheu, use um valor aproximado.</p>
+        </div>
+
+        <div>
+          <span class="rotulo">Tipo de imóvel</span>
+          <div class="flex flex-col sm:flex-row gap-2.5">
+            <label class="opcao" :class="d.tipoImovel === 'residencial' && 'ativa'">
+              <input type="radio" class="accent-current" value="residencial" x-model="d.tipoImovel">
+              <span><i class="fa-solid fa-house mr-1.5 opacity-60"></i> Para morar</span>
+            </label>
+            <label class="opcao" :class="d.tipoImovel === 'comercial' && 'ativa'">
+              <input type="radio" class="accent-current" value="comercial" x-model="d.tipoImovel">
+              <span><i class="fa-solid fa-store mr-1.5 opacity-60"></i> Para meu negócio</span>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="rotulo" for="f-obj">O que você deseja</label>
+          <select id="f-obj" class="campo" x-model="d.objetivo">
+            <option value="novo">Comprar imóvel novo</option>
+            <option value="usado">Comprar imóvel usado</option>
+            <option value="terreno">Comprar terreno</option>
+            <option value="construir">Construir em terreno próprio</option>
+            <option value="caixa">Comprar um Imóvel CAIXA</option>
+            <option value="reformar">Reformar ou ampliar</option>
+            <option value="emprestimo">Empréstimo com o imóvel em garantia</option>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <label class="rotulo" for="f-uf">Estado</label>
+            <select id="f-uf" class="campo" x-model="d.uf">
+              <option value="">UF</option>
+              <option>AC</option><option>AL</option><option>AM</option><option>AP</option>
+              <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
+              <option>GO</option><option>MA</option><option>MG</option><option>MS</option>
+              <option>MT</option><option>PA</option><option>PB</option><option>PE</option>
+              <option>PI</option><option>PR</option><option>RJ</option><option>RN</option>
+              <option>RO</option><option>RR</option><option>RS</option><option>SC</option>
+              <option>SE</option><option>SP</option><option>TO</option>
+            </select>
+          </div>
+          <div class="col-span-2">
+            <label class="rotulo" for="f-cid">Cidade do imóvel</label>
+            <input id="f-cid" class="campo" x-model="d.cidade" placeholder="Ex.: São Paulo">
+          </div>
+        </div>
+
+        <div>
+          <label class="rotulo" for="f-vi">Valor do imóvel</label>
+          <input id="f-vi" class="campo numero" inputmode="numeric"
+                 :value="d.valorImovel" @input="d.valorImovel = fmtMoeda($event.target.value)" placeholder="R$ 0,00">
+        </div>
+
+        <div>
+          <span class="rotulo">Já possui outro imóvel residencial na mesma cidade?</span>
+          <div class="flex gap-2.5">
+            <label class="opcao" :class="d.outroImovelCidade === 'sim' && 'ativa'">
+              <input type="radio" class="accent-current" value="sim" x-model="d.outroImovelCidade"> Sim
+            </label>
+            <label class="opcao" :class="d.outroImovelCidade === 'nao' && 'ativa'">
+              <input type="radio" class="accent-current" value="nao" x-model="d.outroImovelCidade"> Não
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Passo 3: o financiamento ─── -->
+      <div x-show="passo === 3" class="cartao p-6 surge space-y-5">
+        <div>
+          <h1 class="text-xl font-black">Como pretende pagar</h1>
+          <p class="text-sm mt-1" style="color:var(--ink-soft)">Último passo — é aqui que a parcela toma forma.</p>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="rotulo" for="f-ent">Entrada em dinheiro</label>
+            <input id="f-ent" class="campo numero" inputmode="numeric"
+                   :value="d.entrada" @input="d.entrada = fmtMoeda($event.target.value)" placeholder="R$ 0,00">
+          </div>
+          <div>
+            <label class="rotulo" for="f-fgts">FGTS que vai usar</label>
+            <input id="f-fgts" class="campo numero" inputmode="numeric"
+                   :value="d.fgts" @input="d.fgts = fmtMoeda($event.target.value)" placeholder="R$ 0,00">
+            <p class="text-xs mt-1.5" style="color:var(--ink-soft)">Se não for usar, deixe zerado.</p>
+          </div>
+        </div>
+
+        <div>
+          <label class="rotulo" for="f-prazo">Em quantos anos quer pagar</label>
+          <div class="flex items-center gap-4">
+            <input id="f-prazo" type="range" min="5" :max="Math.floor(prazoMaxMeses/12)" step="1"
+                   x-model.number="anos" class="flex-1 accent-current" style="color:var(--p)">
+            <div class="text-right min-w-[5.5rem]">
+              <div class="text-2xl font-black numero leading-none" x-text="anos"></div>
+              <div class="text-[11px] font-semibold" style="color:var(--ink-soft)"
+                   x-text="'anos · ' + (anos*12) + ' meses'"></div>
+            </div>
+          </div>
+          <p class="text-xs mt-2" style="color:var(--ink-soft)" x-show="idade">
+            <i class="fa-solid fa-circle-info"></i>
+            Com <span x-text="idade"></span> anos, o prazo máximo permitido é de
+            <span x-text="Math.floor(prazoMaxMeses/12)"></span> anos — idade somada ao prazo não pode passar de 80 anos e 6 meses.
+          </p>
+        </div>
+
+        <!-- Resumo antes de enviar -->
+        <div class="rounded-xl p-4" style="background:rgba(52,84,72,.05)">
+          <div class="flex justify-between text-sm py-1">
+            <span style="color:var(--ink-soft)">Valor do imóvel</span>
+            <strong class="numero" x-text="moeda(num(d.valorImovel))"></strong>
+          </div>
+          <div class="flex justify-between text-sm py-1">
+            <span style="color:var(--ink-soft)">Recursos próprios</span>
+            <strong class="numero" x-text="moeda(num(d.entrada) + num(d.fgts))"></strong>
+          </div>
+          <div class="flex justify-between text-sm py-1 pt-2 mt-1 border-t" style="border-color:var(--linha)">
+            <span class="font-bold">A financiar</span>
+            <strong class="numero" style="color:var(--p)" x-text="moeda(valorFinanciado)"></strong>
+          </div>
+        </div>
+
+        <!-- Consentimento -->
+        <label class="flex items-start gap-3 cursor-pointer rounded-xl p-4 border-1.5"
+               :class="d.consentimento ? 'border-2' : 'border'"
+               :style="'border-color:' + (d.consentimento ? 'var(--p)' : 'var(--linha)')">
+          <input type="checkbox" x-model="d.consentimento" class="mt-0.5 w-5 h-5 flex-shrink-0 accent-current" style="color:var(--p)">
+          <span class="text-xs leading-relaxed" style="color:var(--ink-soft)">
+            Autorizo a <strong>Essense Negócios Imobiliários</strong> a usar os dados acima para esta
+            pré-análise de crédito e para que meu corretor entre em contato comigo.
+            Os dados não são compartilhados com terceiros e podem ser apagados a qualquer momento,
+            a pedido, conforme a <strong>Lei 13.709/2018 (LGPD)</strong>.
+          </span>
+        </label>
+
+        <div class="text-xs flex gap-2 items-start" style="color:var(--ink-soft)">
+          <i class="fa-solid fa-lock mt-0.5"></i>
+          <span>Este formulário pode ser enviado <strong>uma única vez</strong>. Confira os dados antes de continuar.</span>
+        </div>
+      </div>
+
+      <!-- Navegação -->
+      <div class="flex gap-3 nao-imprime">
+        <button type="button" x-show="passo > 1" @click="passo--; rolarTopo()" class="btn btn-ghost px-5">
+          <i class="fa-solid fa-arrow-left"></i>
+          <span class="hidden sm:inline">Voltar</span>
+        </button>
+        <button type="submit" class="btn btn-p flex-1" :disabled="!podeAvancar || enviando">
+          <template x-if="enviando">
+            <span><i class="fa-solid fa-circle-notch fa-spin"></i> Calculando…</span>
+          </template>
+          <template x-if="!enviando">
+            <span>
+              <span x-text="passo < 3 ? 'Continuar' : 'Ver meu resultado'"></span>
+              <i class="fa-solid fa-arrow-right ml-1"></i>
+            </span>
+          </template>
+        </button>
+      </div>
+
+      <p class="text-xs text-center" style="color:var(--ink-soft)" x-show="!podeAvancar && !enviando"
+         x-text="faltaTexto"></p>
+    </form>
+
+    <!-- ══════════ RESULTADO ══════════ -->
+    <div x-show="tela === 'resultado'" class="space-y-5 surge">
+
+      <!-- Parcela -->
+      <div class="cartao overflow-hidden">
+        <div class="fundo-topo text-white px-6 py-6 text-center">
+          <div class="selo text-white/60 justify-center mb-2">
+            <i class="fa-solid fa-chart-line"></i> Sua pré-análise
+          </div>
+          <div class="text-sm text-white/70">Primeira parcela estimada</div>
+          <div class="text-4xl sm:text-5xl font-black numero my-1.5" x-text="moedaCurta(res.primeira)"></div>
+          <div class="text-sm text-white/70">
+            na tabela <strong x-text="sistema"></strong> · <span class="numero" x-text="anos"></span> anos
+          </div>
+        </div>
+
+        <!-- Alternar sistema -->
+        <div class="flex border-b nao-imprime" style="border-color:var(--linha)">
+          <template x-for="s in ['SAC','PRICE']" :key="s">
+            <button @click="sistema = s" class="flex-1 py-3 text-sm font-bold transition-colors"
+                    :style="sistema === s ? 'color:var(--p); box-shadow:inset 0 -2.5px 0 var(--p)' : 'color:var(--ink-soft)'">
+              <span x-text="s === 'SAC' ? 'SAC · parcela cai' : 'PRICE · parcela fixa'"></span>
+            </button>
+          </template>
+        </div>
+
+        <div class="p-6 space-y-2.5">
+          <div class="flex justify-between text-sm">
+            <span style="color:var(--ink-soft)">Valor financiado</span>
+            <strong class="numero" x-text="moeda(res.financiado)"></strong>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span style="color:var(--ink-soft)">Primeira parcela</span>
+            <strong class="numero" x-text="moeda(res.primeira)"></strong>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span style="color:var(--ink-soft)">Última parcela</span>
+            <strong class="numero" x-text="moeda(res.ultima)"></strong>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span style="color:var(--ink-soft)">Prazo</span>
+            <strong class="numero" x-text="(anos*12) + ' meses'"></strong>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span style="color:var(--ink-soft)">Linha de crédito indicada</span>
+            <strong class="text-right" x-text="linha.nome"></strong>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span style="color:var(--ink-soft)">Taxa de juros</span>
+            <strong class="numero" x-text="pct(linha.taxa, 2) + ' ao ano'"></strong>
+          </div>
+          <p class="text-xs pt-2 leading-relaxed" style="color:var(--ink-soft)">
+            A parcela já inclui os seguros obrigatórios (MIP e DFI) e a tarifa mensal de administração.
+          </p>
+        </div>
+      </div>
+
+      <!-- Enquadramento -->
+      <div class="cartao p-6">
+        <h2 class="font-black mb-3.5">Como ficou o enquadramento</h2>
+        <div class="space-y-2.5">
+          <template x-for="(a, i) in avisos" :key="i">
+            <div class="flex gap-3 text-sm leading-relaxed">
+              <i class="fa-solid mt-0.5 flex-shrink-0"
+                 :class="{
+                   'fa-circle-check text-green-600': a.nivel === 'ok',
+                   'fa-triangle-exclamation text-amber-500': a.nivel === 'alerta',
+                   'fa-circle-xmark text-red-500': a.nivel === 'erro',
+                   'fa-circle-info text-gray-400': a.nivel === 'info'
+                 }"></i>
+              <span x-text="a.texto"></span>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Evolução -->
+      <div class="cartao p-6">
+        <h2 class="font-black mb-1">Como a parcela caminha</h2>
+        <p class="text-xs mb-4" style="color:var(--ink-soft)">Valor total da parcela no 1º mês de cada ano.</p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm numero">
+            <thead>
+              <tr class="text-left" style="color:var(--ink-soft)">
+                <th class="font-semibold pb-2 text-xs uppercase tracking-wide">Ano</th>
+                <th class="font-semibold pb-2 text-xs uppercase tracking-wide text-right">Parcela</th>
+                <th class="font-semibold pb-2 text-xs uppercase tracking-wide text-right">Saldo devedor</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="l in porAno" :key="l.ano">
+                <tr class="border-t" style="border-color:var(--linha)">
+                  <td class="py-2 font-bold" x-text="l.ano"></td>
+                  <td class="py-2 text-right" x-text="moeda(l.total)"></td>
+                  <td class="py-2 text-right" style="color:var(--ink-soft)" x-text="moedaCurta(l.saldo)"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Aviso legal -->
+      <div class="rounded-xl p-4 text-xs leading-relaxed" style="background:rgba(180,136,96,.1); color:var(--ink-soft)">
+        <strong style="color:var(--s-d)"><i class="fa-solid fa-circle-info"></i> Importante:</strong>
+        esta é uma <strong>estimativa</strong> calculada com as taxas vigentes das linhas da Caixa e não é
+        proposta nem aprovação de crédito. Os valores finais dependem da análise cadastral da Caixa,
+        da avaliação do imóvel e do índice de correção da linha contratada.
+      </div>
+
+      <!-- Ações -->
+      <div class="space-y-2.5 nao-imprime">
+        <a x-show="corretor.whatsapp" :href="linkWhatsCorretor(mensagemCliente())" target="_blank" rel="noopener"
+           class="btn btn-wa w-full text-base">
+          <i class="fa-brands fa-whatsapp text-xl"></i>
+          <span x-text="'Falar com ' + primeiroNome(corretor.nome) + ' agora'"></span>
+        </a>
+        <button @click="window.print()" class="btn btn-ghost w-full">
+          <i class="fa-solid fa-file-arrow-down"></i> Salvar em PDF
+        </button>
+      </div>
+
+      <!-- Confirmação de envio -->
+      <div class="text-center text-xs leading-relaxed pt-1" style="color:var(--ink-soft)">
+        <template x-if="entregue">
+          <p>
+            <i class="fa-solid fa-circle-check text-green-600"></i>
+            Resultado enviado para <strong x-text="corretor.nome"></strong>.
+            Ele já pode ver sua simulação completa.
+          </p>
+        </template>
+        <template x-if="!entregue">
+          <p>
+            <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
+            Não consegui avisar seu corretor automaticamente.
+            Toque em <strong>Falar no WhatsApp</strong> acima para enviar o resultado a ele.
+          </p>
+        </template>
+      </div>
+    </div>
+  </main>
+
+  <!-- ══════════ RODAPÉ ══════════ -->
+  <footer class="max-w-2xl mx-auto px-5 pb-10 text-center">
+    <img src="./logo-essense.png" alt="" class="h-7 w-auto mx-auto opacity-35">
+    <p class="text-[11px] mt-2.5 leading-relaxed" style="color:var(--ink-soft)">
+      Essense Negócios Imobiliários ·
+      <a href="https://www.essenseimoveis.com.br" target="_blank" rel="noopener" class="underline">essenseimoveis.com.br</a><br>
+      Seus dados trafegam em conexão criptografada e são usados apenas por seu corretor.
+    </p>
+  </footer>
+
+  <!-- Botão flutuante de WhatsApp -->
+  <a x-show="corretor.whatsapp && tela !== 'carregando'"
+     :href="linkWhatsCorretor('Olá! Estou preenchendo a pré-análise de crédito e tenho uma dúvida.')"
+     target="_blank" rel="noopener"
+     class="nao-imprime fixed bottom-5 right-5 w-14 h-14 rounded-full shadow-xl flex items-center justify-center text-white z-40"
+     style="background:#1fa855" :title="'Falar com ' + primeiroNome(corretor.nome)">
+    <i class="fa-brands fa-whatsapp text-2xl"></i>
+  </a>
+</div>
+
+<!-- ══════════════════ LÓGICA ══════════════════ -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp }
+    from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+  const app = initializeApp({
+    apiKey: "AIzaSyCr5q-PYWTSMROKkaCJjjvCSO7LiNi_i0Y",
+    authDomain: "amigo-corretor-d6ae3.firebaseapp.com",
+    projectId: "amigo-corretor-d6ae3",
+    storageBucket: "amigo-corretor-d6ae3.firebasestorage.app",
+    messagingSenderId: "663861608611",
+    appId: "1:663861608611:web:e0a22a4fb3472dc5bc7f16"
+  });
+  const db = getFirestore(app);
+
+  window._linkLer = (token) => getDoc(doc(db, 'analises_link', token));
+  /* setDoc sem merge em documento inexistente = create. Se o documento já
+     existe, a regra de segurança recusa: é o que torna o link de uso único
+     — a trava fica no servidor, não no navegador do cliente. */
+  window._respostaEnviar = (token, dados) =>
+    setDoc(doc(db, 'analises_resposta', token), { ...dados, criadoEm: serverTimestamp() });
+  window._linkMarcarUsado = (token) =>
+    updateDoc(doc(db, 'analises_link', token), { status: 'respondido', respondidoEm: serverTimestamp() });
+</script>
+
+<script>
+function pagina() {
+  /* Cache das tabelas fora do objeto reativo: 420 linhas recalculadas a
+     cada repintura seria caro e provocaria laço de renderização. */
+  let _cache = { chave: '' };
+
+  const LINHAS = [
+    { id:'mcmv1', nome:'Minha Casa Minha Vida · Faixa 1', taxa:4.50,  cota:95, prazoMax:420, rendaMax:2850 },
+    { id:'mcmv2', nome:'Minha Casa Minha Vida · Faixa 2', taxa:5.50,  cota:90, prazoMax:420, rendaMax:4700 },
+    { id:'mcmv3', nome:'Minha Casa Minha Vida · Faixa 3', taxa:7.66,  cota:85, prazoMax:420, rendaMax:8600 },
+    { id:'mcmv4', nome:'Minha Casa Minha Vida · Faixa 4', taxa:10.00, cota:80, prazoMax:420, rendaMax:12000 },
+    { id:'poupanca', nome:'SBPE · Poupança + juros',      taxa:10.49, cota:80, prazoMax:420 },
+    { id:'tr',       nome:'SBPE · TR + juros',            taxa:11.49, cota:80, prazoMax:420 },
+    { id:'fixa',     nome:'SBPE · Taxa fixa',             taxa:11.99, cota:70, prazoMax:360 },
+  ];
+
+  return {
+    tela: 'carregando',
+    passo: 1,
+    enviando: false,
+    entregue: false,
+    token: '',
+    corretor: { nome: '', creci: '', foto: '', whatsapp: '' },
+    corretorUid: '',
+    params: { convencao: 'equivalente', mip: 0.025, dfi: 0.0045, taxaAdm: 25, comprometimentoMax: 30, linha: 'auto' },
+    sistema: 'SAC',
+    anos: 30,
+    idade: 0,
+
+    d: {
+      nome: '', cpf: '', nascimento: '', celular: '', email: '', renda: '',
+      fgts3anos: '', maisCompradores: '',
+      tipoImovel: 'residencial', objetivo: 'usado', uf: '', cidade: '',
+      valorImovel: '', outroImovelCidade: '',
+      entrada: '', fgts: '', consentimento: false,
+    },
+
+    /* ─────────── Abertura ─────────── */
+
+    async carregar() {
+      this.tela = 'carregando';
+      this.token = new URLSearchParams(location.search).get('t') || '';
+      if (!/^[A-Za-z0-9_-]{16,64}$/.test(this.token)) { this.tela = 'invalido'; return; }
+
+      /* Trava local: resposta a quem já enviou deste aparelho, antes mesmo
+         de consultar o servidor. A trava de verdade está nas regras. */
+      if (localStorage.getItem('analise_' + this.token)) { this.tela = 'usado'; return; }
+
+      let snap;
+      try {
+        snap = await window._linkLer(this.token);
+      } catch (e) {
+        console.warn('link:', e.message);
+        this.tela = 'erro';
+        return;
+      }
+      if (!snap.exists()) { this.tela = 'invalido'; return; }
+
+      const l = snap.data();
+      this.corretorUid = l.corretorUid || '';
+      this.corretor = {
+        nome: l.corretorNome || 'Seu corretor',
+        creci: l.corretorCreci || '',
+        foto: l.corretorFoto || '',
+        whatsapp: String(l.corretorWhatsapp || '').replace(/\D/g, ''),
+      };
+      Object.assign(this.params, l.params || {});
+      if (l.clienteNome && !this.d.nome) this.d.nome = l.clienteNome;
+      if (l.valorImovel) this.d.valorImovel = this.fmtMoeda(String(Math.round(l.valorImovel * 100)));
+
+      const expira = l.expiraEm?.toMillis ? l.expiraEm.toMillis() : Number(l.expiraEm || 0);
+      if (expira && Date.now() > expira) { this.tela = 'expirado'; return; }
+      if (l.status && l.status !== 'pendente') { this.tela = 'usado'; return; }
+
+      this.tela = 'form';
+    },
+
+    /* ─────────── Formatação ─────────── */
+
+    num(v) {
+      const d = String(v ?? '').replace(/\D/g, '');
+      return d ? Number(d) / 100 : 0;
+    },
+    fmtMoeda(v) {
+      const d = String(v ?? '').replace(/\D/g, '').slice(0, 11);
+      if (!d) return '';
+      return 'R$ ' + (Number(d) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    },
+    moeda(v) {
+      return 'R$ ' + (Number(v) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    },
+    moedaCurta(v) {
+      return 'R$ ' + (Number(v) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    },
+    pct(v, casas) {
+      return (Number(v) || 0).toLocaleString('pt-BR',
+        { minimumFractionDigits: casas ?? 1, maximumFractionDigits: casas ?? 1 }) + '%';
+    },
+    fmtCpf(v) {
+      const d = String(v || '').replace(/\D/g, '').slice(0, 11);
+      return d.replace(/^(\d{3})(\d)/, '$1.$2')
+              .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+              .replace(/\.(\d{3})(\d{1,2})$/, '.$1-$2');
+    },
+    fmtCelular(v) {
+      const d = String(v || '').replace(/\D/g, '').slice(0, 11);
+      if (d.length <= 10) return d.replace(/^(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d)/, '$1-$2');
+      return d.replace(/^(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2');
+    },
+    iniciais(n) {
+      return String(n || '').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase();
+    },
+    primeiroNome(n) { return String(n || 'seu corretor').trim().split(/\s+/)[0]; },
+
+    /* Confere os dois dígitos verificadores: melhor pegar o engano aqui
+       do que lá na frente, no cadastro da Caixa. */
+    get cpfValido() {
+      const d = String(this.d.cpf || '').replace(/\D/g, '');
+      if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+      const dv = (ate) => {
+        let soma = 0;
+        for (let i = 0; i < ate; i++) soma += Number(d[i]) * (ate + 1 - i);
+        const r = (soma * 10) % 11;
+        return r === 10 ? 0 : r;
+      };
+      return dv(9) === Number(d[9]) && dv(10) === Number(d[10]);
+    },
+
+    aplicarIdade() {
+      const dt = new Date(this.d.nascimento + 'T12:00:00');
+      if (!this.d.nascimento || isNaN(dt)) { this.idade = 0; return; }
+      const hoje = new Date();
+      let i = hoje.getFullYear() - dt.getFullYear();
+      const m = hoje.getMonth() - dt.getMonth();
+      if (m < 0 || (m === 0 && hoje.getDate() < dt.getDate())) i--;
+      this.idade = (i > 0 && i < 120) ? i : 0;
+      if (this.anos * 12 > this.prazoMaxMeses) this.anos = Math.floor(this.prazoMaxMeses / 12);
+    },
+
+    /* ─────────── Cálculo ─────────── */
+
+    get valorFinanciado() {
+      return Math.max(0, this.num(this.d.valorImovel) - this.num(this.d.entrada) - this.num(this.d.fgts));
+    },
+    get cota() {
+      const vi = this.num(this.d.valorImovel);
+      return vi > 0 ? (this.valorFinanciado / vi) * 100 : 0;
+    },
+
+    /* A Caixa limita idade + prazo a 80 anos e 6 meses. */
+    get prazoMaxMeses() {
+      const teto = this.linha.prazoMax;
+      if (!this.idade) return teto;
+      return Math.max(60, Math.min(teto, Math.floor((80.5 - this.idade) * 12)));
+    },
+
+    /* Linha indicada: a mais barata em que a renda se enquadra. O corretor
+       pode fixar uma linha ao gerar o link; 'auto' escolhe pela renda. */
+    get linha() {
+      if (this.params.linha && this.params.linha !== 'auto') {
+        return LINHAS.find(l => l.id === this.params.linha) || LINHAS[4];
+      }
+      const renda = this.num(this.d.renda);
+      if (renda > 0) {
+        const faixa = LINHAS.find(l => l.rendaMax && renda <= l.rendaMax);
+        if (faixa) return faixa;
+      }
+      return LINHAS.find(l => l.id === 'poupanca');
+    },
+
+    get taxaMensal() {
+      const a = this.linha.taxa / 100;
+      return this.params.convencao === 'nominal' ? a / 12 : Math.pow(1 + a, 1 / 12) - 1;
+    },
+
+    tabela(sistema) {
+      const chave = [this.valorFinanciado, this.anos, this.linha.id, this.num(this.d.valorImovel), this.params.convencao].join('|');
+      if (_cache.chave !== chave) {
+        _cache = { chave, SAC: this._montar('SAC'), PRICE: this._montar('PRICE') };
+      }
+      return _cache[sistema] || [];
+    },
+
+    _montar(sistema) {
+      const pv = this.valorFinanciado;
+      const n = this.anos * 12;
+      const i = this.taxaMensal;
+      if (pv <= 0 || n <= 0) return [];
+      const dfi = this.num(this.d.valorImovel) * (Number(this.params.dfi) || 0) / 100;
+      const adm = Number(this.params.taxaAdm) || 0;
+      const amortSac = pv / n;
+      const pmtPrice = i > 0 ? pv * i / (1 - Math.pow(1 + i, -n)) : pv / n;
+      const linhas = [];
+      let saldo = pv;
+      for (let k = 1; k <= n; k++) {
+        const juros = saldo * i;
+        const amort = sistema === 'SAC' ? amortSac : pmtPrice - juros;
+        const mip = saldo * (Number(this.params.mip) || 0) / 100;
+        const parcela = amort + juros;
+        saldo = Math.max(0, saldo - amort);
+        linhas.push({ n: k, juros, amort, parcela, mip, dfi, adm, total: parcela + mip + dfi + adm, saldo });
+      }
+      return linhas;
+    },
+
+    get res() {
+      const t = this.tabela(this.sistema);
+      if (!t.length) return { primeira: 0, ultima: 0, financiado: 0, juros: 0, total: 0 };
+      return {
+        primeira: t[0].total,
+        ultima: t[t.length - 1].total,
+        financiado: this.valorFinanciado,
+        juros: t.reduce((s, l) => s + l.juros, 0),
+        total: t.reduce((s, l) => s + l.total, 0),
+      };
+    },
+
+    get porAno() {
+      const t = this.tabela(this.sistema);
+      const out = [];
+      for (let k = 0; k < t.length; k += 12) {
+        out.push({ ano: Math.floor(k / 12) + 1, total: t[k].total, saldo: t[k].saldo });
+      }
+      return out;
+    },
+
+    get comprometimento() {
+      const r = this.num(this.d.renda);
+      return r > 0 ? (this.res.primeira / r) * 100 : 0;
+    },
+
+    get avisos() {
+      const av = [];
+      const l = this.linha;
+      const renda = this.num(this.d.renda);
+      const maxComp = Number(this.params.comprometimentoMax) || 30;
+
+      if (this.cota > l.cota) {
+        av.push({ nivel: 'erro',
+          texto: `Você está financiando ${this.pct(this.cota)} do imóvel, e esta linha cobre até ${l.cota}%. ` +
+                 `Seriam necessários mais ${this.moedaCurta(this.valorFinanciado - this.num(this.d.valorImovel) * l.cota / 100)} de entrada.` });
+      } else {
+        av.push({ nivel: 'ok', texto: `A entrada cobre o mínimo exigido: você financia ${this.pct(this.cota)} do imóvel, dentro do limite de ${l.cota}%.` });
+      }
+
+      if (renda > 0) {
+        const c = this.comprometimento;
+        if (c > maxComp) {
+          av.push({ nivel: 'erro',
+            texto: `A primeira parcela compromete ${this.pct(c)} da renda informada, acima do teto de ${maxComp}% que os bancos costumam aceitar. ` +
+                   `Para este valor seria preciso renda de ${this.moedaCurta(this.res.primeira / (maxComp / 100))}, ou aumentar a entrada.` });
+        } else {
+          av.push({ nivel: 'ok', texto: `A primeira parcela compromete ${this.pct(c)} da renda — dentro do limite usual de ${maxComp}%.` });
+        }
+      }
+
+      if (this.idade) {
+        av.push({ nivel: 'info',
+          texto: `Com ${this.idade} anos, o prazo máximo permitido é de ${Math.floor(this.prazoMaxMeses / 12)} anos ` +
+                 `(idade somada ao prazo não pode ultrapassar 80 anos e 6 meses).` });
+      }
+
+      if (this.d.fgts3anos === 'sim' && this.num(this.d.fgts) === 0) {
+        av.push({ nivel: 'alerta',
+          texto: 'Você tem 3 anos ou mais de FGTS e não informou uso do saldo. Usar o FGTS pode reduzir bastante a parcela — vale conversar com seu corretor.' });
+      }
+
+      if (this.d.outroImovelCidade === 'sim') {
+        av.push({ nivel: 'alerta',
+          texto: 'Já possuir imóvel residencial na mesma cidade impede o uso do FGTS e pode afastar as condições do Minha Casa Minha Vida.' });
+      }
+
+      return av;
+    },
+
+    /* ─────────── Navegação do formulário ─────────── */
+
+    get faltam() {
+      const f = [];
+      if (this.passo === 1) {
+        if (this.d.nome.trim().split(/\s+/).length < 2) f.push('seu nome completo');
+        if (!this.cpfValido) f.push('um CPF válido');
+        if (!this.idade) f.push('a data de nascimento');
+        if (this.d.celular.replace(/\D/g, '').length < 10) f.push('o celular');
+        if (!this.num(this.d.renda)) f.push('a renda');
+        if (!this.d.fgts3anos) f.push('o tempo de FGTS');
+        if (!this.d.maisCompradores) f.push('se há outro comprador');
+      }
+      if (this.passo === 2) {
+        if (!this.d.uf) f.push('o estado');
+        if (!this.d.cidade.trim()) f.push('a cidade');
+        if (!this.num(this.d.valorImovel)) f.push('o valor do imóvel');
+        if (!this.d.outroImovelCidade) f.push('se já possui outro imóvel na cidade');
+      }
+      if (this.passo === 3) {
+        if (this.valorFinanciado <= 0) f.push('uma entrada menor que o valor do imóvel');
+        if (!this.d.consentimento) f.push('o aceite do uso dos dados');
+      }
+      return f;
+    },
+    get podeAvancar() { return this.faltam.length === 0; },
+    get faltaTexto() {
+      const f = this.faltam;
+      if (!f.length) return '';
+      return 'Falta preencher: ' + f.join(', ') + '.';
+    },
+
+    rolarTopo() { window.scrollTo({ top: 0, behavior: 'smooth' }); },
+
+    async avancar() {
+      if (!this.podeAvancar) return;
+      if (this.passo < 3) { this.passo++; this.rolarTopo(); return; }
+      await this.enviar();
+    },
+
+    /* ─────────── Envio ─────────── */
+
+    async enviar() {
+      this.enviando = true;
+      const sac = this._resumoDe('SAC');
+      const price = this._resumoDe('PRICE');
+
+      const payload = {
+        corretorUid: this.corretorUid || '',
+        token: this.token,
+        consentimento: true,
+        nome: this.d.nome.trim(),
+        cpf: this.d.cpf,
+        nascimento: this.d.nascimento,
+        idade: this.idade,
+        celular: this.d.celular,
+        email: this.d.email.trim(),
+        renda: this.num(this.d.renda),
+        fgts3anos: this.d.fgts3anos,
+        maisCompradores: this.d.maisCompradores,
+        tipoImovel: this.d.tipoImovel,
+        objetivo: this.d.objetivo,
+        uf: this.d.uf,
+        cidade: this.d.cidade.trim(),
+        valorImovel: this.num(this.d.valorImovel),
+        outroImovelCidade: this.d.outroImovelCidade,
+        entrada: this.num(this.d.entrada),
+        fgts: this.num(this.d.fgts),
+        prazoMeses: this.anos * 12,
+        valorFinanciado: this.valorFinanciado,
+        cota: this.cota,
+        linhaId: this.linha.id,
+        linhaNome: this.linha.nome,
+        taxaAnual: this.linha.taxa,
+        comprometimento: this.comprometimento,
+        resultado: { sac, price },
+        avisos: this.avisos.map(a => a.nivel + ': ' + a.texto),
+        lido: false,
+      };
+
+      try {
+        await window._respostaEnviar(this.token, payload);
+        this.entregue = true;
+        localStorage.setItem('analise_' + this.token, '1');
+        try { await window._linkMarcarUsado(this.token); } catch (_) { /* o registro já foi gravado */ }
+      } catch (e) {
+        console.warn('envio:', e.message);
+        /* Pode ser link já usado (a trava de uso único agindo no servidor)
+           ou simples falha de rede. Os dois erros chegam parecidos, então
+           releio o link para saber qual é: se ele já consta respondido ou
+           expirado, a tela é a de uso único; se não, o cliente não pode
+           ficar sem resposta — mostro o resultado e o caminho do WhatsApp. */
+        if (await this._linkJaFechado() || /already exists/i.test(e.message || '')) {
+          this.enviando = false;
+          this.tela = 'usado';
+          return;
+        }
+        this.entregue = false;
+      }
+
+      this.enviando = false;
+      this.tela = 'resultado';
+      this.rolarTopo();
+    },
+
+    async _linkJaFechado() {
+      try {
+        const snap = await window._linkLer(this.token);
+        if (!snap.exists()) return false;
+        const l = snap.data();
+        const exp = l.expiraEm?.toMillis ? l.expiraEm.toMillis() : Number(l.expiraEm || 0);
+        return (l.status && l.status !== 'pendente') || (exp && Date.now() > exp);
+      } catch (_) { return false; }
+    },
+
+    _resumoDe(sistema) {
+      const antes = this.sistema;
+      this.sistema = sistema;
+      const r = { ...this.res };
+      this.sistema = antes;
+      return r;
+    },
+
+    /* ─────────── WhatsApp ─────────── */
+
+    linkWhatsCorretor(texto) {
+      const n = this.corretor.whatsapp;
+      if (!n) return '#';
+      const numero = n.length > 11 ? n : '55' + n;
+      return 'https://wa.me/' + numero + '?text=' + encodeURIComponent(texto);
+    },
+
+    mensagemCliente() {
+      const sac = this._resumoDe('SAC');
+      const price = this._resumoDe('PRICE');
+      return [
+        `Olá, ${this.primeiroNome(this.corretor.nome)}! Sou ${this.d.nome}.`,
+        `Terminei a pré-análise de crédito pelo link que você me enviou.`,
+        ``,
+        `Imóvel: ${this.moedaCurta(this.num(this.d.valorImovel))} em ${this.d.cidade}/${this.d.uf}`,
+        `Entrada + FGTS: ${this.moedaCurta(this.num(this.d.entrada) + this.num(this.d.fgts))}`,
+        `A financiar: ${this.moedaCurta(this.valorFinanciado)} em ${this.anos} anos`,
+        `Linha indicada: ${this.linha.nome}`,
+        ``,
+        `1ª parcela SAC: ${this.moeda(sac.primeira)}`,
+        `1ª parcela PRICE: ${this.moeda(price.primeira)}`,
+        ``,
+        `Podemos conversar sobre os próximos passos?`,
+      ].join('\n');
+    },
+  };
+}
+</script>
+<script defer src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js"></script>
+</body>
+</html>

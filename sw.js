@@ -1,7 +1,9 @@
-const CACHE_NAME = 'amigo-corretor-v5';
+const CACHE_NAME = 'amigo-corretor-v6';
 const URLS = [
   './',
   './index.html',
+  './analise.html',
+  './logo-essense.png',
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css',

@@ -16,7 +16,7 @@
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail }
     from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
   import { getFirestore, doc, getDoc, setDoc, updateDoc, getDocs, collection,
-           addDoc, onSnapshot, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove }
+           addDoc, deleteDoc, onSnapshot, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove }
     from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
   const firebaseConfig = {
@@ -66,6 +66,28 @@
     setDoc(doc(db, 'chat_configs', uid), { bloqueados: arrayUnion(targetUid) }, { merge: true });
   window._chatUnblock = (uid, targetUid) =>
     setDoc(doc(db, 'chat_configs', uid), { bloqueados: arrayRemove(targetUid) }, { merge: true });
+  // ── Pré-análise que o cliente preenche por link ───────────────────────────
+  // O token é o próprio id do documento. O link carrega só o que o cliente
+  // precisa ver; o que ele responde vai para outra coleção, que ninguém lê
+  // sem estar logado.
+  window._analiseCriar = (token, dados) =>
+    setDoc(doc(db, 'analises_link', token), { ...dados, criadoEm: serverTimestamp() });
+  window._analiseLinksListen = (uid, cb) => onSnapshot(
+    query(collection(db, 'analises_link'), where('corretorUid', '==', uid)),
+    (snap) => { const l = []; snap.forEach(d => l.push({ id: d.id, ...d.data() })); cb(l); },
+    (err) => console.warn('analises_link:', err.message)
+  );
+  window._analiseRespostasListen = (uid, cb) => onSnapshot(
+    query(collection(db, 'analises_resposta'), where('corretorUid', '==', uid)),
+    (snap) => { const l = []; snap.forEach(d => l.push({ id: d.id, ...d.data() })); cb(l); },
+    (err) => console.warn('analises_resposta:', err.message)
+  );
+  window._analiseLinkExcluir     = (token) => deleteDoc(doc(db, 'analises_link', token));
+  window._analiseRespostaExcluir = (token) => deleteDoc(doc(db, 'analises_resposta', token));
+  window._analiseMarcarLida      = (token) => updateDoc(doc(db, 'analises_resposta', token), { lido: true });
+  window._analiseReabrir = (token, expiraEm) =>
+    updateDoc(doc(db, 'analises_link', token), { status: 'pendente', expiraEm, respondidoEm: null });
+
   window._fbCreateUser = async (email, password) => {
     const apiKey = firebaseConfig.apiKey;
     const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`, {
@@ -1968,6 +1990,9 @@ tailwind.config = {
         <p class="font-bold text-sm transition-all" :class="section==='credito' ? 'text-white' : 'text-white text-opacity-55'">Crédito Caixa</p>
         <p class="text-[11px] transition-all" :class="section==='credito' ? 'text-blue-300' : 'text-white text-opacity-30'">Pré-análise e tabelas SAC/Price</p>
       </div>
+      <span x-show="analiseNaoLidas > 0" x-text="analiseNaoLidas"
+            class="flex-shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center animate-pulse"
+            :title="analiseNaoLidas + ' pré-análise(s) preenchida(s) pelo cliente'"></span>
       <i x-show="section==='credito'" class="fa-solid fa-chevron-right text-white text-opacity-40 text-xs flex-shrink-0"></i>
     </button>
 
@@ -3787,6 +3812,44 @@ tailwind.config = {
       </div>
 
       <!-- Confirmar na Caixa -->
+      <!-- ===== ENVIAR PRÉ-ANÁLISE AO CLIENTE ===== -->
+      <div class="rounded-2xl shadow-sm border p-4"
+           :class="analiseNaoLidas > 0 ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white'">
+        <div class="flex items-start gap-3">
+          <span class="w-9 h-9 rounded-xl flex items-center justify-center text-white flex-shrink-0"
+                style="background:linear-gradient(135deg,var(--p-l),var(--p-d))">
+            <i class="fa-solid fa-paper-plane text-sm"></i>
+          </span>
+          <div class="flex-1 min-w-0">
+            <h3 class="text-sm font-black text-gray-800">O próprio cliente preenche</h3>
+            <p class="text-[11px] text-gray-500 leading-relaxed mt-0.5">
+              Gere um link com sua foto e seu WhatsApp. O cliente preenche os dados,
+              vê só o resultado da parcela — e a resposta cai aqui na hora.
+            </p>
+
+            <div class="mt-3 flex flex-wrap gap-2">
+              <button @click="analiseAba='novo'; showAnalisePainel=true"
+                      class="flex items-center justify-center gap-2 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-opacity hover:opacity-90"
+                      style="background:var(--p)">
+                <i class="fa-solid fa-link text-xs"></i> Gerar link do cliente
+              </button>
+              <button x-show="analiseRespostas.length"
+                      @click="analiseAba='respostas'; showAnalisePainel=true"
+                      class="relative flex items-center justify-center gap-2 text-sm font-bold px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-600 hover:border-gray-300 transition-colors">
+                <i class="fa-solid fa-inbox text-xs"></i> Respostas
+                <span x-show="analiseNaoLidas > 0" x-text="analiseNaoLidas"
+                      class="min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center"></span>
+              </button>
+            </div>
+
+            <p x-show="analisePendentes > 0" class="text-[11px] text-amber-600 font-semibold mt-2.5">
+              <i class="fa-solid fa-hourglass-half"></i>
+              <span x-text="analisePendentes"></span> link(s) aguardando o cliente preencher.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div class="rounded-2xl shadow-sm border border-gray-100 bg-white p-4">
         <div class="flex items-start gap-3">
           <span class="w-9 h-9 rounded-xl flex items-center justify-center text-white flex-shrink-0" style="background:#0057A6">
@@ -3822,6 +3885,315 @@ tailwind.config = {
         definitivas são exclusivas da Caixa Econômica Federal.
       </div>
 
+    </div>
+  </div>
+
+  <!-- ═══════════ PAINEL: LINKS DE PRÉ-ANÁLISE DO CLIENTE ═══════════ -->
+  <div x-show="showAnalisePainel" x-transition class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
+       style="background:rgba(0,0,0,0.5)" @click.self="showAnalisePainel=false">
+    <div class="bg-white w-full sm:max-w-2xl sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[92vh] flex flex-col">
+
+      <!-- Cabeçalho -->
+      <div class="px-5 py-4 flex items-center justify-between text-white sm:rounded-t-2xl rounded-t-2xl"
+           style="background:linear-gradient(135deg,var(--p-l),var(--p-d))">
+        <div class="min-w-0">
+          <h3 class="font-black">Pré-análise com o cliente</h3>
+          <p class="text-[11px] text-white text-opacity-70">Link seguro, de uso único, com a sua cara</p>
+        </div>
+        <button @click="showAnalisePainel=false" class="w-9 h-9 rounded-lg hover:bg-white/15 flex items-center justify-center flex-shrink-0">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Abas -->
+      <div class="flex border-b border-gray-100 flex-shrink-0">
+        <template x-for="ab in [
+            {id:'novo',      rot:'Gerar link',  ic:'fa-link'},
+            {id:'links',     rot:'Meus links',  ic:'fa-list'},
+            {id:'respostas', rot:'Respostas',   ic:'fa-inbox'}]" :key="ab.id">
+          <button @click="analiseAba = ab.id; analiseRespostaAberta = null"
+                  class="flex-1 py-3 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+                  :class="analiseAba === ab.id ? 'text-gray-800' : 'text-gray-400 hover:text-gray-600'"
+                  :style="analiseAba === ab.id ? 'box-shadow: inset 0 -2.5px 0 var(--p)' : ''">
+            <i class="fa-solid" :class="ab.ic"></i>
+            <span x-text="ab.rot"></span>
+            <span x-show="ab.id === 'links' && analiseLinks.length" x-text="analiseLinks.length"
+                  class="min-w-[17px] h-[17px] px-1 rounded-full bg-gray-100 text-gray-500 text-[10px] font-black flex items-center justify-center"></span>
+            <span x-show="ab.id === 'respostas' && analiseNaoLidas > 0" x-text="analiseNaoLidas"
+                  class="min-w-[17px] h-[17px] px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center"></span>
+          </button>
+        </template>
+      </div>
+
+      <div class="overflow-y-auto p-5 space-y-4">
+
+        <!-- ─────────── ABA: GERAR LINK ─────────── -->
+        <template x-if="analiseAba === 'novo'">
+          <div class="space-y-4">
+
+            <!-- Prévia do que o cliente vê -->
+            <div class="rounded-2xl p-4 text-white" style="background:linear-gradient(150deg,var(--p-l),var(--p-dd))">
+              <div class="bg-white rounded-lg px-2.5 py-1.5 inline-flex mb-3">
+                <span class="text-[10px] font-black tracking-wider" style="color:var(--p-d)">ESSENSE</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-full overflow-hidden border-2 flex-shrink-0 bg-white/10"
+                     style="border-color:var(--s-l)">
+                  <img x-show="contaFoto" :src="contaFoto" class="w-full h-full object-cover">
+                  <div x-show="!contaFoto" class="w-full h-full flex items-center justify-center text-sm font-black text-white/70"
+                       x-text="(contaNome||'?').split(' ').slice(0,2).map(w=>w[0]).join('')"></div>
+                </div>
+                <div class="min-w-0">
+                  <div class="text-[10px] font-bold uppercase tracking-wider" style="color:var(--s-l)">Seu corretor</div>
+                  <div class="font-black leading-tight truncate" x-text="contaNome || 'Seu nome'"></div>
+                  <div class="text-[11px] text-white/60" x-text="contaCreci ? 'CRECI ' + contaCreci : 'Essense Negócios Imobiliários'"></div>
+                </div>
+              </div>
+              <p class="text-[11px] text-white/50 mt-3">É assim que o cliente vê você ao abrir o link.</p>
+            </div>
+
+            <!-- Avisos de cadastro incompleto -->
+            <div x-show="!contaFoto" class="rounded-xl bg-amber-50 border border-amber-200 px-3.5 py-2.5 text-[11px] text-amber-800 leading-relaxed">
+              <i class="fa-solid fa-camera"></i>
+              Você ainda não tem foto no perfil — o cliente vai ver só as suas iniciais.
+              <button @click="showAnalisePainel=false; showContaPanel=true" class="font-black underline">Adicionar foto</button>
+            </div>
+            <div x-show="!analiseMeuWhatsapp" class="rounded-xl bg-red-50 border border-red-200 px-3.5 py-2.5 text-[11px] text-red-700 leading-relaxed">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              Cadastre seu WhatsApp em <b>Minha Conta</b>: é o número que o cliente usa para falar com você.
+              <button @click="showAnalisePainel=false; showContaPanel=true" class="font-black underline">Cadastrar agora</button>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2">Para qual cliente</label>
+              <select :value="analiseNovo.clienteId" x-init="$nextTick(() => $el.value = analiseNovo.clienteId)"
+                      @change="analiseNovo.clienteId = $event.target.value"
+                      class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-200">
+                <option value="">— Link avulso (sem cliente vinculado) —</option>
+                <template x-for="c in clientes" :key="c.id">
+                  <option :value="c.id" x-text="c.nome"></option>
+                </template>
+              </select>
+              <p class="text-[11px] text-gray-400 mt-1.5">
+                Vinculando um cliente, o convite já sai no WhatsApp dele e com o nome preenchido.
+              </p>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2">O link vale por</label>
+              <div class="flex gap-2">
+                <template x-for="dia in [1,3,7,15,30]" :key="dia">
+                  <button @click="analiseNovo.validadeDias = dia"
+                          class="flex-1 py-2.5 rounded-xl border text-sm font-bold transition-colors"
+                          :class="analiseNovo.validadeDias === dia
+                            ? 'border-transparent text-white'
+                            : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'"
+                          :style="analiseNovo.validadeDias === dia ? 'background:var(--p)' : ''">
+                    <span x-text="dia"></span><span class="text-[10px] font-semibold ml-0.5">d</span>
+                  </button>
+                </template>
+              </div>
+              <p class="text-[11px] text-gray-400 mt-1.5">
+                Passado o prazo o link para de abrir sozinho — menos chance de dado de cliente ficar circulando por aí.
+              </p>
+            </div>
+
+            <button @click="criarAnalise()" :disabled="analiseCriando"
+                    class="w-full flex items-center justify-center gap-2 text-white text-sm font-bold px-4 py-3 rounded-xl transition-opacity hover:opacity-90 disabled:opacity-50"
+                    style="background:var(--p)">
+              <i class="fa-solid" :class="analiseCriando ? 'fa-circle-notch fa-spin' : 'fa-link'"></i>
+              <span x-text="analiseCriando ? 'Gerando…' : 'Gerar link seguro'"></span>
+            </button>
+
+            <div class="rounded-xl bg-gray-50 border border-gray-100 px-3.5 py-3 text-[11px] text-gray-500 leading-relaxed space-y-1">
+              <p><i class="fa-solid fa-fingerprint text-gray-400 w-3.5"></i> Cada link tem um código único e impossível de adivinhar.</p>
+              <p><i class="fa-solid fa-lock text-gray-400 w-3.5"></i> Pode ser preenchido <b>uma única vez</b> — depois disso só você consegue liberar de novo.</p>
+              <p><i class="fa-solid fa-eye-slash text-gray-400 w-3.5"></i> O cliente vê apenas o resultado: nada do seu sistema aparece para ele.</p>
+              <p><i class="fa-solid fa-shield-halved text-gray-400 w-3.5"></i> CPF, renda e telefone só são legíveis por você, aqui dentro.</p>
+            </div>
+          </div>
+        </template>
+
+        <!-- ─────────── ABA: MEUS LINKS ─────────── -->
+        <template x-if="analiseAba === 'links'">
+          <div class="space-y-3">
+            <div x-show="analiseUltimoLink" class="rounded-xl border-2 border-green-200 bg-green-50 p-3.5">
+              <p class="text-[11px] font-black text-green-700 uppercase tracking-wide mb-1.5">
+                <i class="fa-solid fa-circle-check"></i> Link pronto
+              </p>
+              <p class="text-[11px] text-gray-600 break-all font-mono bg-white rounded-lg px-2.5 py-2 border border-green-100"
+                 x-text="analiseUltimoLink"></p>
+              <button @click="simCopiar(analiseUltimoLink, 'Link')"
+                      class="mt-2 text-[11px] font-black text-green-700 hover:underline">
+                <i class="fa-solid fa-copy"></i> Copiar link
+              </button>
+            </div>
+
+            <p x-show="!analiseLinks.length" class="text-center text-sm text-gray-400 py-10">
+              <i class="fa-solid fa-link-slash text-2xl block mb-2 text-gray-300"></i>
+              Nenhum link gerado ainda.
+            </p>
+
+            <template x-for="l in analiseLinks" :key="l.id">
+              <div class="rounded-xl border border-gray-100 bg-white p-3.5">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="min-w-0">
+                    <p class="text-sm font-black text-gray-800 truncate" x-text="l.clienteNome || 'Link avulso'"></p>
+                    <p class="text-[11px] text-gray-400 mt-0.5">
+                      <span x-text="analiseQuando(l.criadoEm)"></span>
+                      <span x-show="analiseValidade(l)"> · <span x-text="analiseValidade(l)"></span></span>
+                    </p>
+                  </div>
+                  <span class="text-[10px] font-black px-2 py-1 rounded-full flex-shrink-0"
+                        :class="analiseStatus(l).cor" x-text="analiseStatus(l).rotulo"></span>
+                </div>
+                <div class="flex flex-wrap gap-1.5 mt-3">
+                  <button x-show="analiseStatus(l).id === 'pendente'" @click="analiseEnviarCliente(l)"
+                          class="flex items-center gap-1.5 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg" style="background:#25D366">
+                    <i class="fa-brands fa-whatsapp"></i> Enviar
+                  </button>
+                  <button @click="analiseCopiarLink(l)"
+                          class="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-300">
+                    <i class="fa-solid fa-copy"></i> Copiar
+                  </button>
+                  <button x-show="analiseStatus(l).id !== 'pendente'" @click="analiseReabrir(l)"
+                          class="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-300">
+                    <i class="fa-solid fa-rotate-right"></i> Liberar de novo
+                  </button>
+                  <button @click="analiseExcluirLink(l)"
+                          class="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 ml-auto">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </template>
+          </div>
+        </template>
+
+        <!-- ─────────── ABA: RESPOSTAS ─────────── -->
+        <template x-if="analiseAba === 'respostas' && !analiseRespostaAberta">
+          <div class="space-y-3">
+            <p x-show="!analiseRespostas.length" class="text-center text-sm text-gray-400 py-10">
+              <i class="fa-solid fa-inbox text-2xl block mb-2 text-gray-300"></i>
+              Nenhum cliente preencheu ainda.<br>
+              <span class="text-[11px]">Quando preencher, a resposta aparece aqui na hora.</span>
+            </p>
+            <template x-for="r in analiseRespostas" :key="r.id">
+              <button @click="abrirAnaliseResposta(r)"
+                      class="w-full text-left rounded-xl border p-3.5 transition-colors hover:border-gray-300"
+                      :class="r.lido ? 'border-gray-100 bg-white' : 'border-green-200 bg-green-50'">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="min-w-0">
+                    <p class="text-sm font-black text-gray-800 truncate flex items-center gap-1.5">
+                      <span x-show="!r.lido" class="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></span>
+                      <span x-text="r.nome"></span>
+                    </p>
+                    <p class="text-[11px] text-gray-500 mt-0.5">
+                      <span x-text="simMoedaCurta(r.valorImovel)"></span> ·
+                      <span x-text="(r.cidade || '') + '/' + (r.uf || '')"></span> ·
+                      <span x-text="Math.round((r.prazoMeses||0)/12) + ' anos'"></span>
+                    </p>
+                    <p class="text-[11px] font-bold mt-1" style="color:var(--p)">
+                      1ª parcela <span x-text="simMoeda(r.resultado?.sac?.primeira || 0)"></span> (SAC)
+                    </p>
+                  </div>
+                  <span class="text-[10px] text-gray-400 flex-shrink-0" x-text="analiseQuando(r.criadoEm)"></span>
+                </div>
+              </button>
+            </template>
+          </div>
+        </template>
+
+        <!-- ─────────── DETALHE DA RESPOSTA ─────────── -->
+        <template x-if="analiseRespostaAberta">
+          <div class="space-y-4">
+            <button @click="analiseRespostaAberta = null" class="text-[11px] font-bold text-gray-400 hover:text-gray-600">
+              <i class="fa-solid fa-arrow-left"></i> Todas as respostas
+            </button>
+
+            <div>
+              <h4 class="text-lg font-black text-gray-800" x-text="analiseRespostaAberta.nome"></h4>
+              <p class="text-[11px] text-gray-400" x-text="'Preenchido em ' + analiseQuando(analiseRespostaAberta.criadoEm)"></p>
+            </div>
+
+            <!-- Resultado -->
+            <div class="rounded-xl p-4 text-white" style="background:linear-gradient(135deg,var(--p-l),var(--p-d))">
+              <p class="text-[10px] font-bold uppercase tracking-wider text-white/60 mb-2">Resultado que o cliente viu</p>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <p class="text-[10px] text-white/60">1ª parcela SAC</p>
+                  <p class="text-lg font-black" x-text="simMoeda(analiseRespostaAberta.resultado?.sac?.primeira || 0)"></p>
+                </div>
+                <div>
+                  <p class="text-[10px] text-white/60">1ª parcela PRICE</p>
+                  <p class="text-lg font-black" x-text="simMoeda(analiseRespostaAberta.resultado?.price?.primeira || 0)"></p>
+                </div>
+              </div>
+              <p class="text-[11px] text-white/70 mt-2.5" x-text="analiseRespostaAberta.linhaNome"></p>
+            </div>
+
+            <!-- Dados -->
+            <div class="rounded-xl border border-gray-100 divide-y divide-gray-50">
+              <template x-for="campo in [
+                  ['CPF', analiseRespostaAberta.cpf],
+                  ['Nascimento', analiseRespostaAberta.nascimento ? new Date(analiseRespostaAberta.nascimento+'T12:00:00').toLocaleDateString('pt-BR') + ' (' + analiseRespostaAberta.idade + ' anos)' : '—'],
+                  ['Celular', analiseRespostaAberta.celular],
+                  ['E-mail', analiseRespostaAberta.email || '—'],
+                  ['Renda bruta familiar', simMoeda(analiseRespostaAberta.renda)],
+                  ['3 anos ou mais de FGTS', analiseSimNao(analiseRespostaAberta.fgts3anos)],
+                  ['Outro comprador ou dependente', analiseSimNao(analiseRespostaAberta.maisCompradores)],
+                  ['Tipo de imóvel', analiseRespostaAberta.tipoImovel === 'comercial' ? 'Para o negócio' : 'Para morar'],
+                  ['O que deseja', analiseObjetivoNome(analiseRespostaAberta.objetivo)],
+                  ['Cidade', (analiseRespostaAberta.cidade||'') + '/' + (analiseRespostaAberta.uf||'')],
+                  ['Valor do imóvel', simMoeda(analiseRespostaAberta.valorImovel)],
+                  ['Outro imóvel na cidade', analiseSimNao(analiseRespostaAberta.outroImovelCidade)],
+                  ['Entrada', simMoeda(analiseRespostaAberta.entrada)],
+                  ['FGTS que vai usar', simMoeda(analiseRespostaAberta.fgts)],
+                  ['A financiar', simMoeda(analiseRespostaAberta.valorFinanciado)],
+                  ['Prazo', (analiseRespostaAberta.prazoMeses||0) + ' meses'],
+                  ['Comprometimento da renda', simPct(analiseRespostaAberta.comprometimento)]
+                ]" :key="campo[0]">
+                <div class="flex items-center justify-between gap-3 px-3.5 py-2.5">
+                  <span class="text-[11px] text-gray-400" x-text="campo[0]"></span>
+                  <span class="text-xs font-bold text-gray-700 text-right" x-text="campo[1] || '—'"></span>
+                </div>
+              </template>
+            </div>
+
+            <!-- Enquadramento -->
+            <div x-show="analiseRespostaAberta.avisos?.length" class="space-y-1.5">
+              <template x-for="(a, i) in (analiseRespostaAberta.avisos || [])" :key="i">
+                <p class="text-[11px] leading-relaxed flex gap-2"
+                   :class="a.startsWith('erro') ? 'text-red-600' : (a.startsWith('alerta') ? 'text-amber-600' : 'text-gray-500')">
+                  <i class="fa-solid mt-0.5"
+                     :class="a.startsWith('erro') ? 'fa-circle-xmark' : (a.startsWith('alerta') ? 'fa-triangle-exclamation' : (a.startsWith('ok') ? 'fa-circle-check' : 'fa-circle-info'))"></i>
+                  <span x-text="a.replace(/^(ok|erro|alerta|info): /, '')"></span>
+                </p>
+              </template>
+            </div>
+
+            <!-- Ações -->
+            <div class="grid grid-cols-2 gap-2">
+              <button @click="analiseResponderCliente(analiseRespostaAberta)"
+                      class="flex items-center justify-center gap-2 text-white text-xs font-bold px-3 py-2.5 rounded-xl" style="background:#25D366">
+                <i class="fa-brands fa-whatsapp"></i> Responder
+              </button>
+              <button @click="analiseVirarCliente(analiseRespostaAberta)"
+                      class="flex items-center justify-center gap-2 text-white text-xs font-bold px-3 py-2.5 rounded-xl" style="background:var(--p)">
+                <i class="fa-solid fa-user-plus"></i> Virar cliente
+              </button>
+              <button @click="analiseCarregarNaSimulacao(analiseRespostaAberta)"
+                      class="flex items-center justify-center gap-2 text-xs font-bold px-3 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:border-gray-300">
+                <i class="fa-solid fa-calculator"></i> Abrir na simulação
+              </button>
+              <button @click="analiseExcluirResposta(analiseRespostaAberta)"
+                      class="flex items-center justify-center gap-2 text-xs font-bold px-3 py-2.5 rounded-xl border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200">
+                <i class="fa-solid fa-trash"></i> Apagar dados
+              </button>
+            </div>
+          </div>
+        </template>
+      </div>
     </div>
   </div>
 
@@ -6278,7 +6650,7 @@ function app() {
           this.firebaseUser = user;
           this.firebaseUID = user.uid;
           this.loggedIn = true;
-          this.$nextTick(() => { this.initChat(); this.iniciarLeadsJarvis(); });
+          this.$nextTick(() => { this.initChat(); this.iniciarLeadsJarvis(); this.iniciarAnalises(); });
           const savedC = localStorage.getItem(this._keyClientes);
           this.clientes = savedC ? JSON.parse(savedC) : [];
           const savedCap = localStorage.getItem(this._keyCaptacoes);
@@ -6297,6 +6669,7 @@ function app() {
           this.activityFeed = [];
           if (this.chatListener) { this.chatListener(); this.chatListener = null; }
           this.pararLeadsJarvis();
+          this.pararAnalises();
           this.chatMensagens = []; this.chatUnread = 0; this.showChat = false;
         }
       });
@@ -9814,6 +10187,329 @@ function app() {
 
     atualizarAgora() {
       location.replace('./index.html?v=' + Date.now());
+    },
+
+    /* ══════════ LINK DE PRÉ-ANÁLISE PARA O CLIENTE ══════════
+       O corretor gera um link; o cliente abre em analise.html, preenche e
+       vê só o resultado. A resposta volta por aqui em tempo real.
+       O link vale uma única vez: a trava é do Firestore (o create falha se
+       o documento de resposta já existe), não do navegador do cliente. */
+
+    analiseLinks: [],
+    analiseRespostas: [],
+    _analiseUnsub: [],
+    _analisePrimeiraCarga: true,
+    showAnalisePainel: false,
+    analiseAba: 'novo',                 // novo | links | respostas
+    analiseRespostaAberta: null,
+    analiseNovo: { clienteId: '', validadeDias: 7 },
+    analiseUltimoLink: '',
+    analiseCriando: false,
+
+    get analiseBaseUrl() {
+      return new URL('analise.html', location.href.split('?')[0].split('#')[0]).href;
+    },
+
+    get analiseMeuWhatsapp() {
+      return String(this.contaTelefone || (this.isAdmin ? '11943560902' : '')).replace(/\D/g, '');
+    },
+
+    get analiseNaoLidas() {
+      return this.analiseRespostas.filter(r => !r.lido).length;
+    },
+
+    get analisePendentes() {
+      return this.analiseLinks.filter(l => this.analiseStatus(l).id === 'pendente').length;
+    },
+
+    iniciarAnalises() {
+      if (this._analiseUnsub.length || !this.firebaseUID || !window._analiseLinksListen) return;
+      this._analiseUnsub.push(window._analiseLinksListen(this.firebaseUID, (l) => {
+        this.analiseLinks = l.sort((a, b) => (b.criadoEm?.seconds || 0) - (a.criadoEm?.seconds || 0));
+      }));
+      this._analiseUnsub.push(window._analiseRespostasListen(this.firebaseUID, (l) => {
+        const antes = this.analiseRespostas.map(r => r.id);
+        this.analiseRespostas = l.sort((a, b) => (b.criadoEm?.seconds || 0) - (a.criadoEm?.seconds || 0));
+        const novas = this.analiseRespostas.filter(r => !antes.includes(r.id));
+        // Na primeira carga tudo é "novo": o aviso só vale do segundo lote
+        // em diante, senão o corretor toma um susto a cada abertura.
+        if (!this._analisePrimeiraCarga && novas.length) this.avisarAnaliseNova(novas[0]);
+        this._analisePrimeiraCarga = false;
+      }));
+    },
+
+    pararAnalises() {
+      this._analiseUnsub.forEach(u => { try { u(); } catch (_) {} });
+      this._analiseUnsub = [];
+      this.analiseLinks = [];
+      this.analiseRespostas = [];
+      this._analisePrimeiraCarga = true;
+    },
+
+    avisarAnaliseNova(r) {
+      this.showToast('📋 ' + (r.nome || 'Um cliente') + ' preencheu a pré-análise!');
+      this.addFeedItem('📋', `${r.nome || 'Cliente'} preencheu a pré-análise de crédito`);
+      try {
+        if (window.Notification && Notification.permission === 'granted') {
+          new Notification('Pré-análise preenchida', {
+            body: `${r.nome || 'Um cliente'} — ${this.simMoedaCurta(r.valorImovel)} em ${r.cidade || ''}`,
+            icon: './icon-192.png',
+          });
+        }
+      } catch (_) { /* notificação é um extra: nunca pode derrubar o aviso */ }
+    },
+
+    /* Token do link: 18 bytes de aleatoriedade criptográfica. Não dá para
+       adivinhar nem para chegar no link de um cliente tentando vizinhos. */
+    _analiseToken() {
+      const b = new Uint8Array(18);
+      crypto.getRandomValues(b);
+      return btoa(String.fromCharCode(...b)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    },
+
+    /* A foto vai dentro do documento do link, então precisa ser pequena:
+       256px quadrados em JPEG resolvem e cabem com folga no limite do
+       Firestore. Foto hospedada fora contamina o canvas e volta vazia —
+       nesse caso o cliente vê as iniciais, e não um erro. */
+    async _analiseFotoReduzida() {
+      if (!this.contaFoto) return '';
+      try {
+        const img = await new Promise((ok, falhou) => {
+          const i = new Image();
+          i.onload = () => ok(i);
+          i.onerror = falhou;
+          i.src = this.contaFoto;
+        });
+        const lado = 256;
+        const c = document.createElement('canvas');
+        c.width = c.height = lado;
+        const m = Math.min(img.width, img.height);
+        c.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, lado, lado);
+        return c.toDataURL('image/jpeg', 0.82);
+      } catch (_) { return ''; }
+    },
+
+    analiseStatus(l) {
+      const exp = l.expiraEm?.toMillis ? l.expiraEm.toMillis() : Number(l.expiraEm || 0);
+      if (l.status === 'respondido') return { id: 'respondido', rotulo: 'Preenchido', cor: 'bg-green-100 text-green-700' };
+      if (exp && Date.now() > exp)    return { id: 'expirado',   rotulo: 'Expirado',   cor: 'bg-gray-100 text-gray-500' };
+      return { id: 'pendente', rotulo: 'Aguardando o cliente', cor: 'bg-amber-100 text-amber-700' };
+    },
+
+    analiseValidade(l) {
+      const exp = l.expiraEm?.toMillis ? l.expiraEm.toMillis() : Number(l.expiraEm || 0);
+      if (!exp) return '';
+      const dias = Math.ceil((exp - Date.now()) / 86400000);
+      if (dias < 0) return 'expirou em ' + new Date(exp).toLocaleDateString('pt-BR');
+      if (dias === 0) return 'expira hoje';
+      return 'expira em ' + dias + (dias === 1 ? ' dia' : ' dias');
+    },
+
+    analiseUrl(l) { return this.analiseBaseUrl + '?t=' + l.id; },
+
+    async criarAnalise() {
+      if (!this.firebaseUID || !window._analiseCriar) {
+        this.showToast('Entre na sua conta para gerar o link');
+        return;
+      }
+      if (!this.analiseMeuWhatsapp) {
+        this.showToast('Cadastre seu WhatsApp em Minha Conta — é por ele que o cliente fala com você');
+        this.showContaPanel = true;
+        return;
+      }
+      this.analiseCriando = true;
+      const token = this._analiseToken();
+      const dias = Math.max(1, Math.min(30, Number(this.analiseNovo.validadeDias) || 7));
+      const cliente = this.clientes.find(c => String(c.id) === String(this.analiseNovo.clienteId));
+      try {
+        await window._analiseCriar(token, {
+          corretorUid: this.firebaseUID,
+          corretorNome: this.contaNome || this.currentUserProfile?.nome || 'Seu corretor',
+          corretorCreci: this.contaCreci || '',
+          corretorFoto: await this._analiseFotoReduzida(),
+          corretorWhatsapp: this.analiseMeuWhatsapp,
+          imobiliaria: this.contaImobiliaria || 'Essense Negócios Imobiliários',
+          clienteNome: cliente ? cliente.nome : '',
+          clienteId: cliente ? String(cliente.id) : '',
+          valorImovel: cliente ? this.simNum(cliente.valorInteresse) : 0,
+          params: {
+            convencao: this.simCredito.convencao,
+            mip: Number(this.simCredito.mip) || 0,
+            dfi: Number(this.simCredito.dfi) || 0,
+            taxaAdm: Number(this.simCredito.taxaAdm) || 0,
+            comprometimentoMax: Number(this.simCredito.comprometimentoMax) || 30,
+            linha: 'auto',
+          },
+          status: 'pendente',
+          expiraEm: new Date(Date.now() + dias * 86400000),
+        });
+        this.analiseUltimoLink = this.analiseBaseUrl + '?t=' + token;
+        this.analiseAba = 'links';
+        this.showToast('Link gerado 🔗');
+      } catch (e) {
+        console.warn('criar análise:', e);
+        this.showToast('Não consegui gerar o link: ' + (e.message || e));
+      }
+      this.analiseCriando = false;
+    },
+
+    analiseTextoConvite(l) {
+      const nome = (l.clienteNome || '').split(' ')[0];
+      return [
+        `Olá${nome ? ', ' + nome : ''}! Aqui é ${this.contaNome || 'seu corretor'}` +
+          `${this.contaImobiliaria ? ', da ' + this.contaImobiliaria : ', da Essense Imóveis'}.`,
+        ``,
+        `Preparei sua pré-análise de crédito habitacional. Você preenche seus dados neste link ` +
+          `seguro e já vê na hora o valor estimado da parcela:`,
+        ``,
+        this.analiseUrl(l),
+        ``,
+        `O link é exclusivo seu e pode ser preenchido uma única vez. ` +
+          `Qualquer dúvida, é só me chamar por aqui.`,
+      ].join('\n');
+    },
+
+    analiseEnviarCliente(l) {
+      const cliente = this.clientes.find(c => String(c.id) === String(l.clienteId));
+      const fone = cliente ? String(cliente.telefone || '').replace(/\D/g, '') : '';
+      const destino = fone ? (fone.length > 11 ? fone : '55' + fone) : '';
+      window.open('https://wa.me/' + destino + '?text=' + encodeURIComponent(this.analiseTextoConvite(l)),
+                  '_blank', 'noopener');
+    },
+
+    async analiseCopiarLink(l) {
+      await this.simCopiar(this.analiseUrl(l), 'Link');
+    },
+
+    async analiseExcluirLink(l) {
+      if (!confirm('Apagar este link? Quem já tiver recebido não vai mais conseguir abrir.')) return;
+      try {
+        await window._analiseLinkExcluir(l.id);
+        this.showToast('Link apagado');
+      } catch (e) { this.showToast('Não consegui apagar: ' + e.message); }
+    },
+
+    /* Reabrir dá ao cliente uma segunda chance sem precisar de link novo —
+       mas só funciona se a resposta anterior for apagada junto, senão o
+       Firestore recusa o segundo envio. É o que o aviso explica. */
+    async analiseReabrir(l) {
+      if (!confirm('Liberar este link para ser preenchido de novo?\n\nA resposta anterior será apagada.')) return;
+      try {
+        try { await window._analiseRespostaExcluir(l.id); } catch (_) { /* pode não existir */ }
+        await window._analiseReabrir(l.id, new Date(Date.now() + 7 * 86400000));
+        this.showToast('Link liberado por mais 7 dias');
+      } catch (e) { this.showToast('Não consegui reabrir: ' + e.message); }
+    },
+
+    abrirAnaliseResposta(r) {
+      this.analiseRespostaAberta = r;
+      if (!r.lido) {
+        window._analiseMarcarLida(r.id).catch(() => {});
+      }
+    },
+
+    async analiseExcluirResposta(r) {
+      if (!confirm('Apagar os dados que ' + (r.nome || 'o cliente') + ' enviou?\n\nIsso não pode ser desfeito.')) return;
+      try {
+        await window._analiseRespostaExcluir(r.id);
+        this.analiseRespostaAberta = null;
+        this.showToast('Resposta apagada');
+      } catch (e) { this.showToast('Não consegui apagar: ' + e.message); }
+    },
+
+    /* Traz a resposta do cliente para a simulação desta tela, para o
+       corretor seguir ajustando taxa e prazo com os dados reais. */
+    analiseCarregarNaSimulacao(r) {
+      this.simCredito.valorImovel = String(r.valorImovel || '');
+      this.simCredito.entrada     = String(r.entrada || '');
+      this.simCredito.fgts        = String(r.fgts || '');
+      this.simCredito.renda       = String(r.renda || '');
+      this.simCredito.idade       = r.idade || '';
+      this.simCredito.prazo       = r.prazoMeses || 360;
+      if (r.linhaId) this.simTrocarLinha(r.linhaId);
+      Object.assign(this.simCaixa, {
+        cpf: r.cpf || '', nascimento: r.nascimento || '', celular: r.celular || '',
+        fgts3anos: r.fgts3anos || '', maisCompradores: r.maisCompradores || '',
+        tipoImovel: r.tipoImovel || 'residencial', objetivo: r.objetivo || 'usado',
+        uf: r.uf || '', cidade: r.cidade || '', outroImovelCidade: r.outroImovelCidade || '',
+      });
+      this.simSalvar();
+      this.simSalvarCaixa();
+      this.showAnalisePainel = false;
+      this.analiseRespostaAberta = null;
+      this.section = 'credito';
+      this.showToast('Dados carregados na simulação ✅');
+    },
+
+    /* O lead chegou pronto: nome, telefone, renda e valor pretendido.
+       Vira cliente da carteira sem redigitação — e sem duplicar quem já está. */
+    analiseVirarCliente(r) {
+      const tel = String(r.celular || '').replace(/\D/g, '');
+      const jaTem = this.clientes.find(c => tel && String(c.telefone || '').replace(/\D/g, '') === tel);
+      if (jaTem) {
+        this.showToast(jaTem.nome + ' já está na sua carteira');
+        return;
+      }
+      this.clientes.unshift({
+        id: Date.now().toString() + Math.random().toString(36).slice(2, 6),
+        nome: r.nome || 'Cliente sem nome',
+        telefone: r.celular || '',
+        email: r.email || '',
+        tipo: 'buscar_venda',
+        imovel: '',
+        valorInteresse: String(r.valorImovel || ''),
+        dataInicio: this.todayStr(),
+        origem: 'Pré-análise de crédito',
+        status: 'ativo',
+        pipeline: 'atendimento',
+        observacao: [
+          `Pré-análise preenchida pelo cliente.`,
+          `Renda: ${this.simMoedaCurta(r.renda)} · Entrada + FGTS: ${this.simMoedaCurta((r.entrada || 0) + (r.fgts || 0))}`,
+          `Financiar ${this.simMoedaCurta(r.valorFinanciado)} em ${r.prazoMeses} meses · ${r.linhaNome || ''}`,
+          `1ª parcela SAC ${this.simMoeda(r.resultado?.sac?.primeira || 0)} · PRICE ${this.simMoeda(r.resultado?.price?.primeira || 0)}`,
+          `Imóvel em ${r.cidade || ''}/${r.uf || ''}`,
+        ].join('\n'),
+        ativo: true,
+        etapasFeitas: [],
+        mediaCount: 0,
+        novo: true,
+        recebidoEm: Date.now(),
+      });
+      this.clientes = [...this.clientes];
+      this.save();
+      this.addFeedItem('👤', `${r.nome} virou cliente pela pré-análise`);
+      this.showToast(r.nome + ' entrou na sua carteira ✅');
+    },
+
+    analiseResponderCliente(r) {
+      const fone = String(r.celular || '').replace(/\D/g, '');
+      if (!fone) { this.showToast('Este cliente não informou celular'); return; }
+      const nome = (r.nome || '').split(' ')[0];
+      const txt = [
+        `Olá, ${nome}! Recebi sua pré-análise, obrigado por preencher.`,
+        ``,
+        `Pelo que você informou, dá para financiar ${this.simMoedaCurta(r.valorFinanciado)} ` +
+          `em ${Math.round((r.prazoMeses || 0) / 12)} anos, com primeira parcela estimada em ` +
+          `${this.simMoeda(r.resultado?.sac?.primeira || 0)} na tabela SAC.`,
+        ``,
+        `Quando podemos conversar para eu te mostrar as opções?`,
+      ].join('\n');
+      window.open('https://wa.me/' + (fone.length > 11 ? fone : '55' + fone) + '?text=' + encodeURIComponent(txt),
+                  '_blank', 'noopener');
+    },
+
+    analiseQuando(ts) {
+      const ms = ts?.toMillis ? ts.toMillis() : Number(ts || 0);
+      if (!ms) return '';
+      return new Date(ms).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit',
+                                                    hour: '2-digit', minute: '2-digit' });
+    },
+
+    analiseSimNao(v) { return v === 'sim' ? 'Sim' : (v === 'nao' ? 'Não' : '—'); },
+
+    analiseObjetivoNome(v) {
+      const o = this.simCaixaObjetivos.find(x => x.v === v);
+      return o ? o.l : (v || '—');
     },
 
     showToast(msg) {

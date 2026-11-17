@@ -38,5 +38,52 @@ service cloud.firestore {
       allow delete: if request.auth != null
                     && resource.data.destinatarioUid == request.auth.uid;
     }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Pré-análise de crédito que o cliente preenche por link.
+    //
+    // O token é a credencial: quem tem o link lê o documento; quem não tem
+    // não consegue nem descobrir que ele existe (list fechado para anônimo).
+    // O documento do link carrega SÓ o que o cliente precisa ver — nome,
+    // CRECI, foto e WhatsApp do corretor. Nada do cliente mora aqui.
+    // ─────────────────────────────────────────────────────────────────────
+    match /analises_link/{token} {
+      allow get: if true;
+
+      // O corretor só enxerga e mexe nos links que ele mesmo gerou.
+      allow list: if request.auth != null
+                  && resource.data.corretorUid == request.auth.uid;
+      allow create: if request.auth != null
+                    && request.resource.data.corretorUid == request.auth.uid
+                    && request.resource.data.status == 'pendente';
+      allow update, delete: if request.auth != null
+                            && resource.data.corretorUid == request.auth.uid;
+
+      // O cliente, sem login, só pode marcar o link como respondido.
+      allow update: if request.auth == null
+                    && resource.data.status == 'pendente'
+                    && request.resource.data.status == 'respondido'
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['status', 'respondidoEm']);
+    }
+
+    // As respostas do cliente — CPF, celular, renda — ficam separadas e
+    // NUNCA são legíveis sem login: quem tem o link escreve, só o corretor lê.
+    match /analises_resposta/{token} {
+      function link() {
+        return get(/databases/$(database)/documents/analises_link/$(token)).data;
+      }
+
+      // Uma única vez: o create do Firestore falha se o documento já existe,
+      // então a trava de uso único é do servidor, não do navegador.
+      allow create: if request.resource.data.consentimento == true
+                    && request.resource.data.corretorUid == link().corretorUid
+                    && link().status == 'pendente'
+                    && request.time < link().expiraEm;
+
+      allow read, update, delete: if request.auth != null
+                                  && resource.data.corretorUid == request.auth.uid;
+    }
+
   }
 }
