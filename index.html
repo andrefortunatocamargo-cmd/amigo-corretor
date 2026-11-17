@@ -3343,7 +3343,7 @@ tailwind.config = {
       <!-- Cliente -->
       <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
         <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2">Cliente (opcional)</label>
-        <select :value="simCredito.clienteId" @change="simVincularCliente($event.target.value)"
+        <select :value="simCredito.clienteId" x-init="$nextTick(() => $el.value = simCredito.clienteId)" @change="simVincularCliente($event.target.value)"
                 class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200">
           <option value="">— Simulação avulsa —</option>
           <template x-for="c in clientes" :key="c.id">
@@ -3428,7 +3428,7 @@ tailwind.config = {
 
         <div>
           <label class="block text-xs font-semibold text-gray-600 mb-1">Linha de crédito</label>
-          <select :value="simCredito.linha" @change="simTrocarLinha($event.target.value)"
+          <select :value="simCredito.linha" x-init="$nextTick(() => $el.value = simCredito.linha)" @change="simTrocarLinha($event.target.value)"
                   class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200">
             <template x-for="l in simLinhas" :key="l.id">
               <option :value="l.id" x-text="l.nome"></option>
@@ -3526,6 +3526,139 @@ tailwind.config = {
             MIP incide sobre o saldo devedor; DFI sobre o valor do imóvel. Os percentuais variam com a idade
             e o perfil do proponente — confirme na proposta da agência.
           </p>
+        </details>
+      </div>
+
+      <!-- Dados para a Simulação Completa da Caixa -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+        <details>
+          <summary class="text-[11px] font-bold text-gray-400 uppercase tracking-wide cursor-pointer select-none hover:text-gray-600 flex items-center gap-2">
+            <i class="fa-solid fa-id-card text-[10px]" style="color:#0057A6"></i>
+            Dados para a Simulação Completa
+          </summary>
+          <p class="text-[11px] text-gray-400 mt-2 leading-relaxed">
+            Não entram na conta desta tela — são os campos que a Caixa pede no simulador oficial.
+            Preenchendo aqui, você chega lá com tudo pronto.
+          </p>
+
+          <div class="mt-3 space-y-3">
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">CPF</label>
+              <input type="text" inputmode="numeric" placeholder="000.000.000-00"
+                class="w-full px-3 py-2.5 rounded-xl border text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-200"
+                :class="simCaixa.cpf && !simCpfValido ? 'border-amber-300' : 'border-gray-200'"
+                :value="simCaixa.cpf"
+                @input="simCaixa.cpf = simFmtCpf($event.target.value); $event.target.value = simCaixa.cpf; simSalvarCaixa()">
+              <p x-show="simCaixa.cpf && !simCpfValido" class="text-[10px] text-amber-600 mt-1">
+                <i class="fa-solid fa-circle-exclamation"></i> Os dígitos não fecham — confira antes de ir ao simulador.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Data de nascimento</label>
+                <input type="date"
+                  class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  :value="simCaixa.nascimento"
+                  @change="simAplicarNascimento($event.target.value)">
+                <p class="text-[10px] text-gray-400 mt-1">preenche a idade sozinha</p>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Telefone celular</label>
+                <input type="text" inputmode="numeric" placeholder="(00) 00000-0000"
+                  class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  :value="simCaixa.celular"
+                  @input="simCaixa.celular = simFmtCelular($event.target.value); $event.target.value = simCaixa.celular; simSalvarCaixa()">
+                <p class="text-[10px] text-gray-400 mt-1">recebe o código</p>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1.5">Tem 3 anos ou mais de FGTS?</label>
+              <div class="grid grid-cols-2 gap-2">
+                <template x-for="o in [{v:'sim',l:'Sim, 3 anos ou mais'},{v:'nao',l:'Não, menos de 3'}]" :key="o.v">
+                  <button @click="simCaixa.fgts3anos = o.v; simSalvarCaixa()"
+                          class="px-2.5 py-2 rounded-lg text-[11px] font-bold border transition-all"
+                          :class="simCaixa.fgts3anos===o.v ? 'text-white border-transparent' : 'bg-white text-gray-600 border-gray-200'"
+                          :style="simCaixa.fgts3anos===o.v ? 'background:#0057A6' : ''"
+                          x-text="o.l"></button>
+                </template>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1.5">Mais de um comprador ou dependente?</label>
+              <div class="grid grid-cols-2 gap-2">
+                <template x-for="o in [{v:'sim',l:'Sim, tenho'},{v:'nao',l:'Não, só eu'}]" :key="o.v">
+                  <button @click="simCaixa.maisCompradores = o.v; simSalvarCaixa()"
+                          class="px-2.5 py-2 rounded-lg text-[11px] font-bold border transition-all"
+                          :class="simCaixa.maisCompradores===o.v ? 'text-white border-transparent' : 'bg-white text-gray-600 border-gray-200'"
+                          :style="simCaixa.maisCompradores===o.v ? 'background:#0057A6' : ''"
+                          x-text="o.l"></button>
+                </template>
+              </div>
+            </div>
+
+            <div class="border-t border-gray-100 pt-3">
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Tipo de imóvel</label>
+              <select :value="simCaixa.tipoImovel" @change="simCaixa.tipoImovel = $event.target.value; simSalvarCaixa()"
+                      class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200">
+                <option value="residencial">Casa, apartamento ou terreno para morar</option>
+                <option value="comercial">Sala, loja ou espaço para seu negócio</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">O que deseja</label>
+              <select :value="simCaixa.objetivo" x-init="$nextTick(() => $el.value = simCaixa.objetivo)" @change="simCaixa.objetivo = $event.target.value; simSalvarCaixa()"
+                      class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200">
+                <template x-for="o in simCaixaObjetivos" :key="o.v">
+                  <option :value="o.v" x-text="o.l"></option>
+                </template>
+              </select>
+              <p class="text-[10px] text-gray-400 mt-1"
+                 x-text="(simCaixaObjetivos.find(o => o.v === simCaixa.objetivo) || {}).d"></p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Estado</label>
+                <select :value="simCaixa.uf" x-init="$nextTick(() => $el.value = simCaixa.uf)" @change="simCaixa.uf = $event.target.value; simSalvarCaixa()"
+                        class="w-full px-2 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200">
+                  <option value="">—</option>
+                  <template x-for="u in simUFs" :key="u">
+                    <option :value="u" x-text="u"></option>
+                  </template>
+                </select>
+              </div>
+              <div class="col-span-2">
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Cidade</label>
+                <input type="text" placeholder="Município do imóvel"
+                  class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  :value="simCaixa.cidade"
+                  @input="simCaixa.cidade = $event.target.value; simSalvarCaixa()">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1.5">Possui outro imóvel na mesma cidade?</label>
+              <div class="grid grid-cols-2 gap-2">
+                <template x-for="o in [{v:'sim',l:'Sim'},{v:'nao',l:'Não'}]" :key="o.v">
+                  <button @click="simCaixa.outroImovelCidade = o.v; simSalvarCaixa()"
+                          class="px-2.5 py-2 rounded-lg text-[11px] font-bold border transition-all"
+                          :class="simCaixa.outroImovelCidade===o.v ? 'text-white border-transparent' : 'bg-white text-gray-600 border-gray-200'"
+                          :style="simCaixa.outroImovelCidade===o.v ? 'background:#0057A6' : ''"
+                          x-text="o.l"></button>
+                </template>
+              </div>
+            </div>
+
+            <p class="text-[10px] text-gray-400 leading-relaxed border-t border-gray-100 pt-2.5">
+              <i class="fa-solid fa-lock mr-1"></i>
+              CPF e telefone ficam guardados só neste navegador e aparecem apenas no painel de cópia —
+              nunca vão para a mensagem de WhatsApp nem para o relatório impresso.
+            </p>
+          </div>
         </details>
       </div>
     </div>
@@ -3689,6 +3822,69 @@ tailwind.config = {
         definitivas são exclusivas da Caixa Econômica Federal.
       </div>
 
+    </div>
+  </div>
+
+  <!-- ===== PAINEL: DADOS PARA COLAR NO SIMULADOR DA CAIXA ===== -->
+  <div x-show="showCaixaPainel" x-transition class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
+       style="background:rgba(0,0,0,0.5)" @click.self="showCaixaPainel=false">
+    <div class="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl overflow-hidden max-h-[88vh] flex flex-col" @click.stop>
+
+      <div class="px-5 py-4 flex items-center gap-3 flex-shrink-0" style="background:#0057A6">
+        <span class="w-9 h-9 rounded-xl bg-white bg-opacity-20 flex items-center justify-center flex-shrink-0">
+          <i class="fa-solid fa-clipboard-list text-white"></i>
+        </span>
+        <div class="flex-1 min-w-0">
+          <h3 class="text-white font-black text-sm">Dados para colar na Caixa</h3>
+          <p class="text-blue-200 text-[11px]">Toque em cada campo para copiar</p>
+        </div>
+        <button @click="showCaixaPainel=false" class="text-white text-opacity-70 hover:text-opacity-100">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="overflow-y-auto flex-1 px-5 py-4">
+        <div x-show="simCamposFaltando.length > 0"
+             class="mb-3 px-3 py-2.5 rounded-xl bg-amber-50 text-amber-700 text-[11px] leading-relaxed">
+          <i class="fa-solid fa-circle-exclamation mr-1"></i>
+          Ainda falta preencher: <span class="font-bold" x-text="simCamposFaltando.join(', ')"></span>.
+        </div>
+
+        <template x-for="(grupo, idx) in ['Dados pessoais','Dados do imóvel']" :key="grupo">
+          <div class="mb-4">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2"
+               x-text="(idx + 1) + '. ' + grupo"></p>
+            <div class="space-y-1.5">
+              <template x-for="c in simCamposCaixa.filter(x => x.etapa === grupo)" :key="c.rotulo">
+                <button @click="simCopiar(c.valor, c.rotulo)"
+                        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all text-left group">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-[10px] text-gray-400" x-text="c.rotulo"></p>
+                    <p class="text-sm font-bold text-gray-800 truncate" x-text="c.valor"></p>
+                  </div>
+                  <i class="fa-regular fa-copy text-gray-300 group-hover:text-blue-500 text-sm flex-shrink-0"></i>
+                </button>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        <p class="text-[10px] text-gray-400 leading-relaxed">
+          O site da Caixa não aceita receber dados de fora — por segurança, nenhum site pode preencher
+          o formulário de outro. Por isso a cópia campo a campo: é o caminho mais rápido que existe.
+        </p>
+      </div>
+
+      <div class="px-5 py-3 border-t border-gray-100 flex gap-2 flex-shrink-0">
+        <button @click="simCopiar(simDadosParaColar(), 'Tudo')"
+                class="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-bold hover:border-gray-300">
+          <i class="fa-regular fa-copy mr-1"></i> Copiar tudo
+        </button>
+        <button @click="window.open(SIMULADOR_CAIXA, '_blank', 'noopener')"
+                class="flex-1 px-3 py-2.5 rounded-xl text-white text-sm font-bold transition-opacity hover:opacity-90" style="background:#0057A6">
+          <i class="fa-solid fa-arrow-up-right-from-square mr-1"></i> Abrir Caixa
+        </button>
+      </div>
     </div>
   </div>
 </section>
@@ -9343,6 +9539,130 @@ function app() {
       window.open(base + encodeURIComponent(texto), '_blank');
     },
 
+    /* ── Dados exigidos pela Simulação Completa da Caixa ───────────────
+       Não entram na conta desta tela: servem para o corretor chegar ao
+       simulador oficial com tudo na mão. Os campos e as opções abaixo
+       são os do próprio formulário da Caixa, na mesma ordem.
+       CPF e telefone ficam só aqui e no painel de cópia — nunca vão para
+       a mensagem de WhatsApp nem para o relatório impresso. */
+    simCaixa: Object.assign({
+      cpf: '', nascimento: '', celular: '',
+      fgts3anos: '', maisCompradores: '',
+      tipoImovel: 'residencial', objetivo: 'usado',
+      uf: '', cidade: '', outroImovelCidade: '',
+    }, JSON.parse(localStorage.getItem('amigo_sim_caixa') || '{}')),
+
+    showCaixaPainel: false,
+
+    simCaixaObjetivos: [
+      { v:'novo',       l:'Comprar novo',        d:'Imóvel na planta ou recém-construído' },
+      { v:'usado',      l:'Comprar usado',       d:'Imóvel que já teve outro dono' },
+      { v:'terreno',    l:'Comprar terreno',     d:'Adquirir lote para construir' },
+      { v:'construir',  l:'Construir',           d:'Edificar em terreno próprio' },
+      { v:'caixa',      l:'Imóveis CAIXA',       d:'Imóvel à venda pela própria CAIXA' },
+      { v:'reformar',   l:'Reformar ou ampliar', d:'Melhorias no seu imóvel' },
+      { v:'emprestimo', l:'Pegar empréstimo',    d:'Usar imóvel como garantia' },
+    ],
+
+    simUFs: ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA',
+             'PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO'],
+
+    simSalvarCaixa() {
+      localStorage.setItem('amigo_sim_caixa', JSON.stringify(this.simCaixa));
+    },
+
+    simFmtCpf(v) {
+      const d = String(v || '').replace(/\D/g, '').slice(0, 11);
+      return d.replace(/^(\d{3})(\d)/, '$1.$2')
+              .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+              .replace(/\.(\d{3})(\d{1,2})$/, '.$1-$2');
+    },
+
+    simFmtCelular(v) {
+      const d = String(v || '').replace(/\D/g, '').slice(0, 11);
+      if (d.length <= 10) return d.replace(/^(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d)/, '$1-$2');
+      return d.replace(/^(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2');
+    },
+
+    /* Confere os dígitos verificadores: evita a viagem perdida de
+       descobrir o CPF errado só lá no simulador. */
+    get simCpfValido() {
+      const d = String(this.simCaixa.cpf || '').replace(/\D/g, '');
+      if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+      const dv = (ate) => {
+        let soma = 0;
+        for (let i = 0; i < ate; i++) soma += Number(d[i]) * (ate + 1 - i);
+        const r = (soma * 10) % 11;
+        return r === 10 ? 0 : r;
+      };
+      return dv(9) === Number(d[9]) && dv(10) === Number(d[10]);
+    },
+
+    /* A data de nascimento já dá a idade usada no cálculo do prazo. */
+    simAplicarNascimento(valor) {
+      this.simCaixa.nascimento = valor;
+      const d = new Date(valor + 'T12:00:00');
+      if (!valor || isNaN(d)) { this.simSalvarCaixa(); return; }
+      const hoje = new Date();
+      let idade = hoje.getFullYear() - d.getFullYear();
+      const m = hoje.getMonth() - d.getMonth();
+      if (m < 0 || (m === 0 && hoje.getDate() < d.getDate())) idade--;
+      if (idade > 0 && idade < 120) {
+        this.simCredito.idade = idade;
+        this.simSalvar();
+      }
+      this.simSalvarCaixa();
+    },
+
+    /* O que colar, campo a campo, na ordem do formulário da Caixa. */
+    get simCamposCaixa() {
+      const c = this.simCaixa, d = this.simCredito;
+      const sn = (v) => v === 'sim' ? 'Sim' : (v === 'nao' ? 'Não' : '—');
+      const obj = this.simCaixaObjetivos.find(o => o.v === c.objetivo);
+      return [
+        { etapa: 'Dados pessoais', rotulo: 'CPF', valor: c.cpf },
+        { etapa: 'Dados pessoais', rotulo: 'Data de nascimento',
+          valor: c.nascimento ? new Date(c.nascimento + 'T12:00:00').toLocaleDateString('pt-BR') : '' },
+        { etapa: 'Dados pessoais', rotulo: 'Telefone celular', valor: c.celular },
+        { etapa: 'Dados pessoais', rotulo: 'Renda bruta mensal',
+          valor: this.simNum(d.renda) ? this.simMoedaCurta(this.simNum(d.renda)) : '' },
+        { etapa: 'Dados pessoais', rotulo: '3 anos ou mais de FGTS', valor: sn(c.fgts3anos) },
+        { etapa: 'Dados pessoais', rotulo: 'Mais de um comprador ou dependente', valor: sn(c.maisCompradores) },
+        { etapa: 'Dados do imóvel', rotulo: 'Tipo de imóvel',
+          valor: c.tipoImovel === 'comercial'
+            ? 'Sala, loja ou espaço para seu negócio'
+            : 'Casa, apartamento ou terreno para morar' },
+        { etapa: 'Dados do imóvel', rotulo: 'O que deseja', valor: obj ? obj.l : '' },
+        { etapa: 'Dados do imóvel', rotulo: 'Estado', valor: c.uf },
+        { etapa: 'Dados do imóvel', rotulo: 'Cidade', valor: c.cidade },
+        { etapa: 'Dados do imóvel', rotulo: 'Valor do imóvel',
+          valor: this.simNum(d.valorImovel) ? this.simMoedaCurta(this.simNum(d.valorImovel)) : '' },
+        { etapa: 'Dados do imóvel', rotulo: 'Possui outro imóvel na mesma cidade', valor: sn(c.outroImovelCidade) },
+      ].filter(x => x.valor && x.valor !== '—');
+    },
+
+    get simCamposFaltando() {
+      const c = this.simCaixa;
+      const faltam = [];
+      if (!c.cpf) faltam.push('CPF');
+      if (!c.nascimento) faltam.push('data de nascimento');
+      if (!c.celular) faltam.push('celular');
+      if (!this.simNum(this.simCredito.renda)) faltam.push('renda');
+      if (!c.uf) faltam.push('estado');
+      if (!c.cidade) faltam.push('cidade');
+      if (!this.simNum(this.simCredito.valorImovel)) faltam.push('valor do imóvel');
+      return faltam;
+    },
+
+    async simCopiar(texto, rotulo) {
+      try {
+        await navigator.clipboard.writeText(String(texto));
+        this.showToast(rotulo + ' copiado 📋');
+      } catch (_) {
+        this.showToast('Não consegui copiar — selecione e use ⌘C');
+      }
+    },
+
     /* Quanto a escolha da convenção muda a 1ª parcela, nesta simulação. */
     simDiferencaConvencao() {
       const pv = this.simValorFinanciado;
@@ -9366,26 +9686,27 @@ function app() {
     SIMULADOR_CAIXA: 'https://simuladorhabitacao.caixa.gov.br',
 
     simDadosParaColar() {
-      const d = this.simCredito;
       const l = [];
       if (this.simCliente) l.push('Cliente: ' + this.simCliente.nome);
-      l.push('Valor do imóvel: ' + this.simMoedaCurta(this.simNum(d.valorImovel)));
-      if (this.simNum(d.entrada)) l.push('Entrada: ' + this.simMoedaCurta(this.simNum(d.entrada)));
-      if (this.simNum(d.fgts))    l.push('FGTS: ' + this.simMoedaCurta(this.simNum(d.fgts)));
-      if (this.simNum(d.renda))   l.push('Renda bruta familiar: ' + this.simMoedaCurta(this.simNum(d.renda)));
-      if (Number(d.idade))        l.push('Idade do proponente: ' + d.idade + ' anos');
-      l.push('Prazo pretendido: ' + d.prazo + ' meses');
-      return l.join('\n');
+      let etapa = '';
+      this.simCamposCaixa.forEach(c => {
+        if (c.etapa !== etapa) { etapa = c.etapa; l.push('', '— ' + etapa + ' —'); }
+        l.push(c.rotulo + ': ' + c.valor);
+      });
+      l.push('', 'Prazo pretendido: ' + this.simCredito.prazo + ' meses');
+      return l.join('\n').trim();
     },
 
+    /* Abre o simulador e o painel de cópia ao mesmo tempo: nenhum site
+       pode preencher o formulário de outro — é uma trava do navegador,
+       não uma limitação nossa — então o caminho mais rápido é ter os
+       campos lado a lado para colar um a um. */
     async abrirSimuladorCaixa() {
-      const dados = this.simDadosParaColar();
       try {
-        await navigator.clipboard.writeText(dados);
-        this.showToast('Dados copiados — é só colar no simulador 📋');
-      } catch (_) {
-        this.showToast('Abrindo o simulador da Caixa');
-      }
+        await navigator.clipboard.writeText(this.simDadosParaColar());
+        this.showToast('Dados copiados — cole no simulador 📋');
+      } catch (_) { /* o painel resolve: dá para copiar campo a campo */ }
+      this.showCaixaPainel = true;
       window.open(this.SIMULADOR_CAIXA, '_blank', 'noopener');
     },
 
