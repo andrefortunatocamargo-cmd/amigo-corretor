@@ -856,6 +856,20 @@ tailwind.config = {
       </div>
     </div>
 
+    <!-- ===== ATALHO CRÉDITO CAIXA ===== -->
+    <div class="mb-5 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm cursor-pointer transition-opacity hover:opacity-90"
+         style="background:linear-gradient(135deg,#0057A6,#003d75)" @click="abrirSimulador(null)">
+      <div class="w-10 h-10 rounded-xl bg-white bg-opacity-20 flex items-center justify-center flex-shrink-0">
+        <i class="fa-solid fa-building-columns text-white text-base"></i>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="text-white font-black text-sm">Simular crédito na Caixa</p>
+        <p class="text-blue-200 text-xs truncate">Parcela, enquadramento e tabelas SAC ou Price</p>
+      </div>
+      <i class="fa-solid fa-arrow-right text-white text-xs opacity-70 flex-shrink-0"></i>
+    </div>
+    <!-- ===== /ATALHO CRÉDITO CAIXA ===== -->
+
     <!-- ===== LEMBRETE CAPTAÇÕES ===== -->
     <div x-show="captacoesPendentesHoje().length > 0" class="mb-5">
       <div class="bg-purple-600 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm cursor-pointer hover:bg-purple-700 transition-colors"
@@ -1927,6 +1941,21 @@ tailwind.config = {
         <p class="text-[11px] transition-all" :class="section==='visitas' ? 'text-amber-300' : 'text-white text-opacity-30'">Roteiro do dia de visitas</p>
       </div>
       <i x-show="section==='visitas'" class="fa-solid fa-chevron-right text-white text-opacity-40 text-xs flex-shrink-0"></i>
+    </button>
+
+    <!-- Crédito Caixa -->
+    <button @click="section='credito'; menuOpen=false"
+            class="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-150 text-left relative"
+            :class="section==='credito' ? 'bg-white bg-opacity-15' : 'hover:bg-white/10'">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all"
+           :class="section==='credito' ? 'bg-white bg-opacity-20' : 'bg-white bg-opacity-5'">
+        <i class="fa-solid fa-building-columns text-base" :class="section==='credito' ? 'text-white' : 'text-white text-opacity-50'"></i>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="font-bold text-sm transition-all" :class="section==='credito' ? 'text-white' : 'text-white text-opacity-55'">Crédito Caixa</p>
+        <p class="text-[11px] transition-all" :class="section==='credito' ? 'text-blue-300' : 'text-white text-opacity-30'">Pré-análise e tabelas SAC/Price</p>
+      </div>
+      <i x-show="section==='credito'" class="fa-solid fa-chevron-right text-white text-opacity-40 text-xs flex-shrink-0"></i>
     </button>
 
   </nav>
@@ -3267,6 +3296,336 @@ tailwind.config = {
   </div>
 </section>
 
+
+<!-- ========== SEÇÃO CRÉDITO CAIXA ========== -->
+<section x-show="section==='credito'" class="max-w-7xl mx-auto px-4 py-4 sm:py-6 pb-24 sm:pb-6">
+
+  <!-- Header -->
+  <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <h1 class="text-xl font-black text-gray-800 flex items-center gap-2">
+        <span class="w-9 h-9 rounded-xl flex items-center justify-center text-white" style="background:#0057A6"><i class="fa-solid fa-building-columns text-base"></i></span>
+        Crédito Caixa
+      </h1>
+      <p class="text-xs text-gray-500 mt-0.5">Pré-análise de financiamento habitacional · tabelas SAC e Price</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button @click="simImprimir()" class="flex items-center gap-2 text-sm font-bold px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-600 hover:border-gray-300 transition-colors">
+        <i class="fa-solid fa-print"></i> <span class="hidden sm:inline">Imprimir</span>
+      </button>
+      <button @click="simEnviarWhatsApp()" class="flex items-center gap-2 text-white text-sm font-bold px-3.5 py-2.5 rounded-xl transition-colors" style="background:#25D366">
+        <i class="fa-brands fa-whatsapp"></i> <span class="hidden sm:inline">Enviar</span>
+      </button>
+      <button @click="simLimpar()" title="Limpar simulação" class="flex items-center justify-center w-10 h-10 rounded-xl border border-gray-200 bg-white text-gray-400 hover:text-red-500 hover:border-red-200 transition-colors">
+        <i class="fa-solid fa-eraser"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+
+    <!-- ===== COLUNA ESQUERDA: DADOS ===== -->
+    <div class="lg:col-span-2 space-y-4">
+
+      <!-- Cliente -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2">Cliente (opcional)</label>
+        <select :value="simCredito.clienteId" @change="simVincularCliente($event.target.value)"
+                class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200">
+          <option value="">— Simulação avulsa —</option>
+          <template x-for="c in clientes" :key="c.id">
+            <option :value="c.id" x-text="c.nome"></option>
+          </template>
+        </select>
+        <p x-show="simCliente" class="text-[11px] text-gray-400 mt-2">
+          A simulação vai no WhatsApp direto para este cliente.
+        </p>
+      </div>
+
+      <!-- Valores -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-3">
+        <h2 class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Valores</h2>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Valor do imóvel</label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-semibold">R$</span>
+            <input type="text" inputmode="numeric" placeholder="0"
+              class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-200"
+              :value="simCredito.valorImovel ? Number(simCredito.valorImovel).toLocaleString('pt-BR') : ''"
+              @input="simCredito.valorImovel = $event.target.value.replace(/\D/g,''); $event.target.value = simCredito.valorImovel ? Number(simCredito.valorImovel).toLocaleString('pt-BR') : ''; simSalvar()">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Entrada</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-semibold">R$</span>
+              <input type="text" inputmode="numeric" placeholder="0"
+                class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-200"
+                :value="simCredito.entrada ? Number(simCredito.entrada).toLocaleString('pt-BR') : ''"
+                @input="simCredito.entrada = $event.target.value.replace(/\D/g,''); $event.target.value = simCredito.entrada ? Number(simCredito.entrada).toLocaleString('pt-BR') : ''; simSalvar()">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">FGTS</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-semibold">R$</span>
+              <input type="text" inputmode="numeric" placeholder="0"
+                class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-200"
+                :value="simCredito.fgts ? Number(simCredito.fgts).toLocaleString('pt-BR') : ''"
+                @input="simCredito.fgts = $event.target.value.replace(/\D/g,''); $event.target.value = simCredito.fgts ? Number(simCredito.fgts).toLocaleString('pt-BR') : ''; simSalvar()">
+            </div>
+          </div>
+        </div>
+
+        <!-- Resumo do financiado -->
+        <div class="rounded-xl px-3 py-2.5 flex items-center justify-between" style="background:#f0f6fc">
+          <span class="text-xs font-semibold text-gray-500">Valor financiado</span>
+          <div class="text-right">
+            <span class="text-base font-black" style="color:#0057A6" x-text="simMoedaCurta(simValorFinanciado)"></span>
+            <span class="block text-[10px] text-gray-400" x-text="simCota > 0 ? simPct(simCota) + ' do imóvel' : ''"></span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Renda bruta familiar</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-semibold">R$</span>
+              <input type="text" inputmode="numeric" placeholder="0"
+                class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-200"
+                :value="simCredito.renda ? Number(simCredito.renda).toLocaleString('pt-BR') : ''"
+                @input="simCredito.renda = $event.target.value.replace(/\D/g,''); $event.target.value = simCredito.renda ? Number(simCredito.renda).toLocaleString('pt-BR') : ''; simSalvar()">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Idade (mais velho)</label>
+            <input type="number" min="18" max="80" placeholder="anos"
+              class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-200"
+              x-model="simCredito.idade" @input="simSalvar()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Condições -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-3">
+        <h2 class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Condições do financiamento</h2>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Linha de crédito</label>
+          <select :value="simCredito.linha" @change="simTrocarLinha($event.target.value)"
+                  class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200">
+            <template x-for="l in simLinhas" :key="l.id">
+              <option :value="l.id" x-text="l.nome"></option>
+            </template>
+          </select>
+          <p class="text-[11px] text-gray-400 mt-1.5" x-text="simLinhaAtual.obs"></p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Juros (% ao ano)</label>
+            <input type="number" step="0.01" min="0"
+              class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-200"
+              x-model.number="simCredito.taxaAnual" @input="simSalvar()">
+            <p class="text-[10px] text-gray-400 mt-1" x-text="'equivale a ' + simPct(simTaxaMensal*100, 3) + ' a.m.'"></p>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Prazo (meses)</label>
+            <input type="number" min="12" :max="simPrazoMax" step="12"
+              class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-200"
+              x-model.number="simCredito.prazo" @input="simSalvar()">
+            <p class="text-[10px] text-gray-400 mt-1" x-text="'máximo aqui: ' + simPrazoMax + ' meses'"></p>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Sistema de amortização</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button @click="simCredito.sistema='SAC'; simVerTabela='SAC'; simSalvar()"
+                    class="px-3 py-2.5 rounded-xl text-sm font-bold border transition-all text-left"
+                    :class="simCredito.sistema==='SAC' ? 'text-white border-transparent' : 'bg-white text-gray-600 border-gray-200'"
+                    :style="simCredito.sistema==='SAC' ? 'background:#0057A6' : ''">
+              SAC
+              <span class="block text-[10px] font-normal opacity-75">parcela cai todo mês</span>
+            </button>
+            <button @click="simCredito.sistema='PRICE'; simVerTabela='PRICE'; simSalvar()"
+                    class="px-3 py-2.5 rounded-xl text-sm font-bold border transition-all text-left"
+                    :class="simCredito.sistema==='PRICE' ? 'text-white border-transparent' : 'bg-white text-gray-600 border-gray-200'"
+                    :style="simCredito.sistema==='PRICE' ? 'background:#0057A6' : ''">
+              Price
+              <span class="block text-[10px] font-normal opacity-75">parcela fixa</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Encargos -->
+        <details class="pt-1">
+          <summary class="text-xs font-semibold text-gray-500 cursor-pointer select-none hover:text-gray-700">
+            Seguros e tarifa <span class="text-gray-300">(ajuste fino)</span>
+          </summary>
+          <div class="grid grid-cols-3 gap-2 mt-3">
+            <div>
+              <label class="block text-[10px] font-semibold text-gray-500 mb-1">MIP % a.m.</label>
+              <input type="number" step="0.001" min="0" class="w-full px-2 py-2 rounded-lg border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-200"
+                     x-model.number="simCredito.mip" @input="simSalvar()">
+            </div>
+            <div>
+              <label class="block text-[10px] font-semibold text-gray-500 mb-1">DFI % a.m.</label>
+              <input type="number" step="0.0001" min="0" class="w-full px-2 py-2 rounded-lg border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-200"
+                     x-model.number="simCredito.dfi" @input="simSalvar()">
+            </div>
+            <div>
+              <label class="block text-[10px] font-semibold text-gray-500 mb-1">Tarifa R$</label>
+              <input type="number" step="1" min="0" class="w-full px-2 py-2 rounded-lg border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-200"
+                     x-model.number="simCredito.taxaAdm" @input="simSalvar()">
+            </div>
+          </div>
+          <p class="text-[10px] text-gray-400 mt-2 leading-relaxed">
+            MIP incide sobre o saldo devedor; DFI sobre o valor do imóvel. Os percentuais variam com a idade
+            e o perfil do proponente — confirme na proposta da agência.
+          </p>
+        </details>
+      </div>
+    </div>
+
+    <!-- ===== COLUNA DIREITA: RESULTADO ===== -->
+    <div class="lg:col-span-3 space-y-4">
+
+      <!-- Veredito -->
+      <div class="bg-white rounded-2xl shadow-sm border p-4"
+           :class="simBloqueado ? 'border-red-200' : 'border-gray-100'">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs"
+                :style="simBloqueado ? 'background:#dc2626' : 'background:#16a34a'">
+            <i class="fa-solid" :class="simBloqueado ? 'fa-triangle-exclamation' : 'fa-check'"></i>
+          </span>
+          <h2 class="text-sm font-black text-gray-800" x-text="simBloqueado ? 'Não enquadra como está' : 'Enquadramento'"></h2>
+        </div>
+        <div class="space-y-2">
+          <template x-for="(a, i) in simAvisos" :key="i">
+            <div class="flex items-start gap-2 text-xs leading-relaxed px-3 py-2 rounded-xl"
+                 :class="a.nivel==='erro' ? 'bg-red-50 text-red-700' : (a.nivel==='alerta' ? 'bg-amber-50 text-amber-700' : (a.nivel==='ok' ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'))">
+              <i class="fa-solid mt-0.5 flex-shrink-0"
+                 :class="a.nivel==='erro' ? 'fa-circle-xmark' : (a.nivel==='alerta' ? 'fa-circle-exclamation' : (a.nivel==='ok' ? 'fa-circle-check' : 'fa-circle-info'))"></i>
+              <span x-text="a.texto"></span>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Comparativo SAC × Price -->
+      <div x-show="simValorFinanciado > 0 && simCredito.prazo > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <template x-for="s in ['SAC','PRICE']" :key="s">
+          <div class="bg-white rounded-2xl shadow-sm border p-4 transition-all"
+               :class="simCredito.sistema===s ? 'border-blue-300 ring-1 ring-blue-200' : 'border-gray-100'">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-sm font-black text-gray-800" x-text="s==='SAC' ? 'SAC' : 'Price'"></h3>
+              <button x-show="simCredito.sistema!==s" @click="simCredito.sistema=s; simVerTabela=s; simSalvar()"
+                      class="text-[10px] font-bold px-2 py-1 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-300">usar</button>
+              <span x-show="simCredito.sistema===s" class="text-[10px] font-bold px-2 py-1 rounded-lg text-white" style="background:#0057A6">escolhido</span>
+            </div>
+            <template x-if="simResumo(s)">
+              <div class="space-y-1.5">
+                <div class="flex items-baseline justify-between">
+                  <span class="text-[11px] text-gray-500">1ª parcela</span>
+                  <span class="text-lg font-black text-gray-800" x-text="simMoeda(simResumo(s).primeira)"></span>
+                </div>
+                <div class="flex items-baseline justify-between">
+                  <span class="text-[11px] text-gray-500">Última parcela</span>
+                  <span class="text-sm font-bold text-gray-600" x-text="simMoeda(simResumo(s).ultima)"></span>
+                </div>
+                <div class="border-t border-gray-100 pt-1.5 mt-1.5 space-y-1">
+                  <div class="flex items-baseline justify-between">
+                    <span class="text-[11px] text-gray-500">Total de juros</span>
+                    <span class="text-xs font-bold text-gray-600" x-text="simMoedaCurta(simResumo(s).juros)"></span>
+                  </div>
+                  <div class="flex items-baseline justify-between">
+                    <span class="text-[11px] text-gray-500">Seguros + tarifa</span>
+                    <span class="text-xs font-bold text-gray-600" x-text="simMoedaCurta(simResumo(s).seguros)"></span>
+                  </div>
+                  <div class="flex items-baseline justify-between">
+                    <span class="text-[11px] font-semibold text-gray-600">Total pago</span>
+                    <span class="text-xs font-black" style="color:#0057A6" x-text="simMoedaCurta(simResumo(s).total)"></span>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </template>
+      </div>
+
+      <!-- Tabela de amortização -->
+      <div x-show="simValorFinanciado > 0 && simCredito.prazo > 0" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-2">
+          <h2 class="text-sm font-black text-gray-800">Tabela de amortização</h2>
+          <div class="flex gap-1.5">
+            <template x-for="s in ['SAC','PRICE']" :key="s">
+              <button @click="simVerTabela=s; simAnoAberto=0"
+                      class="text-[11px] font-bold px-3 py-1.5 rounded-lg border transition-all"
+                      :class="simVerTabela===s ? 'text-white border-transparent' : 'bg-white text-gray-500 border-gray-200'"
+                      :style="simVerTabela===s ? 'background:#0057A6' : ''"
+                      x-text="s==='SAC' ? 'SAC' : 'Price'"></button>
+            </template>
+          </div>
+        </div>
+
+        <p class="px-4 py-2 text-[11px] text-gray-400 border-b border-gray-50">
+          Resumo por ano — toque num ano para ver mês a mês.
+        </p>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs">
+            <thead>
+              <tr class="bg-gray-50 text-gray-400 text-[10px] uppercase tracking-wide">
+                <th class="px-3 py-2 text-left font-bold">Ano</th>
+                <th class="px-3 py-2 text-right font-bold">1ª parcela</th>
+                <th class="px-3 py-2 text-right font-bold">Última</th>
+                <th class="px-3 py-2 text-right font-bold hidden sm:table-cell">Juros no ano</th>
+                <th class="px-3 py-2 text-right font-bold">Saldo devedor</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="r in simLinhasFlat(simVerTabela)" :key="r.k">
+                <tr class="border-t transition-colors"
+                    :class="r.tipo==='ano' ? 'border-gray-50 cursor-pointer hover:bg-blue-50' : 'border-gray-100 bg-gray-50 text-[11px]'"
+                    @click="r.tipo==='ano' && (simAnoAberto = simAnoAberto === r.ano ? 0 : r.ano)">
+                  <td class="px-3 py-2.5" :class="r.tipo==='ano' ? 'font-bold text-gray-700' : 'py-1.5 pl-9 text-gray-500'">
+                    <i x-show="r.tipo==='ano'" class="fa-solid text-[9px] text-gray-300 mr-1.5"
+                       :class="simAnoAberto===r.ano ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
+                    <span x-text="r.rot"></span>
+                    <span class="text-gray-300 font-normal" x-text="r.sub"></span>
+                  </td>
+                  <td class="px-3 py-2.5 text-right tabular-nums"
+                      :class="r.tipo==='ano' ? 'font-semibold text-gray-700' : 'py-1.5 text-gray-700'" x-text="r.c1"></td>
+                  <td class="px-3 py-2.5 text-right tabular-nums"
+                      :class="r.tipo==='ano' ? 'text-gray-500' : 'py-1.5 text-gray-400'" x-text="r.c2"></td>
+                  <td class="px-3 py-2.5 text-right tabular-nums hidden sm:table-cell"
+                      :class="r.tipo==='ano' ? 'text-gray-500' : 'py-1.5 text-gray-400'" x-text="r.c3"></td>
+                  <td class="px-3 py-2.5 text-right font-semibold tabular-nums"
+                      :class="r.tipo==='ano' ? '' : 'py-1.5 font-normal text-gray-500'"
+                      :style="r.tipo==='ano' ? 'color:#0057A6' : ''" x-text="r.c4"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Ressalva -->
+      <div class="rounded-2xl px-4 py-3 text-[11px] leading-relaxed text-gray-500 border border-gray-100 bg-gray-50">
+        <i class="fa-solid fa-circle-info mr-1 text-gray-400"></i>
+        Simulação de apoio à negociação. As taxas vêm preenchidas como referência e devem ser ajustadas
+        conforme a proposta que o cliente receber. A análise de crédito, a aprovação e as condições
+        definitivas são exclusivas da Caixa Econômica Federal.
+      </div>
+
+    </div>
+  </div>
+</section>
+<!-- ========== /SEÇÃO CRÉDITO CAIXA ========== -->
 <!-- ========== BOTTOM NAV (mobile only) ========== -->
 <nav class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-2xl" style="padding-bottom: env(safe-area-inset-bottom)">
   <div class="flex items-stretch h-16">
@@ -4854,6 +5213,11 @@ window.MediaStore = (function () {
 
 <script>
 function app() {
+  /* Cache das tabelas de amortização: fica fora do objeto reativo do
+     Alpine para não disparar repintura ao ser gravado. */
+  let _simCache = { chave: '' };
+  let _simResumos = { chave: '' };
+
   return {
     darkMode: localStorage.getItem('darkMode') === 'true',
     paletaAtual: localStorage.getItem('amigo_paleta') || 'verde',
@@ -8551,6 +8915,434 @@ function app() {
       this.save();
       this.showAjustarData = false;
       this.showToast('Data atualizada! Timeline reprogramada com sucesso. 📅');
+    },
+
+    /* ══════════════════════════════════════════════════════════════════
+       PRÉ-ANÁLISE DE CRÉDITO HABITACIONAL — CAIXA
+       ──────────────────────────────────────────────────────────────────
+       Estima parcela, enquadramento e monta as tabelas SAC e Price.
+       É uma simulação de apoio à negociação: quem aprova crédito é a
+       Caixa. Por isso toda taxa fica editável na tela — o corretor
+       ajusta conforme a proposta que o cliente recebeu da agência.
+       ═══════════════════════════════════════════════════════════════ */
+
+    /* Linhas de financiamento. As taxas são REFERÊNCIA (nov/2026) e
+       servem como ponto de partida: mudam com frequência e variam por
+       relacionamento do cliente com o banco. */
+    simLinhas: [
+      { id:'poupanca', nome:'SBPE · Poupança + juros', taxa:10.49, cota:80, prazoMax:420,
+        obs:'Parcela acompanha o rendimento da poupança. Imóvel novo ou usado.' },
+      { id:'tr',       nome:'SBPE · TR + juros',       taxa:11.49, cota:80, prazoMax:420,
+        obs:'Correção pela TR. A linha mais usada do SBPE.' },
+      { id:'fixa',     nome:'SBPE · Taxa fixa',        taxa:11.99, cota:70, prazoMax:360,
+        obs:'Sem correção por índice: previsibilidade total da parcela.' },
+      { id:'mcmv1',    nome:'MCMV · Faixa 1',          taxa:4.50,  cota:95, prazoMax:420, rendaMax:2850,
+        obs:'Renda de referência até R$ 2.850. Subsídio conforme a região.' },
+      { id:'mcmv2',    nome:'MCMV · Faixa 2',          taxa:5.50,  cota:90, prazoMax:420, rendaMax:4700,
+        obs:'Renda de referência até R$ 4.700.' },
+      { id:'mcmv3',    nome:'MCMV · Faixa 3',          taxa:7.66,  cota:85, prazoMax:420, rendaMax:8600,
+        obs:'Renda de referência até R$ 8.600.' },
+      { id:'mcmv4',    nome:'MCMV · Faixa 4 (Classe Média)', taxa:10.00, cota:80, prazoMax:420, rendaMax:12000,
+        obs:'Renda de referência até R$ 12.000. Imóvel até R$ 500 mil.' },
+    ],
+
+    simCredito: Object.assign({
+      clienteId: '',
+      valorImovel: '',
+      entrada: '',
+      fgts: '',
+      renda: '',
+      idade: '',
+      prazo: 360,
+      linha: 'poupanca',
+      taxaAnual: 10.49,
+      sistema: 'SAC',
+      mip: 0.025,        // % ao mês sobre o saldo devedor
+      dfi: 0.0045,       // % ao mês sobre o valor do imóvel
+      taxaAdm: 25,       // tarifa mensal de administração (R$)
+      comprometimentoMax: 30,
+    }, JSON.parse(localStorage.getItem('amigo_sim_credito') || '{}')),
+
+    simVerTabela: 'SAC',   // qual tabela está aberta embaixo
+    simAnoAberto: 0,       // 0 = resumo por ano; >0 = ano expandido
+
+    simSalvar() {
+      localStorage.setItem('amigo_sim_credito', JSON.stringify(this.simCredito));
+    },
+
+    get simLinhaAtual() {
+      return this.simLinhas.find(l => l.id === this.simCredito.linha) || this.simLinhas[0];
+    },
+
+    /* Trocar de linha traz a taxa e o prazo de referência junto. */
+    simTrocarLinha(id) {
+      const l = this.simLinhas.find(x => x.id === id);
+      if (!l) return;
+      this.simCredito.linha = id;
+      this.simCredito.taxaAnual = l.taxa;
+      if (Number(this.simCredito.prazo) > l.prazoMax) this.simCredito.prazo = l.prazoMax;
+      this.simSalvar();
+    },
+
+    simNum(v) { return Number(String(v ?? '').replace(/\./g, '').replace(',', '.')) || 0; },
+
+    simMoeda(v) {
+      return 'R$ ' + (Number(v) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    },
+
+    /* Porcentagem no formato brasileiro: 30,7% e não 30.7% */
+    simPct(v, casas) {
+      return (Number(v) || 0).toLocaleString('pt-BR', {
+        minimumFractionDigits: casas ?? 1, maximumFractionDigits: casas ?? 1 }) + '%';
+    },
+
+    simMoedaCurta(v) {
+      return 'R$ ' + (Number(v) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    },
+
+    get simValorFinanciado() {
+      const bruto = this.simNum(this.simCredito.valorImovel)
+                  - this.simNum(this.simCredito.entrada)
+                  - this.simNum(this.simCredito.fgts);
+      return Math.max(0, bruto);
+    },
+
+    get simCota() {
+      const vi = this.simNum(this.simCredito.valorImovel);
+      return vi > 0 ? (this.simValorFinanciado / vi) * 100 : 0;
+    },
+
+    /* Taxa anual efetiva → mensal equivalente. */
+    get simTaxaMensal() {
+      const a = Number(this.simCredito.taxaAnual) || 0;
+      return Math.pow(1 + a / 100, 1 / 12) - 1;
+    },
+
+    /* Caixa limita prazo + idade a 80 anos e 6 meses. */
+    get simPrazoMaxIdade() {
+      const idade = Number(this.simCredito.idade) || 0;
+      if (!idade) return this.simLinhaAtual.prazoMax;
+      return Math.max(0, Math.floor((80.5 - idade) * 12));
+    },
+
+    get simPrazoMax() {
+      return Math.min(this.simLinhaAtual.prazoMax, this.simPrazoMaxIdade);
+    },
+
+    /* Monta a tabela mês a mês. Guardada em cache fora do objeto
+       reativo: 420 linhas × 2 sistemas a cada repintura seria caro. */
+    simTabela(sistema) {
+      const d = this.simCredito;
+      const chave = [this.simValorFinanciado, d.prazo, d.taxaAnual, d.mip, d.dfi, d.taxaAdm, d.valorImovel].join('|');
+      if (_simCache.chave !== chave) {
+        _simCache = { chave, SAC: this._simMontar('SAC'), PRICE: this._simMontar('PRICE') };
+      }
+      return _simCache[sistema] || [];
+    },
+
+    _simMontar(sistema) {
+      const d = this.simCredito;
+      const pv = this.simValorFinanciado;
+      const n = Math.max(0, Math.floor(Number(d.prazo) || 0));
+      const i = this.simTaxaMensal;
+      if (pv <= 0 || n <= 0) return [];
+
+      const dfi = this.simNum(d.valorImovel) * (Number(d.dfi) || 0) / 100;
+      const adm = Number(d.taxaAdm) || 0;
+      const amortSac = pv / n;
+      const pmtPrice = i > 0 ? pv * i / (1 - Math.pow(1 + i, -n)) : pv / n;
+
+      const linhas = [];
+      let saldo = pv;
+      for (let k = 1; k <= n; k++) {
+        const juros = saldo * i;
+        const amort = sistema === 'SAC' ? amortSac : pmtPrice - juros;
+        const mip = saldo * (Number(d.mip) || 0) / 100;
+        const parcela = amort + juros;
+        saldo = Math.max(0, saldo - amort);
+        linhas.push({
+          n: k, juros, amort, parcela, mip, dfi, adm,
+          total: parcela + mip + dfi + adm,
+          saldo,
+        });
+      }
+      return linhas;
+    },
+
+    simResumo(sistema) {
+      const t = this.simTabela(sistema);
+      if (!t.length) return null;
+      if (_simResumos.chave === _simCache.chave && _simResumos[sistema]) return _simResumos[sistema];
+      if (_simResumos.chave !== _simCache.chave) _simResumos = { chave: _simCache.chave };
+      const soma = (campo) => t.reduce((s, l) => s + l[campo], 0);
+      _simResumos[sistema] = {
+        primeira: t[0].total,
+        ultima: t[t.length - 1].total,
+        juros: soma('juros'),
+        seguros: soma('mip') + soma('dfi') + soma('adm'),
+        parcelas: soma('parcela'),
+        total: soma('total'),
+        financiado: this.simValorFinanciado,
+      };
+      return _simResumos[sistema];
+    },
+
+    get simComprometimento() {
+      const r = this.simNum(this.simCredito.renda);
+      const res = this.simResumo(this.simCredito.sistema);
+      return r > 0 && res ? (res.primeira / r) * 100 : 0;
+    },
+
+    get simRendaMinima() {
+      const res = this.simResumo(this.simCredito.sistema);
+      const max = Number(this.simCredito.comprometimentoMax) || 30;
+      return res ? res.primeira / (max / 100) : 0;
+    },
+
+    /* Veredito do enquadramento: o que trava, o que só merece atenção. */
+    get simAvisos() {
+      const d = this.simCredito;
+      const avisos = [];
+      const linha = this.simLinhaAtual;
+      const vi = this.simNum(d.valorImovel);
+      const renda = this.simNum(d.renda);
+      const prazo = Number(d.prazo) || 0;
+      const idade = Number(d.idade) || 0;
+      const res = this.simResumo(d.sistema);
+      const maxComp = Number(d.comprometimentoMax) || 30;
+
+      if (!vi || !this.simValorFinanciado) {
+        avisos.push({ nivel: 'info', texto: 'Informe o valor do imóvel e a entrada para ver o resultado.' });
+        return avisos;
+      }
+
+      if (this.simCota > linha.cota) {
+        avisos.push({ nivel: 'erro',
+          texto: `Financiando ${this.simPct(this.simCota)} do imóvel — a linha ${linha.nome} cobre até ${linha.cota}%. ` +
+                 `Falta ${this.simMoedaCurta(this.simValorFinanciado - vi * linha.cota / 100)} de entrada.` });
+      } else {
+        avisos.push({ nivel: 'ok', texto: `Cota de ${this.simPct(this.simCota)} — dentro do limite de ${linha.cota}% da linha.` });
+      }
+
+      if (prazo > linha.prazoMax) {
+        avisos.push({ nivel: 'erro', texto: `Prazo de ${prazo} meses acima do máximo de ${linha.prazoMax} meses desta linha.` });
+      }
+      if (idade && prazo > this.simPrazoMaxIdade) {
+        avisos.push({ nivel: 'erro',
+          texto: `Com ${idade} anos, o prazo máximo é ${this.simPrazoMaxIdade} meses ` +
+                 `(a Caixa limita idade + prazo a 80 anos e 6 meses).` });
+      }
+
+      if (renda && res) {
+        const comp = this.simComprometimento;
+        if (comp > maxComp) {
+          avisos.push({ nivel: 'erro',
+            texto: `A 1ª parcela compromete ${this.simPct(comp)} da renda — o teto usual é ${maxComp}%. ` +
+                   `Seria preciso renda de ${this.simMoedaCurta(this.simRendaMinima)}.` });
+        } else {
+          avisos.push({ nivel: 'ok', texto: `1ª parcela compromete ${this.simPct(comp)} da renda — dentro dos ${maxComp}%.` });
+        }
+      } else if (res) {
+        avisos.push({ nivel: 'info', texto: `Informe a renda bruta familiar para checar o comprometimento. Necessária: ${this.simMoedaCurta(this.simRendaMinima)}.` });
+      }
+
+      if (linha.rendaMax && renda > linha.rendaMax) {
+        avisos.push({ nivel: 'alerta',
+          texto: `Renda acima do teto de referência da ${linha.nome} (${this.simMoedaCurta(linha.rendaMax)}). Confirme a faixa na agência.` });
+      }
+
+      return avisos;
+    },
+
+    get simBloqueado() {
+      return this.simAvisos.some(a => a.nivel === 'erro');
+    },
+
+    /* Prefill a partir de um cliente da carteira. */
+    simVincularCliente(id) {
+      this.simCredito.clienteId = id;
+      const c = this.clientes.find(x => x.id === id);
+      if (c && c.valorInteresse && !this.simNum(this.simCredito.valorImovel)) {
+        this.simCredito.valorImovel = String(c.valorInteresse);
+      }
+      this.simSalvar();
+    },
+
+    get simCliente() {
+      return this.clientes.find(c => c.id === this.simCredito.clienteId) || null;
+    },
+
+    abrirSimulador(clienteId) {
+      this.section = 'credito';
+      this.menuOpen = false;
+      if (clienteId) this.simVincularCliente(clienteId);
+    },
+
+    simLimpar() {
+      this.simCredito = Object.assign({}, this.simCredito, {
+        clienteId: '', valorImovel: '', entrada: '', fgts: '', renda: '', idade: '',
+      });
+      this.simSalvar();
+      this.showToast('Simulação limpa');
+    },
+
+    /* Agrupa a tabela por ano — 420 linhas de uma vez não se lê. */
+    simPorAno(sistema) {
+      const t = this.simTabela(sistema);
+      const anos = [];
+      for (let a = 0; a * 12 < t.length; a++) {
+        const fatia = t.slice(a * 12, a * 12 + 12);
+        anos.push({
+          ano: a + 1,
+          de: fatia[0].n,
+          ate: fatia[fatia.length - 1].n,
+          primeira: fatia[0].total,
+          ultima: fatia[fatia.length - 1].total,
+          juros: fatia.reduce((s, l) => s + l.juros, 0),
+          amort: fatia.reduce((s, l) => s + l.amort, 0),
+          saldo: fatia[fatia.length - 1].saldo,
+          linhas: fatia,
+        });
+      }
+      return anos;
+    },
+
+    /* Ano + meses numa lista só: cada item vira uma <tr>, sem aninhar
+       tbody (que o navegador desmonta e quebraria o x-for). */
+    simLinhasFlat(sistema) {
+      const fora = [];
+      this.simPorAno(sistema).forEach(a => {
+        fora.push({
+          k: 'a' + a.ano, tipo: 'ano', ano: a.ano,
+          rot: 'Ano ' + a.ano, sub: ' · mês ' + a.de + '–' + a.ate,
+          c1: this.simMoeda(a.primeira), c2: this.simMoeda(a.ultima),
+          c3: this.simMoedaCurta(a.juros), c4: this.simMoedaCurta(a.saldo),
+        });
+        if (this.simAnoAberto === a.ano) {
+          a.linhas.forEach(m => fora.push({
+            k: 'm' + m.n, tipo: 'mes', ano: a.ano,
+            rot: 'mês ' + m.n, sub: '',
+            c1: this.simMoeda(m.total), c2: 'juros ' + this.simMoeda(m.juros),
+            c3: 'amort. ' + this.simMoeda(m.amort), c4: this.simMoedaCurta(m.saldo),
+          }));
+        }
+      });
+      return fora;
+    },
+
+    simTextoWhatsApp() {
+      const d = this.simCredito;
+      const res = this.simResumo(d.sistema);
+      if (!res) return '';
+      const l = this.simLinhaAtual;
+      let m = '🏦 *PRÉ-ANÁLISE DE CRÉDITO — CAIXA*\n';
+      m += '_Simulação de apoio · AMiGO Corretor_\n\n';
+      if (this.simCliente) m += `👤 ${this.simCliente.nome}\n\n`;
+      m += `🏠 Imóvel: ${this.simMoedaCurta(this.simNum(d.valorImovel))}\n`;
+      m += `💰 Entrada: ${this.simMoedaCurta(this.simNum(d.entrada))}\n`;
+      if (this.simNum(d.fgts)) m += `🏛️ FGTS: ${this.simMoedaCurta(this.simNum(d.fgts))}\n`;
+      m += `📄 Financiado: ${this.simMoedaCurta(res.financiado)}\n\n`;
+      m += `📋 Linha: ${l.nome}\n`;
+      m += `📈 Juros: ${this.simPct(d.taxaAnual, 2)} a.a.\n`;
+      m += `⏳ Prazo: ${d.prazo} meses\n`;
+      m += `⚙️ Sistema: ${d.sistema === 'SAC' ? 'SAC (parcela decrescente)' : 'Price (parcela fixa)'}\n\n`;
+      m += '━━━━━━━━━━━━━━━━━━━━\n';
+      m += `*1ª parcela: ${this.simMoeda(res.primeira)}*\n`;
+      m += `Última parcela: ${this.simMoeda(res.ultima)}\n`;
+      m += `Total de juros: ${this.simMoedaCurta(res.juros)}\n`;
+      m += `Total pago: ${this.simMoedaCurta(res.total)}\n`;
+      m += '━━━━━━━━━━━━━━━━━━━━\n\n';
+      if (this.simNum(d.renda)) m += `Comprometimento da renda: ${this.simPct(this.simComprometimento)}\n\n`;
+      m += '_Valores estimados, com seguros e tarifa inclusos._\n';
+      m += '_A aprovação e as condições finais são da Caixa._';
+      return m;
+    },
+
+    simEnviarWhatsApp() {
+      const texto = this.simTextoWhatsApp();
+      if (!texto) { this.showToast('Preencha a simulação primeiro'); return; }
+      const c = this.simCliente;
+      const tel = c && c.telefone ? String(c.telefone).replace(/\D/g, '') : '';
+      const base = tel
+        ? `https://wa.me/55${tel.length > 11 ? tel.slice(-11) : tel}?text=`
+        : 'https://wa.me/?text=';
+      window.open(base + encodeURIComponent(texto), '_blank');
+    },
+
+    simImprimir() {
+      const d = this.simCredito;
+      const sistema = this.simVerTabela;
+      const t = this.simTabela(sistema);
+      if (!t.length) { this.showToast('Preencha a simulação primeiro'); return; }
+      const res = this.simResumo(sistema);
+      const l = this.simLinhaAtual;
+      const esc = (s) => String(s).replace(/[&<>]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[ch]));
+      const hoje = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
+
+      const linhas = t.map(x => `<tr>
+        <td class="c">${x.n}</td>
+        <td>${this.simMoeda(x.amort)}</td>
+        <td>${this.simMoeda(x.juros)}</td>
+        <td>${this.simMoeda(x.mip + x.dfi + x.adm)}</td>
+        <td class="b">${this.simMoeda(x.total)}</td>
+        <td>${this.simMoeda(x.saldo)}</td></tr>`).join('');
+
+      const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+      <title>Pré-análise de crédito · AMiGO Corretor</title>
+      <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Helvetica Neue',Arial,sans-serif; font-size:11px; color:#111; background:#fff; padding:28px 34px; }
+        h1 { font-size:19px; margin-bottom:4px; }
+        .sub { font-size:10px; color:#777; border-bottom:1px solid #ccc; padding-bottom:9px; margin-bottom:18px; }
+        .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:18px; }
+        .box { border:1px solid #ddd; border-radius:6px; padding:9px 11px; }
+        .box span { display:block; font-size:9px; color:#888; text-transform:uppercase; letter-spacing:.4px; }
+        .box strong { font-size:13px; }
+        .dados { font-size:10px; color:#444; margin-bottom:16px; line-height:1.7; }
+        table { width:100%; border-collapse:collapse; }
+        th { background:#f0f0f0; font-size:9px; text-transform:uppercase; letter-spacing:.3px; padding:6px 5px; text-align:right; border-bottom:1px solid #bbb; }
+        th:first-child { text-align:center; }
+        td { padding:4px 5px; text-align:right; border-bottom:1px solid #eee; font-variant-numeric:tabular-nums; }
+        td.c { text-align:center; color:#888; }
+        td.b { font-weight:bold; }
+        tr:nth-child(even) td { background:#fafafa; }
+        .rodape { margin-top:18px; font-size:9px; color:#888; border-top:1px solid #ccc; padding-top:9px; line-height:1.6; }
+        @media print { body { padding:14px 18px; } th { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+      </style></head><body>
+      <h1>Pré-análise de crédito habitacional</h1>
+      <div class="sub">Caixa Econômica Federal · Tabela ${sistema === 'SAC' ? 'SAC' : 'Price'} · ${hoje}</div>
+      <div class="dados">
+        ${this.simCliente ? `<b>Cliente:</b> ${esc(this.simCliente.nome)}<br>` : ''}
+        <b>Valor do imóvel:</b> ${this.simMoeda(this.simNum(d.valorImovel))} &nbsp;·&nbsp;
+        <b>Entrada:</b> ${this.simMoeda(this.simNum(d.entrada))}
+        ${this.simNum(d.fgts) ? ` &nbsp;·&nbsp; <b>FGTS:</b> ${this.simMoeda(this.simNum(d.fgts))}` : ''}<br>
+        <b>Linha:</b> ${esc(l.nome)} &nbsp;·&nbsp; <b>Juros:</b> ${this.simPct(d.taxaAnual, 2)} a.a.
+        &nbsp;·&nbsp; <b>Prazo:</b> ${d.prazo} meses
+        ${this.simNum(d.renda) ? ` &nbsp;·&nbsp; <b>Renda:</b> ${this.simMoeda(this.simNum(d.renda))} (${this.simPct(this.simComprometimento)} comprometidos)` : ''}
+      </div>
+      <div class="grid">
+        <div class="box"><span>Financiado</span><strong>${this.simMoeda(res.financiado)}</strong></div>
+        <div class="box"><span>1ª parcela</span><strong>${this.simMoeda(res.primeira)}</strong></div>
+        <div class="box"><span>Última parcela</span><strong>${this.simMoeda(res.ultima)}</strong></div>
+        <div class="box"><span>Total pago</span><strong>${this.simMoeda(res.total)}</strong></div>
+      </div>
+      <table>
+        <thead><tr><th>Mês</th><th>Amortização</th><th>Juros</th><th>Seguros + tarifa</th><th>Parcela total</th><th>Saldo devedor</th></tr></thead>
+        <tbody>${linhas}</tbody>
+      </table>
+      <div class="rodape">
+        Simulação de apoio à negociação, elaborada no AMiGO Corretor. Os valores incluem seguro MIP
+        (${this.simPct(d.mip, 3)} a.m. sobre o saldo devedor), seguro DFI (${this.simPct(d.dfi, 4)} a.m. sobre o valor do imóvel)
+        e tarifa de administração de ${this.simMoeda(d.taxaAdm)}.<br>
+        As taxas são de referência e podem divergir da proposta final. A análise de crédito, a aprovação
+        e as condições definitivas são exclusivas da Caixa Econômica Federal.
+      </div>
+      <script>window.onload = () => { window.print(); }<\/script>
+      </body></html>`;
+
+      const win = window.open('', '_blank');
+      win.document.write(html);
+      win.document.close();
     },
 
     showToast(msg) {
