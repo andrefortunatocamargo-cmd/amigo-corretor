@@ -83,7 +83,7 @@
         <div class="min-w-0">
           <div class="text-[11px] font-bold uppercase tracking-wider" style="color:var(--s-l)">Seu corretor</div>
           <div class="text-lg font-black leading-tight truncate" x-text="corretor.nome"></div>
-          <div class="text-xs text-white/60" x-text="corretor.creci ? 'CRECI ' + corretor.creci : 'Essense Negócios Imobiliários'"></div>
+          <div class="text-xs text-white/60" x-text="corretor.creci ? (/creci/i.test(corretor.creci) ? corretor.creci : 'CRECI ' + corretor.creci) : 'Essense Negócios Imobiliários'"></div>
         </div>
       </div>
 
