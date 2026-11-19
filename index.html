@@ -3452,7 +3452,13 @@ tailwind.config = {
         <h2 class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Condições do financiamento</h2>
 
         <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Linha de crédito</label>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-semibold text-gray-600">Linha de crédito</label>
+            <button @click="showLinhasGuia = true" type="button"
+                    class="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+              <i class="fa-regular fa-circle-question"></i> Qual escolher?
+            </button>
+          </div>
           <select :value="simCredito.linha" x-init="$nextTick(() => $el.value = simCredito.linha)" @change="simTrocarLinha($event.target.value)"
                   class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200">
             <template x-for="l in simLinhas" :key="l.id">
@@ -3460,6 +3466,21 @@ tailwind.config = {
             </template>
           </select>
           <p class="text-[11px] text-gray-400 mt-1.5" x-text="simLinhaAtual.obs"></p>
+
+          <!-- A renda do cliente aponta para outra linha? -->
+          <template x-if="simAvisoLinha">
+            <div class="mt-2 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+              <i class="fa-solid fa-lightbulb text-amber-500 text-xs mt-0.5"></i>
+              <div class="flex-1 min-w-0">
+                <p class="text-[11px] text-amber-900 leading-snug">
+                  A <span x-text="simAvisoLinha.porque"></span>:
+                  o enquadramento provável é <b x-text="simAvisoLinha.linha.nome"></b>.
+                </p>
+                <button @click="simTrocarLinha(simAvisoLinha.linha.id)" type="button"
+                        class="mt-1 text-[11px] font-bold text-amber-700 underline">Trocar para essa linha</button>
+              </div>
+            </div>
+          </template>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
@@ -3547,9 +3568,27 @@ tailwind.config = {
                      x-model.number="simCredito.taxaAdm" @input="simSalvar()">
             </div>
           </div>
+          <!-- O MIP é o encargo que mais destoa entre uma simulação e outra -->
+          <template x-if="simMipDestoa">
+            <div class="mt-2 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-2">
+              <i class="fa-solid fa-heart-pulse text-amber-500 text-[11px] mt-0.5"></i>
+              <div class="flex-1 min-w-0">
+                <p class="text-[10px] text-amber-900 leading-snug">
+                  Para <b x-text="simCredito.idade + ' anos'"></b> o MIP costuma rodar perto de
+                  <b x-text="simPct(simMipSugerido, 3) + ' a.m.'"></b>, e não
+                  <span x-text="simPct(simCredito.mip, 3)"></span>.
+                  É o encargo que mais desloca a parcela.
+                </p>
+                <button @click="simAplicarMipIdade()" type="button"
+                        class="mt-1 text-[10px] font-bold text-amber-700 underline">Usar o da idade</button>
+              </div>
+            </div>
+          </template>
+
           <p class="text-[10px] text-gray-400 mt-2 leading-relaxed">
-            MIP incide sobre o saldo devedor; DFI sobre o valor do imóvel. Os percentuais variam com a idade
-            e o perfil do proponente — confirme na proposta da agência.
+            MIP (seguro de morte) incide sobre o saldo devedor e <b>sobe muito com a idade</b>: aos 26 anos
+            fica perto de 0,011% a.m. e aos 55 passa de 0,09%. DFI incide sobre o valor do imóvel.
+            Os dois saem de tábua atuarial e só a proposta da agência traz o número exato.
           </p>
         </details>
       </div>
@@ -3712,6 +3751,75 @@ tailwind.config = {
           </template>
         </div>
       </div>
+
+      <!-- Capacidade: a mesma pergunta que a calculadora da Caixa faz -->
+      <template x-if="simCapacidade">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+          <div class="flex items-start justify-between gap-2 mb-1">
+            <div>
+              <h2 class="text-sm font-black text-gray-800">Quanto ele consegue financiar</h2>
+              <p class="text-[11px] text-gray-400 leading-snug">
+                Partindo da renda, como faz a calculadora da Caixa
+              </p>
+            </div>
+            <span class="shrink-0 text-[9px] font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded-full uppercase"
+                  x-text="simCredito.sistema"></span>
+          </div>
+
+          <template x-if="simCapacidade.impossivel">
+            <p class="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2 mt-2 leading-relaxed">
+              Com esta renda, o teto de <span x-text="simPct(simCredito.comprometimentoMax)"></span>
+              não cobre nem os seguros e a tarifa mensal. Não há financiamento possível nestas condições.
+            </p>
+          </template>
+
+          <template x-if="!simCapacidade.impossivel">
+            <div>
+              <div class="grid grid-cols-2 gap-2 mt-3">
+                <div class="rounded-xl px-3 py-2.5" style="background:#eff6ff">
+                  <div class="text-[9px] text-blue-500 uppercase font-bold tracking-wide">Financiamento máximo</div>
+                  <div class="text-base font-black text-blue-800" x-text="simMoeda(simCapacidade.pv)"></div>
+                </div>
+                <div class="rounded-xl px-3 py-2.5 bg-gray-50">
+                  <div class="text-[9px] text-gray-400 uppercase font-bold tracking-wide">Parcela no teto</div>
+                  <div class="text-base font-black text-gray-700" x-text="simMoeda(simCapacidade.parcelaMax)"></div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2 mt-2">
+                <div class="rounded-xl px-3 py-2.5 bg-gray-50">
+                  <div class="text-[9px] text-gray-400 uppercase font-bold tracking-wide">Entrada mínima</div>
+                  <div class="text-sm font-black text-gray-700"
+                       x-text="simNum(simCredito.valorImovel) > 0 ? simMoeda(simCapacidade.entradaMin) : '—'"></div>
+                </div>
+                <div class="rounded-xl px-3 py-2.5 bg-gray-50">
+                  <div class="text-[9px] text-gray-400 uppercase font-bold tracking-wide">Imóvel que alcança</div>
+                  <div class="text-sm font-black text-gray-700" x-text="simMoedaCurta(simCapacidade.imovelMax)"></div>
+                </div>
+              </div>
+
+              <p class="text-[11px] text-gray-500 mt-2.5 leading-relaxed">
+                <template x-if="simCapacidade.travaCota">
+                  <span>O limite aqui é a <b>cota da linha</b> (<span x-text="simLinhaAtual.cota + '%'"></span>),
+                        não a renda: ele pagaria uma parcela maior, mas a linha não financia mais que isso.</span>
+                </template>
+                <template x-if="!simCapacidade.travaCota">
+                  <span>O limite aqui é a <b>renda</b>: a parcela trava em
+                        <span x-text="simPct(simCredito.comprometimentoMax)"></span> de
+                        <span x-text="simMoedaCurta(simNum(simCredito.renda))"></span>.
+                        Financiaria <span x-text="simPct(simCapacidade.cota)"></span> do imóvel.</span>
+                </template>
+              </p>
+
+              <button @click="simUsarCapacidade()" type="button"
+                      class="mt-3 w-full py-2.5 rounded-xl text-xs font-bold text-white" style="background:#0057A6">
+                <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>
+                Ajustar a simulação para este limite
+              </button>
+            </div>
+          </template>
+        </div>
+      </template>
 
       <!-- Comparativo SAC × Price -->
       <div x-show="simValorFinanciado > 0 && simCredito.prazo > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -3889,6 +3997,137 @@ tailwind.config = {
   </div>
 
   <!-- ═══════════ PAINEL: LINKS DE PRÉ-ANÁLISE DO CLIENTE ═══════════ -->
+  <!-- ═══════════ Guia: qual linha de crédito usar ═══════════ -->
+  <div x-show="showLinhasGuia" x-transition class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
+       style="background:rgba(15,23,42,.55)" @click.self="showLinhasGuia = false" x-cloak>
+    <div class="bg-gray-50 w-full sm:max-w-2xl sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[92vh] flex flex-col overflow-hidden">
+
+      <div class="px-5 py-4 flex items-center justify-between shrink-0" style="background:#0057A6">
+        <div>
+          <h3 class="text-white font-bold text-base">Qual linha usar para cada cliente</h3>
+          <p class="text-white/70 text-[11px]">A renda familiar bruta é o que decide o enquadramento</p>
+        </div>
+        <button @click="showLinhasGuia = false" class="text-white/80 hover:text-white w-8 h-8 flex items-center justify-center">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="overflow-y-auto px-4 py-4 space-y-3">
+
+        <!-- Regra de bolso -->
+        <div class="bg-white rounded-2xl border border-gray-200 p-4">
+          <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2">A regra de bolso</h4>
+          <ol class="text-[12px] text-gray-700 space-y-1.5 leading-relaxed list-decimal list-inside">
+            <li><b>Primeiro imóvel e renda até R$ 13.000?</b> Começa pelo MCMV — a faixa sai da renda familiar bruta.</li>
+            <li><b>Já tem imóvel, ou renda acima de R$ 13.000, ou imóvel caro?</b> É SBPE. Dentro do SBPE, a escolha é sobre o risco da parcela, não sobre a renda.</li>
+            <li><b>No SBPE, na dúvida: TR + juros.</b> É a mais usada e costuma sair mais barata que a taxa fixa.</li>
+          </ol>
+          <p class="text-[11px] text-gray-500 mt-2.5 leading-relaxed">
+            O MCMV também exige <b>não ter imóvel registrado no nome</b> e não ter sido
+            beneficiado pelo programa antes. Se o cliente não cumprir isso, a conversa já começa no SBPE.
+          </p>
+        </div>
+
+        <!-- Uma caixa por linha -->
+        <template x-for="l in simLinhas" :key="'g'+l.id">
+          <div class="bg-white rounded-2xl border p-4"
+               :class="l.id === simCredito.linha ? 'border-blue-400 ring-2 ring-blue-100' : 'border-gray-200'">
+
+            <div class="flex items-start justify-between gap-3 mb-2">
+              <div class="min-w-0">
+                <h4 class="font-bold text-sm text-gray-800" x-text="l.nome"></h4>
+                <p class="text-[11px] text-gray-500 mt-0.5">
+                  <span x-text="'Juros ' + simPct(l.taxaMin, 2) + ' a ' + simPct(l.taxaMax, 2) + ' ao ano'"></span>
+                  · <span x-text="'correção por ' + l.indexador"></span>
+                </p>
+              </div>
+              <template x-if="simLinhaSugerida && simLinhaSugerida.id === l.id">
+                <span class="shrink-0 text-[9px] font-bold text-emerald-700 bg-emerald-100 px-2 py-1 rounded-full uppercase">
+                  Indicada
+                </span>
+              </template>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 mb-3">
+              <div class="bg-gray-50 rounded-lg px-2 py-1.5">
+                <div class="text-[9px] text-gray-400 uppercase font-bold">Financia até</div>
+                <div class="text-xs font-bold text-gray-700" x-text="l.cota + '%'"></div>
+              </div>
+              <div class="bg-gray-50 rounded-lg px-2 py-1.5">
+                <div class="text-[9px] text-gray-400 uppercase font-bold">Prazo máx.</div>
+                <div class="text-xs font-bold text-gray-700" x-text="(l.prazoMax/12) + ' anos'"></div>
+              </div>
+              <div class="bg-gray-50 rounded-lg px-2 py-1.5">
+                <div class="text-[9px] text-gray-400 uppercase font-bold" x-text="l.imovelMax ? 'Imóvel até' : 'Teto imóvel'"></div>
+                <div class="text-xs font-bold text-gray-700" x-text="l.imovelMax ? simMoedaCurta(l.imovelMax) : 'SFH'"></div>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <div class="flex gap-2">
+                <i class="fa-solid fa-user-group text-gray-300 text-[11px] mt-0.5 w-3.5 shrink-0"></i>
+                <p class="text-[12px] text-gray-700 leading-snug"><b class="text-gray-500">Para quem:</b> <span x-text="l.paraQuem"></span></p>
+              </div>
+              <div class="flex gap-2">
+                <i class="fa-solid fa-circle-check text-emerald-400 text-[11px] mt-0.5 w-3.5 shrink-0"></i>
+                <p class="text-[12px] text-gray-700 leading-snug"><b class="text-gray-500">Quando indicar:</b> <span x-text="l.quando"></span></p>
+              </div>
+              <div class="flex gap-2">
+                <i class="fa-solid fa-triangle-exclamation text-amber-400 text-[11px] mt-0.5 w-3.5 shrink-0"></i>
+                <p class="text-[12px] text-gray-700 leading-snug"><b class="text-gray-500">Atenção:</b> <span x-text="l.atencao"></span></p>
+              </div>
+            </div>
+
+            <button @click="simTrocarLinha(l.id); showLinhasGuia = false" type="button"
+                    class="mt-3 w-full py-2 rounded-xl text-xs font-bold border transition-all"
+                    :class="l.id === simCredito.linha ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'"
+                    x-text="l.id === simCredito.linha ? 'Linha em uso' : 'Usar esta linha'"></button>
+          </div>
+        </template>
+
+        <!-- SAC x Price -->
+        <div class="bg-white rounded-2xl border border-gray-200 p-4">
+          <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2">SAC ou Price?</h4>
+          <p class="text-[12px] text-gray-700 leading-relaxed mb-2">
+            <b>SAC</b> começa com a parcela mais alta e ela cai todo mês. Paga menos juros no total
+            e é o padrão da Caixa. Exige mais renda para aprovar, porque o banco olha a primeira parcela.
+          </p>
+          <p class="text-[12px] text-gray-700 leading-relaxed">
+            <b>Price</b> tem parcela fixa, mais baixa no começo. Aprova com renda menor e cabe melhor
+            em quem está no limite — mas o custo total é maior. Foi o que a calculadora da Caixa
+            usou no exemplo de renda de R$ 5.200.
+          </p>
+        </div>
+
+        <!-- Por que os números diferem do site da Caixa -->
+        <div class="bg-white rounded-2xl border border-gray-200 p-4">
+          <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2">Se não bater com o site da Caixa</h4>
+          <ul class="text-[12px] text-gray-700 space-y-2 leading-snug">
+            <li><b>A pergunta é outra.</b> A calculadora da Caixa parte da renda e devolve quanto dá para financiar.
+              Aqui você parte do valor e vê a parcela. Use o cartão <b>“Quanto ele consegue financiar”</b> para fazer a mesma pergunta que a Caixa faz.</li>
+            <li><b>Taxa efetiva × nominal.</b> A Caixa mostra a efetiva. Com a convenção <b>Equivalente</b> ligada,
+              digite aqui a efetiva que ela mostrou (8,47%, por exemplo) e a mensal bate exatamente.</li>
+            <li><b>A taxa é uma faixa, não um número.</b> Dentro da mesma faixa do MCMV a taxa muda com renda,
+              região e relacionamento. Os valores aqui são o topo da faixa — o cenário mais caro, para não prometer o que não se cumpre.</li>
+            <li><b>Prazo.</b> A Caixa estica para o máximo que a idade permite (420 meses no MCMV). Prazo menor, parcela maior.</li>
+            <li><b>Seguro MIP.</b> Pesa muito e varia com a idade: aos 26 anos é cerca de um terço do que é aos 50. O campo no Ajuste fino já sugere pela idade.</li>
+          </ul>
+          <p class="text-[11px] text-gray-400 mt-3 leading-relaxed">
+            Taxas e faixas são referência de novembro de 2026 e mudam sem aviso.
+            O número que vale é o da simulação oficial, feita na agência ou no site da Caixa.
+          </p>
+        </div>
+
+      </div>
+
+      <div class="px-4 py-3 bg-white border-t border-gray-100 shrink-0">
+        <button @click="showLinhasGuia = false" class="w-full py-2.5 rounded-xl text-sm font-bold text-white" style="background:#0057A6">
+          Entendi
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div x-show="showAnalisePainel" x-transition class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
        style="background:rgba(0,0,0,0.5)" @click.self="showAnalisePainel=false">
     <div class="bg-white w-full sm:max-w-2xl sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[92vh] flex flex-col">
@@ -9567,20 +9806,54 @@ function app() {
        servem como ponto de partida: mudam com frequência e variam por
        relacionamento do cliente com o banco. */
     simLinhas: [
-      { id:'poupanca', nome:'SBPE · Poupança + juros', taxa:10.49, cota:80, prazoMax:420,
-        obs:'Parcela acompanha o rendimento da poupança. Imóvel novo ou usado.' },
-      { id:'tr',       nome:'SBPE · TR + juros',       taxa:11.49, cota:80, prazoMax:420,
-        obs:'Correção pela TR. A linha mais usada do SBPE.' },
-      { id:'fixa',     nome:'SBPE · Taxa fixa',        taxa:11.99, cota:70, prazoMax:360,
-        obs:'Sem correção por índice: previsibilidade total da parcela.' },
-      { id:'mcmv1',    nome:'MCMV · Faixa 1',          taxa:4.50,  cota:95, prazoMax:420, rendaMax:2850,
-        obs:'Renda de referência até R$ 2.850. Subsídio conforme a região.' },
-      { id:'mcmv2',    nome:'MCMV · Faixa 2',          taxa:5.50,  cota:90, prazoMax:420, rendaMax:4700,
-        obs:'Renda de referência até R$ 4.700.' },
-      { id:'mcmv3',    nome:'MCMV · Faixa 3',          taxa:7.66,  cota:85, prazoMax:420, rendaMax:8600,
-        obs:'Renda de referência até R$ 8.600.' },
-      { id:'mcmv4',    nome:'MCMV · Faixa 4 (Classe Média)', taxa:10.00, cota:80, prazoMax:420, rendaMax:12000,
-        obs:'Renda de referência até R$ 12.000. Imóvel até R$ 500 mil.' },
+      { id:'poupanca', nome:'SBPE · Poupança + juros', taxa:10.49, taxaMin:9.99, taxaMax:10.99,
+        cota:80, prazoMax:420, indexador:'Rendimento da poupança',
+        obs:'Parcela acompanha o rendimento da poupança. Imóvel novo ou usado.',
+        paraQuem:'Quem ficou de fora do MCMV — renda acima do teto, segundo imóvel, imóvel acima do limite do programa ou quem já usou o FGTS no passado.',
+        quando:'Quando o cliente aceita uma parcela que oscila para pagar menos juros enquanto a Selic estiver alta. A taxa cai junto com a poupança.',
+        atencao:'Se a poupança subir, a parcela sobe. Não é a escolha para quem tem orçamento apertado e precisa de previsibilidade.' },
+
+      { id:'tr', nome:'SBPE · TR + juros', taxa:11.49, taxaMin:10.99, taxaMax:11.99,
+        cota:80, prazoMax:420, indexador:'TR',
+        obs:'Correção pela TR. A linha mais usada do SBPE.',
+        paraQuem:'O caminho padrão de quem está fora do MCMV. Serve para imóvel novo, usado, residencial ou comercial.',
+        quando:'Na dúvida entre as linhas do SBPE, é esta. A TR costuma rodar perto de zero, então na prática a parcela se comporta de forma parecida com a taxa fixa, por um juro menor.',
+        atencao:'A TR não é fixa por lei: se voltar a subir, o saldo devedor sobe junto.' },
+
+      { id:'fixa', nome:'SBPE · Taxa fixa', taxa:11.99, taxaMin:11.49, taxaMax:12.99,
+        cota:70, prazoMax:360, indexador:'Nenhum',
+        obs:'Sem correção por índice: previsibilidade total da parcela.',
+        paraQuem:'Quem precisa saber hoje, com certeza, quanto vai pagar no ano 20. Autônomo, renda apertada, planejamento rígido.',
+        quando:'Quando a segurança vale mais que o custo. É a única linha em que a parcela de amanhã já está contratada.',
+        atencao:'É a mais cara das três e costuma pedir mais entrada (cota menor) e prazo menor.' },
+
+      { id:'mcmv1', nome:'MCMV · Faixa 1', taxa:5.25, taxaMin:4.00, taxaMax:5.25,
+        cota:95, prazoMax:420, rendaMin:0, rendaMax:3200, imovelMax:350000, indexador:'TR',
+        obs:'Renda familiar até R$ 3.200. Subsídio conforme a região.',
+        paraQuem:'Renda familiar bruta até R$ 3.200, na compra do primeiro imóvel.',
+        quando:'Sempre que couber: é o juro mais baixo do mercado brasileiro e o subsídio pode abater uma parte relevante da entrada.',
+        atencao:'Exige não ter imóvel no nome nem ter sido beneficiado antes. A taxa menor é do Norte e Nordeste; no Sudeste fica no topo da faixa.' },
+
+      { id:'mcmv2', nome:'MCMV · Faixa 2', taxa:7.00, taxaMin:4.75, taxaMax:7.00,
+        cota:90, prazoMax:420, rendaMin:3200, rendaMax:5000, imovelMax:350000, indexador:'TR',
+        obs:'Renda familiar de R$ 3.200,01 a R$ 5.000.',
+        paraQuem:'Renda familiar bruta entre R$ 3.200,01 e R$ 5.000, primeiro imóvel.',
+        quando:'A faixa com a melhor relação entre juro e acesso. Ainda há subsídio, menor que o da Faixa 1.',
+        atencao:'A taxa varia bastante dentro da faixa: quem está perto de R$ 5.000 paga perto do teto.' },
+
+      { id:'mcmv3', nome:'MCMV · Faixa 3', taxa:8.16, taxaMin:7.66, taxaMax:8.16,
+        cota:85, prazoMax:420, rendaMin:5000, rendaMax:9600, imovelMax:350000, indexador:'TR',
+        obs:'Renda familiar de R$ 5.000,01 a R$ 9.600.',
+        paraQuem:'Renda familiar bruta entre R$ 5.000,01 e R$ 9.600, primeiro imóvel.',
+        quando:'Não há mais subsídio aqui, mas o juro ainda é bem menor que o do SBPE. Vale sempre checar antes de partir para a taxa de balcão.',
+        atencao:'Sem subsídio, a entrada sai do bolso ou do FGTS. Foi nesta faixa que a calculadora da Caixa aplicou 8,16% a.a. (8,47% efetiva) numa renda de R$ 5.200.' },
+
+      { id:'mcmv4', nome:'MCMV · Faixa 4 (Classe Média)', taxa:10.50, taxaMin:10.00, taxaMax:10.50,
+        cota:80, prazoMax:420, rendaMin:9600, rendaMax:13000, imovelMax:500000, indexador:'TR',
+        obs:'Renda familiar de R$ 9.600,01 a R$ 13.000. Imóvel até R$ 500 mil.',
+        paraQuem:'Renda familiar bruta entre R$ 9.600,01 e R$ 13.000 — a faixa criada em 2026 para a classe média.',
+        quando:'Quando o imóvel cabe no teto de R$ 500 mil. O juro fica pouco abaixo do SBPE, mas o prazo chega a 420 meses.',
+        atencao:'Sem subsídio e com teto de imóvel. Acima de R$ 500 mil, só SBPE.' },
     ],
 
     simCredito: Object.assign({
@@ -9620,6 +9893,133 @@ function app() {
       this.simCredito.taxaAnual = l.taxa;
       if (Number(this.simCredito.prazo) > l.prazoMax) this.simCredito.prazo = l.prazoMax;
       this.simSalvar();
+    },
+
+    /* ───────── Qual linha serve para este cliente ─────────
+       A renda familiar é o que decide o enquadramento: o MCMV tem teto,
+       e quem passa dele cai no SBPE. Devolve null enquanto não há renda. */
+    get simLinhaSugerida() {
+      const renda = this.simNum(this.simCredito.renda);
+      if (renda <= 0) return null;
+      const vi = this.simNum(this.simCredito.valorImovel);
+      /* A faixa sai da renda — e só dela. Se o imóvel estourar o teto
+         daquela faixa, o cliente não "sobe" de faixa: cai no SBPE. */
+      const faixa = this.simLinhas.find(l => l.rendaMax
+                                          && renda > (l.rendaMin || 0)
+                                          && renda <= l.rendaMax);
+      if (!faixa) return this.simLinhas.find(l => l.id === 'tr');
+      if (faixa.imovelMax && vi > faixa.imovelMax) return this.simLinhas.find(l => l.id === 'tr');
+      return faixa;
+    },
+
+    /* Só avisa quando a linha escolhida não é a sugerida. */
+    get simAvisoLinha() {
+      const sug = this.simLinhaSugerida;
+      if (!sug || sug.id === this.simCredito.linha) return null;
+      const renda = this.simNum(this.simCredito.renda);
+      const vi = this.simNum(this.simCredito.valorImovel);
+      const atual = this.simLinhaAtual;
+      let porque = `renda de ${this.simMoedaCurta(renda)}`;
+      if (atual.rendaMax && renda > atual.rendaMax) {
+        porque += ` passa do teto de ${this.simMoedaCurta(atual.rendaMax)} da ${atual.nome}`;
+      } else if (atual.imovelMax && vi > atual.imovelMax) {
+        porque += ` serve, mas o imóvel de ${this.simMoedaCurta(vi)} passa do teto de ` +
+                  `${this.simMoedaCurta(atual.imovelMax)} da ${atual.nome}`;
+      } else {
+        porque += ` se enquadra numa linha mais barata`;
+      }
+      return { linha: sug, porque };
+    },
+
+    /* ───────── MIP: o seguro de morte varia MUITO com a idade ─────────
+       Não existe tabela pública única — cada contrato sai de uma tábua
+       atuarial. Estes são pontos de referência que reproduzem bem o que a
+       calculadora da Caixa devolve, e servem como palpite inicial. */
+    simMipPorIdade(idade) {
+      const a = Number(idade) || 0;
+      if (!a) return null;
+      if (a < 30) return 0.011;
+      if (a < 36) return 0.015;
+      if (a < 41) return 0.021;
+      if (a < 46) return 0.030;
+      if (a < 51) return 0.044;
+      if (a < 56) return 0.065;
+      if (a < 61) return 0.095;
+      return 0.140;
+    },
+
+    get simMipSugerido() { return this.simMipPorIdade(this.simCredito.idade); },
+
+    /* Avisa quando o MIP digitado está longe do esperado para a idade. */
+    get simMipDestoa() {
+      const sug = this.simMipSugerido;
+      const atual = Number(this.simCredito.mip) || 0;
+      if (!sug || !atual) return false;
+      return Math.abs(atual - sug) / sug > 0.35;
+    },
+
+    simAplicarMipIdade() {
+      const sug = this.simMipSugerido;
+      if (sug) { this.simCredito.mip = sug; this.simSalvar(); }
+    },
+
+    /* ───────── Modo capacidade: a pergunta que a Caixa responde ─────────
+       A calculadora do site da Caixa NÃO parte do valor financiado — ela
+       parte da renda. Fixa a parcela no teto de comprometimento e devolve
+       o quanto cabe de financiamento, chamando o resto de entrada mínima.
+       Invertemos a Price/SAC para chegar no mesmo lugar. */
+    get simCapacidade() {
+      const d = this.simCredito;
+      const renda = this.simNum(d.renda);
+      const vi = this.simNum(d.valorImovel);
+      const n = Math.max(1, Math.floor(Number(d.prazo) || 0));
+      const i = this.simTaxaMensal;
+      const maxComp = Number(d.comprometimentoMax) || 30;
+      if (renda <= 0) return null;
+
+      const parcelaMax = renda * maxComp / 100;
+      const mip = (Number(d.mip) || 0) / 100;
+      const dfi = vi * (Number(d.dfi) || 0) / 100;
+      const adm = Number(d.taxaAdm) || 0;
+      const sobra = parcelaMax - dfi - adm;          // o que resta p/ juros+amortização+MIP
+      if (sobra <= 0) return { parcelaMax, pv: 0, impossivel: true };
+
+      /* A 1ª parcela é a maior nos dois sistemas, então é ela que trava:
+         SAC   -> pv/n + pv*i + pv*mip
+         PRICE -> pv*fator + pv*mip   */
+      const fator = d.sistema === 'SAC' ? (1 / n + i)
+                                        : (i > 0 ? i / (1 - Math.pow(1 + i, -n)) : 1 / n);
+      let pv = sobra / (fator + mip);
+
+      /* A cota da linha também limita, e o FGTS entra como recurso próprio. */
+      const linha = this.simLinhaAtual;
+      const tetoCota = vi > 0 ? vi * linha.cota / 100 : Infinity;
+      const travaCota = pv > tetoCota;
+      pv = Math.min(pv, tetoCota);
+
+      const fgts = this.simNum(d.fgts);
+      const entradaMin = vi > 0 ? Math.max(0, vi - pv - fgts) : 0;
+
+      return {
+        parcelaMax, pv, entradaMin, travaCota,
+        cota: vi > 0 ? (pv / vi) * 100 : 0,
+        imovelMax: pv + fgts + this.simNum(d.entrada),
+      };
+    },
+
+    /* Joga o resultado do modo capacidade nos campos da simulação. */
+    simUsarCapacidade() {
+      const c = this.simCapacidade;
+      if (!c || !c.pv) return;
+      const vi = this.simNum(this.simCredito.valorImovel);
+      if (vi > 0) {
+        this.simCredito.entrada = String(Math.ceil(c.entradaMin));
+      } else {
+        this.simCredito.valorImovel = String(Math.floor(c.imovelMax));
+        this.simCredito.entrada = '0';
+      }
+      this.simSalvar();
+      this.showToast('Entrada ajustada para o limite da renda');
     },
 
     simNum(v) { return Number(String(v ?? '').replace(/\./g, '').replace(',', '.')) || 0; },
@@ -10199,6 +10599,7 @@ function app() {
     analiseRespostas: [],
     _analiseUnsub: [],
     _analisePrimeiraCarga: true,
+    showLinhasGuia: false,
     showAnalisePainel: false,
     analiseAba: 'novo',                 // novo | links | respostas
     analiseRespostaAberta: null,

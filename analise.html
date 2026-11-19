@@ -590,10 +590,10 @@ function pagina() {
   let _cache = { chave: '' };
 
   const LINHAS = [
-    { id:'mcmv1', nome:'Minha Casa Minha Vida · Faixa 1', taxa:4.50,  cota:95, prazoMax:420, rendaMax:2850 },
-    { id:'mcmv2', nome:'Minha Casa Minha Vida · Faixa 2', taxa:5.50,  cota:90, prazoMax:420, rendaMax:4700 },
-    { id:'mcmv3', nome:'Minha Casa Minha Vida · Faixa 3', taxa:7.66,  cota:85, prazoMax:420, rendaMax:8600 },
-    { id:'mcmv4', nome:'Minha Casa Minha Vida · Faixa 4', taxa:10.00, cota:80, prazoMax:420, rendaMax:12000 },
+    { id:'mcmv1', nome:'Minha Casa Minha Vida · Faixa 1', taxa:5.25,  cota:95, prazoMax:420, rendaMax:3200,  imovelMax:350000 },
+    { id:'mcmv2', nome:'Minha Casa Minha Vida · Faixa 2', taxa:7.00,  cota:90, prazoMax:420, rendaMax:5000,  imovelMax:350000 },
+    { id:'mcmv3', nome:'Minha Casa Minha Vida · Faixa 3', taxa:8.16,  cota:85, prazoMax:420, rendaMax:9600,  imovelMax:350000 },
+    { id:'mcmv4', nome:'Minha Casa Minha Vida · Faixa 4', taxa:10.50, cota:80, prazoMax:420, rendaMax:13000, imovelMax:500000 },
     { id:'poupanca', nome:'SBPE · Poupança + juros',      taxa:10.49, cota:80, prazoMax:420 },
     { id:'tr',       nome:'SBPE · TR + juros',            taxa:11.49, cota:80, prazoMax:420 },
     { id:'fixa',     nome:'SBPE · Taxa fixa',             taxa:11.99, cota:70, prazoMax:360 },
@@ -747,7 +747,9 @@ function pagina() {
       }
       const renda = this.num(this.d.renda);
       if (renda > 0) {
-        const faixa = LINHAS.find(l => l.rendaMax && renda <= l.rendaMax);
+        const vi = this.num(this.d.valorImovel);
+        const faixa = LINHAS.find(l => l.rendaMax && renda <= l.rendaMax
+                                    && (!l.imovelMax || !vi || vi <= l.imovelMax));
         if (faixa) return faixa;
       }
       return LINHAS.find(l => l.id === 'poupanca');

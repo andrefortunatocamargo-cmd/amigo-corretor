@@ -1,4 +1,4 @@
-const CACHE_NAME = 'amigo-corretor-v7';
+const CACHE_NAME = 'amigo-corretor-v8';
 const URLS = [
   './',
   './index.html',
